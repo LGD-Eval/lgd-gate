@@ -12,6 +12,15 @@ Neutral benchmark, ratings, and reports for the AI agent ecosystem.
   <a href="README.zh-CN.md">简体中文</a>
 </p>
 
+
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
+  <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python">
+  <img src="https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey" alt="Platform">
+  <img src="https://img.shields.io/badge/independent-neutral-success" alt="Independent">
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
+</p>
+
 </div>
 
 ---
