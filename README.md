@@ -78,6 +78,48 @@
 
 ---
 
+## 🌳 Ecosystem / 生态系统
+
+LGD-Gate is part of a larger ecosystem of Agent Skill tools. We are the **independent third-party evaluator** — the neutral referee.
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Agent Skill 发布前流程                    │
+└─────────────────────────────────────────────────────────────┘
+
+  1. 开发技能 → 2. 写代码
+       ↓
+  3. [Snyk agent-scan] — 商业安全扫描（找漏洞）
+       ↓
+  4. [Trail of Bits] — 专业安全审计（深度审查）
+       ↓
+  5. [LGD-Gate] ← 我们在这里！独立第三方评测（18 维度）
+       ↓
+  6. [Tencent aig-agent-redteam] — 红队攻击模拟
+       ↓
+  7. [OpenAI security-best-practices] — 最佳实践检查
+       ↓
+  8. 发布！
+```
+
+### Complementary Tools / 互补工具
+
+| Tool | What they do | What we do | How they fit together |
+|------|-------------|-----------|----------------------|
+| **[Snyk agent-scan](https://github.com/snyk/agent-scan)** | Commercial security scanning, find vulnerabilities | We do 18-dimension evaluation, not just security | They find bugs; we give an overall score |
+| **[Trail of Bits](https://github.com/trailofbits)** | Deep security audit, professional penetration testing | We do independent, neutral rating | They audit; we verify and rate |
+| **[Tencent aig-agent-redteam](https://github.com/Tencent/AI-Infra-Guard/tree/main/skills/aig-agent-redteam)** | Red team attack simulation | We also have red team dimension, but we are independent | They attack; we evaluate the attack surface |
+| **[OpenAI security-best-practices](https://officialskills.sh/openai/skills/security-best-practices)** | Best practice checklist | We independently verify compliance | They write the standard; we test against it |
+
+### Why we are unique / 我们的独特位置
+
+- ✅ **Independent.** Three-way separation: theory / product / evaluation. We do not make what we evaluate.
+- ✅ **Neutral.** We are not a security company, not a cloud provider, not a vendor.
+- ✅ **Comprehensive.** 18 dimensions, not just security.
+- ✅ **Evidence-based.** We publish our scores and our failures.
+
+---
+
 ## 🏆 真实战绩 Track Record
 
 | 项目 | 得分 | 等级 | 报告 |
