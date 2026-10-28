@@ -328,7 +328,23 @@ def scan_python_file(filepath: Path, result: ScanResult):
     # Helper: check if line is a comment
     def is_comment_line(line: str) -> bool:
         stripped = line.strip()
-        return stripped.startswith("#") or stripped.startswith('"""') or stripped.startswith("'''")
+        if stripped.startswith("#"):
+            return True
+        # A triple-quote-prefixed line is only a docstring/comment if no executable
+        # code follows the closing quote. `"""doc"""; os.system(...)` must still be
+        # scanned (red-team finding P1-5).
+        if stripped.startswith('"""') or stripped.startswith("'''"):
+            q = '"""' if stripped.startswith('"""') else "'''"
+            after = stripped[3:]
+            if q in after:
+                after = after.split(q, 1)[1]
+            if not re.search(
+                r'(os\.system|eval\(|exec\(|subprocess|__import__|pickle\.|'
+                r'yaml\.load|marshal\.|shelve\.|jsonpickle\.|;|\bdef\b|\bclass\b|\bimport\b)',
+                after,
+            ):
+                return True
+        return False
 
     # Helper: check if match is inside a string (simple heuristic)
     def is_inside_string(line: str, match_start: int) -> bool:
@@ -354,12 +370,19 @@ def scan_python_file(filepath: Path, result: ScanResult):
                 return True
         return False
 
+    # 抑制注释不再静默跳过：先记录 LOW 发现，仍照常扫描（red-team finding P1-4）
+    for i, line in enumerate(lines, 1):
+        if is_suppressed(i):
+            result.findings.append(Finding(
+                severity="LOW", category="suppression-bypass",
+                message="检测到 '# skillgate: ignore' 抑制注释——已忽略抑制并照常扫描（防绕过）",
+                file=str(filepath), line=i
+            ))
+
     # 1. Dangerous code patterns
     for pattern, severity, msg in DANGEROUS_CODE_PATTERNS:
         for i, line in enumerate(lines, 1):
             if is_comment_line(line):
-                continue
-            if is_suppressed(i):
                 continue
             if i in ast_lines:  # AST 已经报过了，不要重复报
                 continue
@@ -373,8 +396,6 @@ def scan_python_file(filepath: Path, result: ScanResult):
     for pattern, severity, msg in NETWORK_PATTERNS:
         for i, line in enumerate(lines, 1):
             if is_comment_line(line):
-                continue
-            if is_suppressed(i):
                 continue
             if re.search(pattern, line):
                 result.findings.append(Finding(
