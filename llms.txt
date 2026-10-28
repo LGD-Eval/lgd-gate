@@ -1,0 +1,30 @@
+# LGD-Gate
+
+LGD-Gate is an independent third-party evaluation service for AI Agent Skills.
+
+## What it does
+
+- Evaluates AI Agent Skills using a five-dimensional framework
+- Gives Trust Score from A+ to D
+- Provides detailed improvement recommendations
+
+## Five Dimensions
+
+1. Structure Integrity (25 points)
+2. Directory Structure (15 points)
+3. Documentation Quality (20 points)
+4. Security Check (25 points)
+5. Ecosystem Compatibility (15 points)
+
+## Usage
+
+```bash
+python evaluate.py path/to/skill/
+```
+
+## Output
+
+- Trust Score: 0-100
+- Grade: A+ / A / B / C / D
+- Findings: list of issues to fix
+- Suggestions: list of improvements
