@@ -1,95 +1,162 @@
-<div align="center">
-
-# 🚪 LGD-Gate
-
-**Independent Trust Evaluation for AI Agent Skills.**
-
-Neutral benchmark, ratings, and reports for the AI agent ecosystem.
+<h1 align="center">🏛️ LGD-Eval</h1>
 
 <p align="center">
-  <strong>Language:</strong>
-  <a href="README.md">English</a> |
-  <a href="README.zh-CN.md">简体中文</a>
+  <strong>Independent Third-Party Agent Skill Evaluation</strong>
 </p>
-
 
 <p align="center">
-  <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License">
-  <img src="https://img.shields.io/badge/python-3.9+-blue.svg" alt="Python">
-  <img src="https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey" alt="Platform">
-  <img src="https://img.shields.io/badge/independent-neutral-success" alt="Independent">
-  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
+  <a href="https://github.com/LGD-Eval/lgd-gate/actions"><img src="https://github.com/LGD-Eval/lgd-gate/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8+-green.svg" alt="Python 3.8+"></a>
 </p>
 
-</div>
+---
+
+> **We do not claim authority: we prove it with evidence.**
+>
+> 我们不宣称权威，我们用证据、流程与真实战绩证明它——以及敢于公布自己问题的自信。
 
 ---
 
-## 🤔 What is LGD-Gate?
+## 🏛️ 官方身份 Official Identity
 
-LGD-Gate is an **independent, neutral evaluation service** for AI agent skills. We scan and rate popular skills from the community, publish transparent reports, and help users make informed decisions.
-
-We are:
-- ✅ **Independent** — not affiliated with any skill vendor
-- ✅ **Transparent** — all our methods and data are open source
-- ✅ **Reproducible** — anyone can run our scans themselves
-
----
-
-## ✨ What We Do
-
-1. **🔍 Security Scanning** — check for vulnerabilities, secrets, and malicious code
-2. **📊 Quality Evaluation** — assess SKILL.md quality, description clarity, and documentation
-3. **🏆 Trust Score** — give every skill a single score (A+ to D)
-4. **📰 Public Reports** — publish detailed reports for popular skills
-5. **📈 Leaderboard** — rank skills by trustworthiness
+| 项 | 内容 |
+|---|------|
+| **理论** | LGD = Lifecycle Governance Doctrine（LGD 全程治理论） |
+| **核心三律** | registered · evidenced · gated（有籍 · 有证 · 有门禁） |
+| **理论 DOI** | 10.5281/zenodo.22456647（LGD 理论 Version 1.7） |
+| **ORCID** | 0009-0001-0512-1237 |
 
 ---
 
-## 📊 Current Leaderboard
+## 📏 标准体系 Standards
 
-| Rank | Skill | Trust Score | Grade |
-|------|-------|-------------|-------|
-| 1 | medxpert-termbase | 95 | A+ |
-| 2 | iso14971-risk-matrix | 93 | A+ |
-| 3 | reg-citation-normalizer | 91 | A+ |
+### 五维评分（lgd-gate）
 
-*Updated 2026-10-28*
+| 维度 | 满分 | 说明 |
+|------|------|------|
+| 结构完整性 | 25 | 文件齐不齐 |
+| 目录结构 | 15 | 目录规不规范 |
+| 文档质量 | 20 | 文档全不全 |
+| 安全检查 | 25 | 有没有安全问题 |
+| 生态兼容 | 15 | 能不能和 LGD 生态互链 |
+
+### 等级
+
+- A+: 90+
+- A: 80-89
+- B: 70-79
+- C: 60-69
+
+> 📖 完整的 L0-L13 企业级标准 → [evaluation-protocol.md](./docs/evaluation-protocol.md)
+
+### 风险分类（EU AI Act）
+
+| 等级 | 说明 | 例子 |
+|------|------|------|
+| 不可接受风险 | 禁止 | 社会评分 |
+| 高风险 | 严格监管 | 医疗、金融 |
+| 中风险 | 透明义务 | 客服机器人 |
+| 低风险 | 基本无义务 | 游戏 AI |
 
 ---
 
-## 🧪 Our Evaluation Methodology
+## 🔬 方法论 Methodology
 
-We use the **LGD Trust Framework**:
-
-| Principle | Meaning |
-|-----------|---------|
-| **Registered** (有籍) | Every skill has a traceable identity |
-| **Evidenced** (有证) | Every finding has proof and explanation |
-| **Guarded** (有门禁) | Every gate is checked automatically |
-
-Read more: [LGD-Evo Methodology](https://github.com/zhaoxinghua09-cell/skillgate/blob/main/docs/lgd-evo-methodology.md)
+| 原则 | 说明 |
+|------|------|
+| **Test-to-break** | 为找错而测试 |
+| **全量实跑非抽样** | 100% 执行，没有抽检 |
+| **独立复核（不自查）** | 自己不评自己，三权分立 |
+| **证据优先可溯源** | 每个结论都有证据 |
 
 ---
 
-## 🚀 How to Get Your Skill Evaluated
+## 🏆 真实战绩 Track Record
 
-1. Open an issue with your skill repository URL
-2. We will scan it and publish a report within 7 days
-3. You will get a Trust Score badge to put in your README
+| 项目 | 得分 | 等级 | 报告 |
+|------|------|------|------|
+| **MedXpert 医疗工具链** | 80/100 | B+ | [查看](./docs/evaluation-reports/) |
+| **SkillGate 项目** | 73/100 | B+ | [查看](./docs/evaluation-reports/) |
+| **LGD-Eval 自己** | 68/100 | C+ | 正在自我改进中 |
+
+> **敢于公布问题的机构才配称权威！**
+
+---
+
+## 🏅 认证体系 Certification
+
+五枚徽章：
+
+| 徽章 | 说明 |
+|------|------|
+| **Verified** | 已验证 |
+| **Audited** | 已审计 |
+| **Evaluated** | 已评测 |
+| **Timestamped** | 已加时间戳 |
+| **Evidence-gated** | 证据门禁通过 |
+
+技术：SHA-256 + 时间戳 + 区块链锚定
+
+---
+
+## 🏛️ 治理结构 Governance
+
+| 原则 | 说明 |
+|------|------|
+| **三权分立** | 理论号 / 产品号 / 评测号，互不干涉 |
+| **中立隔离红线** | 评测号不做产品，产品号不评测 |
+| **领域负责人制度** | 每个领域有专人负责 |
+| **全球参与** | 欢迎全球贡献者 |
+
+---
+
+## 🛠️ 我们的工具
+
+| 工具 | 说明 |
+|------|------|
+| **lgd-gate** | 五维质量评测 |
+| **lgd-audit** | 全方位审查（18 个维度） |
+
+---
+
+## 🚀 Quick Start
+
+```bash
+# 评测一个技能
+python evaluate.py ./my-skill/
+
+# 全方位审查（18 个维度）
+python lgd_audit.py ./my-skill/
+
+# 内部技能模式
+python lgd_audit.py ./my-skill/ --internal
+```
+
+更多用法 → [docs/usage.md](./docs/usage.md)
+
+---
+
+## 🤝 贡献者制度
+
+想参与？看 [CONTRIBUTORS.md](./CONTRIBUTORS.md)
+
+---
+
+## 📚 文档
+
+| 文档 | 说明 |
+|------|------|
+| [评测协议 L0-L13](./docs/evaluation-protocol.md) | 完整评测标准 |
+| [证据存证规范](./docs/evaluation-evidence.md) | 怎么存证、怎么验证 |
+| [评测报告](./docs/evaluation-reports/) | 真实评测结果 |
 
 ---
 
 ## 📄 License
 
-[MIT](LICENSE) — open source, free for everyone.
+MIT License
 
 ---
 
-<div align="center">
-
-**Independent. Transparent. Trustworthy.**
-
-⭐ If you find our evaluations useful, give us a star!
-
-</div>
+*版本：v1.0.0 · 2026-10-28*
