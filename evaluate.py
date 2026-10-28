@@ -12,6 +12,12 @@ import re
 import ast
 import time
 
+# 固化 UTF-8 输出，避免 Windows GBK 控制台打印 emoji/中文时 UnicodeEncodeError 崩溃
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 def evaluate_skill(skill_path):
     """评测一个技能。"""
     start_time = time.time()
