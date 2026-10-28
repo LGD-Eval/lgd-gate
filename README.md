@@ -8,6 +8,12 @@
   <a href="https://github.com/LGD-Eval/lgd-gate/actions"><img src="https://github.com/LGD-Eval/lgd-gate/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
   <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8+-green.svg" alt="Python 3.8+"></a>
+  <a href="https://github.com/LGD-Eval/lgd-gate/stargazers"><img src="https://img.shields.io/github/stars/LGD-Eval/lgd-gate?style=social" alt="GitHub stars"></a>
+  <a href="https://github.com/LGD-Eval/lgd-gate/issues"><img src="https://img.shields.io/github/issues/LGD-Eval/lgd-gate" alt="GitHub issues"></a>
+  <a href="https://github.com/LGD-Eval/lgd-gate/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
+  <img src="https://img.shields.io/badge/offline--first-✅-success" alt="Offline first">
+  <img src="https://img.shields.io/badge/AI--friendly-🤖-informational" alt="AI friendly">
+  <img src="https://img.shields.io/badge/zero--config-⚡-success" alt="Zero config">
 </p>
 
 ---
