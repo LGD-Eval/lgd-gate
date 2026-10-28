@@ -1,46 +1,126 @@
-<div align="center">
+<h1 align="center">🏛️ LGD-Eval</h1>
 
-# 🚪 LGD-Gate
+<p align="center">
+  <strong>独立第三方 Agent Skill 评测机构</strong>
+</p>
 
-**AI Agent 技能的独立信任评测。**
-
-中立的基准测试、评分和报告，为 AI Agent 生态服务。
-
-</div>
-
----
-
-## 🤔 LGD-Gate 是什么？
-
-LGD-Gate 是一个**独立、中立的 AI Agent 技能评测服务**。我们扫描社区热门技能，发布透明报告，帮助用户做出明智的选择。
-
-我们的特点：
-- ✅ **独立** —— 不隶属于任何技能厂商
-- ✅ **透明** —— 所有方法和数据都是开源的
-- ✅ **可复现** —— 任何人都可以自己运行我们的扫描
+<p align="center">
+  <a href="https://github.com/LGD-Eval/lgd-gate/actions"><img src="https://github.com/LGD-Eval/lgd-gate/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License: MIT"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.8+-green.svg" alt="Python 3.8+"></a>
+</p>
 
 ---
 
-## ✨ 我们做什么
+> **我们不宣称权威，我们用证据、流程与真实战绩证明它——以及敢于公布自己问题的自信。**
 
-1. **🔍 安全扫描** —— 检查漏洞、密钥和恶意代码
-2. **📊 质量评估** —— 评估 SKILL.md 质量、描述清晰度和文档
-3. **🏆 信任评分** —— 给每个技能一个单一分数（A+ 到 D）
-4. **📰 公开报告** —— 发布热门技能的详细报告
-5. **📈 排行榜** —— 按可信度排名技能
+---
+
+## 🏛️ 官方身份
+
+| 项 | 内容 |
+|---|------|
+| **理论** | LGD = Lifecycle Governance Doctrine（LGD 全程治理论） |
+| **核心三律** | registered · evidenced · gated（有籍 · 有证 · 有门禁） |
+| **DOI** | 10.5281/zenodo.22456647 (v1.7.0) |
+| **ORCID** | 0009-0001-0512-1237 |
+
+---
+
+## 📏 标准体系
+
+| 等级 | 名称 | 说明 |
+|------|------|------|
+| L0-L13 | 测试专家手册 | 14 级评测标准 |
+| D1-D10 × R1-R3 | 证据门禁查重协议 | 防作弊、防重复 |
+
+---
+
+## 🔬 方法论
+
+| 原则 | 说明 |
+|------|------|
+| **Test-to-break** | 为找错而测试 |
+| **全量实跑非抽样** | 100% 执行，没有抽检 |
+| **独立复核（不自查）** | 自己不评自己，三权分立 |
+| **证据优先可溯源** | 每个结论都有证据 |
+
+---
+
+## 🏆 真实战绩
+
+| 项目 | 结果 |
+|------|------|
+| **MedXpert 医疗工具链** | 21 模块全量实跑，20 通过，发现 1 个自检硬伤 |
+| **SkillGate 项目** | 独立验收发布阻断 P1/P2 修复清单已公布 |
+
+> **敢于公布问题的机构才配称权威！**
+
+---
+
+## 🏅 认证体系
+
+五枚徽章：
+
+| 徽章 | 说明 |
+|------|------|
+| **Verified** | 已验证 |
+| **Audited** | 已审计 |
+| **Evaluated** | 已评测 |
+| **Timestamped** | 已加时间戳 |
+| **Evidence-gated** | 证据门禁通过 |
+
+技术：SHA-256 + 时间戳 + 区块链锚定
+
+---
+
+## 🏛️ 治理结构
+
+| 原则 | 说明 |
+|------|------|
+| **三权分立** | 理论号 / 产品号 / 评测号，互不干涉 |
+| **中立隔离红线** | 评测号不做产品，产品号不评测 |
+| **领域负责人制度** | 每个领域有专人负责 |
+| **全球参与** | 欢迎全球贡献者 |
+
+---
+
+## 🛠️ 我们的工具
+
+| 工具 | 说明 |
+|------|------|
+| **lgd-gate** | 五维质量评测 |
+| **lgd-audit** | 全方位审查（18 个维度） |
+
+---
+
+## 🚀 快速开始
+
+```bash
+# 评测一个技能
+python evaluate.py ./my-skill/
+
+# 全方位审查（18 个维度）
+python lgd_audit.py ./my-skill/
+
+# 内部技能模式
+python lgd_audit.py ./my-skill/ --internal
+```
+
+更多用法 → [docs/usage-zh.md](./docs/usage-zh.md)
+
+---
+
+## 🤝 贡献者制度
+
+想参与？看 [CONTRIBUTORS.md](./CONTRIBUTORS.md)
 
 ---
 
 ## 📄 许可证
 
-[MIT](LICENSE) —— 开源免费。
+MIT License
 
 ---
 
-<div align="center">
-
-**独立、透明、可信。**
-
-⭐ 如果觉得我们的评测有用，给我们点个 star 吧！
-
-</div>
+*版本：v1.0.0 · 2026-10-28*
