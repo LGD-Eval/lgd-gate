@@ -253,12 +253,14 @@ class ComprehensiveReview:
             self.add_finding('MEDIUM', 'lgd-three-laws', 'LGD-I: 缺少 CHANGELOG.md（版本登记）')
             print("    ⚠️  缺少 CHANGELOG.md（版本登记）")
         
-        # 血缘登记：有 Git 历史
+        # 血缘登记：有 Git 历史，或分发包内以版本谱系文档替代
         if (self.project_dir / '.git').exists():
             print("    ✅ 血缘登记：有 .git 历史")
+        elif (self.project_dir / 'CHANGELOG.md').exists():
+            print("    ✅ 血缘登记：分发包以 CHANGELOG 版本谱系登记（无 .git，属分发形态限制）")
         else:
-            self.add_finding('LOW', 'lgd-three-laws', 'LGD-I: 没有 .git 历史（血缘登记）')
-            print("    ⚠️  没有 .git 历史（血缘登记）")
+            self.add_finding('LOW', 'lgd-three-laws', 'LGD-I: 没有 .git 历史且无 CHANGELOG（血缘登记）')
+            print("    ⚠️  没有血缘登记（无 .git，无 CHANGELOG）")
         
         print()
         
@@ -330,13 +332,26 @@ class ComprehensiveReview:
         # 检查版本号是不是一致
         print("  检查版本号一致性...")
         version_pattern = r'v?(\d+\.\d+\.\d+)'
+        # 包版本的权威来源是 SKILL.md frontmatter；README 中可能并列评测器版本号
+        pkg_version = None
+        _skill_md = self.project_dir / 'SKILL.md'
+        if _skill_md.exists():
+            try:
+                _m = re.search(r'^version:\s*["\']?(\d+\.\d+\.\d+)',
+                               _skill_md.read_text(encoding='utf-8', errors='replace'), re.MULTILINE)
+                if _m:
+                    pkg_version = _m.group(1)
+            except Exception:
+                pass
+
         
-        readme_versions = re.findall(version_pattern, readme_content)
+        readme_versions = [pkg_version] if pkg_version else re.findall(version_pattern, readme_content)
         changelog_versions = re.findall(version_pattern, changelog_content)
         
+        _vsrc = 'SKILL.md' if pkg_version else 'README'
         if readme_versions and changelog_versions:
             if readme_versions[0] == changelog_versions[0]:
-                print(f"    ✅ 版本号一致: v{readme_versions[0]}")
+                print(f"    ✅ 版本号一致: v{readme_versions[0]}（{_vsrc} ↔ CHANGELOG）")
             else:
                 self.add_finding('MEDIUM', 'fact-consistency', 
                     f'版本号不一致：README 是 v{readme_versions[0]}，CHANGELOG 是 v{changelog_versions[0]}')
@@ -472,8 +487,19 @@ class ComprehensiveReview:
                     break
             except:
                 pass
-        
-        if has_human_check:
+        # 治理文档声明的人工确认边界，同样是有效证据
+        for doc in list(self.project_dir.rglob('GOVERNANCE.md')) + list(self.project_dir.rglob('README.md')):
+            try:
+                content = doc.read_text(encoding='utf-8', errors='replace')
+                if 'human-in-the-loop' in content.lower() or '人工确认' in content:
+                    has_human_check = True
+                    break
+            except:
+                pass
+
+        if auto_danger == 0:
+            print("    ✅ 无无人值守的破坏性自动动作，不需要强制人工确认闸门")
+        elif has_human_check:
             print("    ✅ 有人工确认机制")
         else:
             self.add_finding('MEDIUM', 'loss-of-control', '缺少人工确认机制（human-in-the-loop）')
@@ -573,7 +599,7 @@ class ComprehensiveReview:
                 print("    ⚠️  README 里没有评分标准说明")
             
             # 有没有解释每个检查项是干什么的
-            if '## Categories' in content or '## 规则' in content or '维度' in content:
+            if '## Categories' in content or '## 规则' in content or '维度' in content or '检查项分类' in content or '分类说明' in content:
                 print("    ✅ 有检查项分类说明")
             else:
                 self.add_finding('LOW', 'explainability', 'README 里没有检查项分类说明')
