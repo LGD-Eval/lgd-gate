@@ -55,6 +55,7 @@
 - C: 60-69
 
 > 📖 完整的 L0-L13 企业级标准 → [evaluation-protocol.md](./docs/evaluation-protocol.md)
+> 📖 Trust Score 双引擎口径声明：skillgate 扫描器（v3.1.2）与 evaluate.py 五维评测为两套评分口径，引用须标注引擎 + rule_version + 扫描对象 + 日期，详见 [SCORE-COMPARISON.md](https://github.com/LGD-Eval/evaluation-evidence/blob/main/evidence/71repo-scan-v3.1.0/SCORE-COMPARISON.md)。
 
 ### 风险分类（EU AI Act）
 
