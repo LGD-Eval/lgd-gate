@@ -41,9 +41,9 @@ jobs:
           if [ -z "$LGD_SCORE" ]; then echo "no score, skip"; exit 0; fi
           if [ -f README.md ]; then
             if grep -q "LGD-SCORE" README.md; then
-              sed -i "s|<!-- LGD-SCORE -->.*<!-- /LGD-SCORE -->|<!-- LGD-SCORE -->**LGD Trust Score: ${LGD_SCORE}/100**<!-- /LGD-SCORE -->|" README.md
+              sed -i "s|<!-- LGD-SCORE -->.*<!-- /LGD-SCORE -->|<!-- LGD-SCORE -->**LGD Trust Score: ${LGD_SCORE}/100**（本仓自评 self-scored）<!-- /LGD-SCORE -->|" README.md
             else
-              { echo "<!-- LGD-SCORE -->**LGD Trust Score: ${LGD_SCORE}/100**<!-- /LGD-SCORE -->"; echo; cat README.md; } > README.new && mv README.new README.md
+              { echo "<!-- LGD-SCORE -->**LGD Trust Score: ${LGD_SCORE}/100**（本仓自评 self-scored）<!-- /LGD-SCORE -->"; echo; cat README.md; } > README.new && mv README.new README.md
             fi
             git config user.name "lgd-bot"
             git config user.email "bot@medxpert.cn"
