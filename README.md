@@ -1,5 +1,3 @@
-<!-- SCORECARD-SCORE -->**OpenSSF Scorecard: 4.3/10**<!-- /SCORECARD-SCORE -->
-
 <!-- LGD-SCORE -->**LGD Trust Score: 89/100**<!-- /LGD-SCORE -->
 
 > **LGD 生态入口** —— 从任一入口都能走到全部入口
@@ -7,6 +5,44 @@
 > [官网 medxpert.cn](https://medxpert.cn/) · [评测门禁 lgd-gate](https://github.com/LGD-Eval/lgd-gate) · [npm 包 lgd-eval](https://github.com/LGD-Eval/lgd-eval) · [公开评分卡](https://github.com/LGD-Eval/evaluation-evidence/blob/main/scores.md) · [排行榜](https://github.com/LGD-Eval/evaluation-evidence/blob/main/LEADERBOARD.md) · [一行安装（免 VPN）](https://github.com/LGD-Eval/lgd-gate/releases/download/v1.0.0/lgd-eval-1.0.0.tgz)
 >
 > 三律：**有籍**（可追溯）· **有证**（有证据）· **有门禁**（有检查）
+---
+
+## ⚡ 30 秒上手 Quick Start
+
+扫一个技能目录，拿到一个分数：
+
+```bash
+python3 evaluate.py ./my-skill
+```
+
+输出：
+
+```
+LGD Trust Score: 65/100 🥉 C
+```
+
+放进 CI，四行：
+
+```yaml
+- uses: LGD-Eval/lgd-gate@v1
+  with:
+    path: ./my-skill
+    threshold: 90
+```
+
+**一个分数，一个档位。** 分数直接决定这个技能该以什么权限运行：
+
+| 分数 | 档位 | 建议 |
+|---|---|---|
+| ≥ 96 | L0 | 免审批直接执行 |
+| 81–95 | L1 | 一次性确认（60 rpm） |
+| 51–80 | L2 | 人工复核（30 rpm） |
+| 31–50 | L3 | 每次强制确认，建议先过沙箱 |
+| 11–30 | L4 | 隔离只读 |
+| ≤ 10 | L5 | 拒绝执行 |
+
+这是我们和只做评分的工具最大的不同：**评测的终点是一个权限决定，不是一个数字。**
+
 
 <h1 align="center">🏛️ LGD-Eval</h1>
 
@@ -219,3 +255,7 @@ MIT License
 ---
 
 *版本：v1.0.0 · 2026-10-28*
+
+---
+
+> 外部工具口径说明：OpenSSF Scorecard 4.3/10 是独立第三方指标，**不参与 LGD Trust Score 计算**，仅作参考陈列。本项目对外报分只有 LGD Trust Score 一个口径。
