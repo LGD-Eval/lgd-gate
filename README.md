@@ -145,6 +145,21 @@ python3 lgd-gate-main/evaluate.py lgd-gate-main/_demo/mitiga-style
 
 同一个形态在真实世界里已经成灾：Snyk 记录 ClawHub 2026-01 出现数百个恶意 skill、自测称 36% 的 skill 含可利用缺陷；arXiv 2507.19880 证明最小 MCP server 即可完成跨工具敏感数据外泄。**技能供应链不是假想威胁，这就是它长什么样。**
 
+### 仓库里有三个扫描器，对外只认一个分数
+
+`evaluate.py`、`skillgate.py`、`lgd_audit.py` 都在这个仓库里，目标不同：
+
+| 工具 | 回答什么 | 是否产出对外分数 |
+|---|---|---|
+| `evaluate.py` | 这个技能能不能信任 → **一个分数 + 一档执行权限** | ✅ 唯一对外口径 |
+| `skillgate.py` | 代码级危险模式（开发者自查） | ❌ 不评总分 |
+| `lgd_audit.py` | 18 维完整性审计（开发者自查） | ❌ 不评总分 |
+
+**为什么它们对同一份代码可能给出不同数字？** 因为扫描器扫自己时会出现自证误报——`skillgate.py` 曾把 `evaluate.py` 里的检测正则 `secret_re` 判成"硬编码凭证"、把规则词表里的 `~/.aws/credentials` 判成"读取凭证"，一度给自己打 0 分并"阻断发布"，而 `evaluate.py` 给同一目录 100 分。这不是能力问题，是**规则表被当成了行为**。
+
+我们按 Bandit `# nosec` / SonarQube `NOSONAR` 的既有约定处理：`# skillgate: ignore` 必须与命中行同行，只对已确认的陪跑代码生效（如沙箱里造诱捕蜜罐的那行）。修完 `skillgate.py` 自扫从 **0/100 F（阻断）→ 95/100 A+（无阻断）**，同时四个恶意样本的分数一条没变——误报消掉了，检测力没掉。
+
+
 
 
 <h1 align="center">🏛️ LGD-Eval</h1>
