@@ -1,0 +1,42 @@
+name: 'LGD Skill Gate'
+description: 'Score an AI agent skill and fail CI when it is below the trust threshold. Same scoring engine as the lgd-eval CLI.'
+author: 'SynomosAI / LGD-Eval'
+
+branding:
+  icon: 'shield'
+  color: 'teal'
+
+inputs:
+  path:
+    description: 'Path to the skill directory to evaluate'
+    required: false
+    default: '.'
+  threshold:
+    description: 'Minimum Trust Score (0-100). CI fails below this value.'
+    required: false
+    default: '90'
+  fix-plan:
+    description: 'Optional path to write a machine-readable fix plan JSON'
+    required: false
+    default: ''
+
+outputs:
+  score:
+    description: 'Trust Score of the evaluated skill'
+    value: ${{ steps.eval.outputs.score }}
+
+runs:
+  using: 'composite'
+  steps:
+    - id: eval
+      shell: bash
+      run: |
+        set -o pipefail
+        ARGS=("${{ inputs.path }}" --fail-under "${{ inputs.threshold }}" --ascii)
+        if [ -n "${{ inputs.fix-plan }}" ]; then
+          ARGS+=(--fix-json "${{ inputs.fix-plan }}")
+        fi
+        python3 "${{ github.action_path }}/evaluate.py" "${ARGS[@]}" | tee /tmp/lgd-eval.log
+        SCORE=$(grep -o 'Trust Score: [0-9]*' /tmp/lgd-eval.log | head -1 | grep -o '[0-9]*')
+        echo "score=$SCORE" >> "$GITHUB_OUTPUT"
+        echo "### LGD Trust Score: **$SCORE/100**" >> "$GITHUB_STEP_SUMMARY"
