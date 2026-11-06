@@ -15,7 +15,7 @@
 python3 evaluate.py ./my-skill
 ```
 
-输出：
+输出（示例，实际分数取决于你的技能）：
 
 ```
 LGD Trust Score: 65/100 🥉 C
