@@ -15,6 +15,7 @@ import time
 import shutil
 import tempfile
 import hashlib
+import subprocess
 import urllib.request
 
 def evaluate_skill(skill_path):
@@ -1035,12 +1036,12 @@ def build_attestation(root, score, grade, dims, evidence):
 def lgd_capabilities():
     """返回各可选能力是否就绪。用于在报告里明确"什么没开"。"""
     cfg = _llm_config()
-    docker = shutil.which("docker")
+    backend = sandbox_backend()
     return {
         "llm_review": bool(cfg),
-        "sandbox": bool(docker),
+        "sandbox": bool(backend),
+        "sandbox_backend": backend,
         "llm_model": cfg[2] if cfg else None,
-        "docker_path": docker,
     }
 
 
@@ -1089,6 +1090,149 @@ def llm_review(evidence):
         return {"enabled": True, "verdicts": json.loads(text), "model": model}
     except Exception as exc:
         return {"enabled": True, "error": str(exc)[:200]}
+
+
+LGD_AUDIT_HOOK = r'''
+import sys, json, os
+_L = os.environ.get("LGD_AUDIT_LOG", "")
+_SENS = (".ssh", ".aws", ".env", "id_rsa", ".npmrc", ".git-credentials",
+         "credential", "secret", "token", "password")
+_BUSY = [False]
+
+def _w(rec):
+    if not _L:
+        return
+    with open(_L, "a") as f:
+        f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+
+def _hook(event, args):
+    if _BUSY[0]:
+        return
+    _BUSY[0] = True
+    try:
+        if event == "socket.connect":
+            _w({"ev": "connect", "addr": str(args[1])})
+        elif event == "socket.getaddrinfo":
+            _w({"ev": "resolve", "host": str(args[0])})
+        elif event == "open" and args and isinstance(args[0], str):
+            low = args[0].lower()
+            if any(k in low for k in _SENS):
+                _w({"ev": "open_sensitive", "path": args[0]})
+        elif event in ("os.system", "subprocess.Popen"):
+            _w({"ev": event, "arg": str(args)[:160]})
+        elif event == "exec":
+            sz = len(str(args[0])) if args else 0
+            if sz > 200:
+                _w({"ev": "exec_big", "size": sz})
+    except Exception:
+        pass
+    finally:
+        _BUSY[0] = False
+
+sys.addaudithook(_hook)
+'''
+
+
+def sandbox_backend():
+    """L3 后端优先级：docker > unshare(Linux) > 不可用。"""
+    if shutil.which("docker"):
+        return "docker"
+    if sys.platform.startswith("linux") and shutil.which("unshare"):
+        return "unshare"
+    return None
+
+
+def _sandbox_one(backend, tree, script, timeout):
+    rel = os.path.relpath(script, tree).replace("\\", "/")
+    logp = os.path.join(tree, "_audit_%s.jsonl"
+                        % hashlib.sha256(rel.encode()).hexdigest()[:8])
+    if os.path.exists(logp):
+        os.remove(logp)
+    env = dict(os.environ)
+    env["LGD_AUDIT_LOG"] = logp
+    env["HOME"] = tree
+    for k in ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY",
+              "all_proxy", "ALL_PROXY", "ftp_proxy", "FTP_PROXY", "PYTHONHOME"):
+        env.pop(k, None)
+    if backend == "unshare":
+        env["PYTHONPATH"] = tree
+        cmd = ["unshare", "--user", "--map-root-user", "--net", "--pid", "--fork",
+               "timeout", str(timeout), sys.executable, os.path.basename(script)]
+        cwd = os.path.dirname(script)
+    else:  # docker
+        env["PYTHONPATH"] = "/s"
+        cmd = ["docker", "run", "--rm", "--network", "none", "--read-only",
+               "--memory", "256m", "--pids-limit", "64",
+               "-e", "LGD_AUDIT_LOG=/logs/a.jsonl", "-e", "PYTHONPATH=/s",
+               "-e", "HOME=/s",
+               "-v", tree + ":/s:ro", "-v", tree + ":/logs:rw",
+               "-w", "/s/" + os.path.dirname(rel),
+               "python:3.12-slim", "timeout", str(timeout),
+               "python3", os.path.basename(script)]
+        cwd = tree
+    try:
+        r = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True,
+                           text=True, timeout=timeout + 8)
+        rc, err = r.returncode, r.stderr
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        rc, err = "TIMEOUT/ERR", str(exc)[:140]
+    events = []
+    for cand in (logp, os.path.join(tree, "a.jsonl")):
+        if os.path.exists(cand):
+            with open(cand, encoding="utf-8", errors="ignore") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            events.append(json.loads(line))
+                        except ValueError:
+                            pass
+            break
+    return {"script": rel, "rc": rc, "stderr": err[-300:], "events": events}
+
+
+def sandbox_detonate(target, timeout=8):
+    """在隔离环境真实执行脚本，观测运行时行为：读凭证 / 解析外发域名 / 起子进程。
+
+    静态只能推测"可能外发"，这里能证明"它确实读了凭证、也确实要发往某个域名"。
+    """
+    backend = sandbox_backend()
+    if not backend:
+        return {"enabled": False,
+                "reason": "未检测到 docker 或 Linux unshare（装 docker 或换 Linux 后自动就绪）"}
+    work = tempfile.mkdtemp(prefix="lgd-sb-")
+    tree = os.path.join(work, "tree")
+    shutil.copytree(target, tree)
+    with open(os.path.join(tree, "sitecustomize.py"), "w", encoding="utf-8") as f:
+        f.write(LGD_AUDIT_HOOK)
+    # 蜜罐：放可读假凭证，让"读-发"链路能跑完，从而看到真实外发目标
+    for d in (tree, os.path.join(tree, "scripts")):
+        try:
+            with open(os.path.join(d, ".env"), "w") as f:
+                f.write("AWS_SECRET_ACCESS_KEY=FAKE_FOR_SANDBOX\n")
+        except OSError:
+            pass
+    try:
+        os.makedirs(os.path.join(tree, ".ssh"), exist_ok=True)
+        with open(os.path.join(tree, ".ssh", "id_rsa"), "w") as f:
+            f.write("-----BEGIN FAKE PRIVATE KEY-----\nHONEYPOT\n-----END-----\n")
+    except OSError:
+        pass
+
+    results = []
+    for dirpath, _, files in os.walk(tree):
+        for fn in sorted(files):
+            if fn.endswith(".py") and fn != "sitecustomize.py":
+                results.append(_sandbox_one(backend, tree, os.path.join(dirpath, fn), timeout))
+
+    exfil = []
+    for r in results:
+        sens = [e["path"] for e in r["events"] if e["ev"] == "open_sensitive"]
+        hosts = [e["host"] for e in r["events"] if e["ev"] == "resolve"]
+        if sens and hosts:
+            exfil.append({"script": r["script"], "read": sens[0], "sent_to": hosts})
+    return {"enabled": True, "backend": backend, "scripts": len(results),
+            "results": results, "exfiltration_evidence": exfil}
 
 
 def build_sarif(evidence, score, grade):
@@ -1156,6 +1300,8 @@ if __name__ == "__main__":
                     help="L2 复核（需自配 LGD_LLM_BASE / LGD_LLM_KEY；未配则跳过）")
     ap.add_argument("--capabilities", action="store_true",
                     help="只打印可选能力就绪状态（LLM 复核 / 沙箱）")
+    ap.add_argument("--sandbox", action="store_true",
+                    help="L3 沙箱：隔离执行并观测运行时行为（需 docker 或 Linux unshare）")
     args = ap.parse_args()
 
     if args.capabilities:
@@ -1163,8 +1309,8 @@ if __name__ == "__main__":
         print("可选能力（默认关闭，按需自配）：")
         print("  L2 LLM 复核: %s" % ("就绪 · " + str(caps["llm_model"]) if caps["llm_review"]
                                   else "未配置（设 LGD_LLM_BASE + LGD_LLM_KEY 即可启用）"))
-        print("  L3 沙箱:     %s" % ("就绪 · " + caps["docker_path"] if caps["sandbox"]
-                                  else "未检测到 docker（装好后自动就绪）"))
+        print("  L3 沙箱:     %s" % ("就绪 · 后端 " + str(caps["sandbox_backend"]) if caps["sandbox"]
+                                  else "未启用（装 docker，或在 Linux 上运行即可）"))
         sys.exit(0)
     
     if not args.skill_path:
@@ -1247,6 +1393,27 @@ if __name__ == "__main__":
                     if isinstance(idx, int) and 0 <= idx < len(evidence):
                         print("     · 疑误报 [%s] %s" % (evidence[idx]["rule_id"],
                                                    evidence[idx]["evidence"][:80]))
+
+    if args.sandbox:
+        sb = sandbox_detonate(target)
+        print()
+        if not sb.get("enabled"):
+            print("  ⚠️ L3 沙箱未启用：%s（静态检测已生效，无需环境）" % sb.get("reason"))
+        else:
+            print("  🧪 L3 沙箱（后端 %s）：执行 %d 个脚本" % (sb["backend"], sb["scripts"]))
+            for r in sb["results"]:
+                flags = []
+                if any(e["ev"] == "open_sensitive" for e in r["events"]):
+                    flags.append("读敏感文件")
+                if any(e["ev"] == "resolve" for e in r["events"]):
+                    flags.append("尝试外发")
+                if any(e["ev"] in ("os.system", "subprocess.Popen") for e in r["events"]):
+                    flags.append("起子进程")
+                print("     · %s → %s" % (r["script"], "、".join(flags) if flags else "未观测到可疑行为"))
+            if sb["exfiltration_evidence"]:
+                print("  ⛔ 运行时铁证（静态只能推测，这里是它真的做了）：")
+                for e in sb["exfiltration_evidence"]:
+                    print("     %s 读取 %s → 发往 %s" % (e["script"], e["read"], ", ".join(e["sent_to"])))
 
     if args.fail_under:
         if score < args.fail_under:
