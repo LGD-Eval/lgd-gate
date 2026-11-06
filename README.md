@@ -134,7 +134,14 @@ LGD Trust Score: 65/100 🥉 C
 2. **原来只扫 `scripts/` 目录** —— 把载荷放在技能根目录就整个绕过。现在递归扫全树（排除 `tests/fixtures` 这类检测夹具，它们是评测输入而非被测技能本体）。
 3. **凭证读取只认字面量路径** —— `open("~/.aws/credentials")` 能抓，但真实写法 `open(os.path.expanduser("~/.aws/credentials"))` 抓不到。现在常量从调用里挖出来。
 
-复跑：`python3 evaluate.py ./_demo/mitiga-style`
+复跑（不需要装 git）：
+
+```bash
+curl -L https://codeload.github.com/LGD-Eval/lgd-gate/tar.gz/refs/heads/main | tar xz
+python3 lgd-gate-main/evaluate.py lgd-gate-main/_demo/mitiga-style
+```
+
+2026-11-06 在**干净环境、只下压缩包、未装 git** 的条件下实测：**22/100 D，9 条命中逐字一致**。这不是我们机器上的数字，是任何人拿到这个仓库都能跑出来的数字。
 
 同一个形态在真实世界里已经成灾：Snyk 记录 ClawHub 2026-01 出现数百个恶意 skill、自测称 36% 的 skill 含可利用缺陷；arXiv 2507.19880 证明最小 MCP server 即可完成跨工具敏感数据外泄。**技能供应链不是假想威胁，这就是它长什么样。**
 
