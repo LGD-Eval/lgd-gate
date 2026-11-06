@@ -1,5 +1,3 @@
-<!-- SCORECARD-SCORE -->**OpenSSF Scorecard: 4.3/10**<!-- /SCORECARD-SCORE -->
-
 <!-- LGD-SCORE -->**LGD Trust Score: 89/100**<!-- /LGD-SCORE -->
 
 > **LGD 生态入口** —— 从任一入口都能走到全部入口
@@ -44,7 +42,6 @@ LGD Trust Score: 65/100 🥉 C
 | ≤ 10 | L5 | 拒绝执行 |
 
 这是我们和只做评分的工具最大的不同：**评测的终点是一个权限决定，不是一个数字。**
-
 
 <h1 align="center">🏛️ LGD-Eval</h1>
 
@@ -260,4 +257,4 @@ MIT License
 
 ---
 
-> 外部工具口径说明：OpenSSF Scorecard 4.3/10 是独立第三方指标，**不参与 LGD Trust Score 计算**，仅作参考陈列。本项目对外报分只有 LGD Trust Score 一个口径。
+> 外部工具口径说明：OpenSSF Scorecard 是独立第三方指标，**不参与 LGD Trust Score 计算**，仅作参考陈列。本项目对外报分只有 LGD Trust Score 一个口径。
