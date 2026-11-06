@@ -18,6 +18,60 @@ import hashlib
 import subprocess
 import urllib.request
 
+
+# ============================================================
+# 安全否决（safety veto）
+# ------------------------------------------------------------
+# 问题：五维加权平均会把"能读凭证并外发"的技能抬到 B 级——
+# 结构、文档、生态几乎满分，把安全 7/25 稀释掉了。
+# 业内成熟做法是按最严重命中封顶，而不是让平均说了算：
+#   guard0    : ≥1 exploitable critical → 最高 D（≤69）
+#   canopii   : critical cap 20 / high 49 / medium 74 / low 89
+#   DataWizual: 出现 CRITICAL 时有效等级封顶 C，数学分照报
+#   SonarQube : 门禁用条件判定，不看总分
+# 这里采用"封顶 + 同时报告原始分"：结论可解释，信息不丢失。
+# ============================================================
+
+VETO_CRITICAL = 49   # 强制落到 L3（每次调用确认）以下
+VETO_HIGH = 69       # 最高 C
+VETO_MEDIUM = 89     # 最高 A
+
+
+def safety_cap(findings):
+    """按命中的最高严重度给出分数上限。返回 (cap, level, reason)。"""
+    joined = " | ".join(findings)
+
+    # critical：已经证明"读了敏感数据并往外送"，或安装期就能拉起远程代码
+    crit_keys = (
+        "凭证文件读取后网络外发",
+        "跨文件凭证外泄",
+        "同文件污点",
+        "安装期脚本含下载执行",
+        "下载执行或动态求值",
+    )
+    crit = any(k in joined for k in crit_keys)
+    # 越权指令 + 隐瞒用户 + 读凭证 三者同时出现，等于在明说"别让人知道我在偷"
+    if ("隐瞒用户" in joined) and ("读取凭证" in joined or "凭证文件" in joined):
+        crit = True
+    if crit:
+        return VETO_CRITICAL, "critical", "命中文凭外泄 / 远程代码执行类问题"
+
+    high_keys = (
+        "硬编码凭证", "shell=True", "命令注入", "动态执行", "eval / exec",
+        "child_process.exec", "new Function", "安装期自动执行脚本", "os.system",
+        "不告知真实行为", "读取凭证文件指令",
+    )
+    if any(k in joined for k in high_keys):
+        return VETO_HIGH, "high", "命中凭证暴露 / 命令执行类问题"
+    if "越权指令" in joined or "免确认执行" in joined:
+        return VETO_HIGH, "high", "命中越权或免确认执行指令"
+
+    # 注意：不设 medium 档。反序列化、rmtree 之类已经在安全维度里扣过分了，
+    # 再封顶一次会造成双重惩罚——清理临时目录的 rmtree 是最典型的误伤，
+    # 评测器扫自己就会把自己的 92 分压成 89。否决只留给"已证实的外泄与远程执行"。
+    return 100, "", ""
+
+
 def evaluate_skill(skill_path):
     """评测一个技能。"""
     start_time = time.time()
@@ -619,7 +673,13 @@ def evaluate_skill(skill_path):
     # 最终评分
     # ============================================================
     elapsed = time.time() - start_time
-    
+
+    # ---- 安全否决：加权平均不得掩盖已经证实的安全事实 ----
+    raw_score = score
+    veto_cap, veto_level, veto_reason = safety_cap(findings)
+    if score > veto_cap:
+        score = veto_cap
+
     print("=" * 70)
     
     if score >= 90:
@@ -640,6 +700,8 @@ def evaluate_skill(skill_path):
     
     # 对外唯一分数：一行给完，不分列其他分数
     print(f"  LGD Trust Score: {score}/100  {emoji} {grade}")
+    if raw_score != score:
+        print(f"  ⛔ 安全否决：原始分 {raw_score} → 封顶 {score}（{veto_level}：{veto_reason}）")
     # 分数 → 执行权限分档（竞品只给分数，这里给出可直接落地的限权建议）
     if score >= 96:
         gate = "L0 免审批（可直接运行，无需限流）"
@@ -700,7 +762,19 @@ def evaluate_skill(skill_path):
     print("  评测完成！")
     print("=" * 70)
     
-    return score, grade, dims, findings, warnings
+    veto_info = None
+    if raw_score != score:
+        veto_info = {
+            "applied": True,
+            "raw_score": raw_score,
+            "capped_to": score,
+            "cap": veto_cap,
+            "level": veto_level,
+            "reason": veto_reason,
+            "policy": "critical(凭证外泄/远程执行)→cap 49 · high(凭证暴露/命令执行)→cap 69；否决只封顶不替代五维明细",
+        }
+
+    return score, grade, dims, findings, warnings, veto_info
 
 def render_ascii_bars(dims):
     """扣分明细（得分/满分）。刻意不输出百分比，避免出现第二套分数。"""
@@ -999,7 +1073,7 @@ def _tree_hashes(root):
     return files, "sha256:" + tree
 
 
-def build_attestation(root, score, grade, dims, evidence):
+def build_attestation(root, score, grade, dims, evidence, veto=None):
     """生成可复现的评测证明。fingerprint 只取自被测内容，不含路径与时间。"""
     payload = {
         "object": {"score": score, "grade": grade},
@@ -1009,6 +1083,8 @@ def build_attestation(root, score, grade, dims, evidence):
                       "evidence": e["evidence"], "fix": e["fix"], "verify": e["verify"]}
                      for e in evidence],
     }
+    if veto:
+        payload["veto"] = veto
     fp = hashlib.sha256(canonical_dumps(payload).encode("utf-8")).hexdigest()
     files, tree = _tree_hashes(root)
     inputs = {
@@ -1025,6 +1101,7 @@ def build_attestation(root, score, grade, dims, evidence):
         "dims": payload["dims"],
         "findings": payload["findings"],
         "fingerprint": "sha256:" + fp,
+        "safety_veto": veto if veto else {"applied": False},
         "inputs": inputs,
         "reproduce": "python evaluate.py <同一路径> --evidence-json out.json  # 应得到完全相同的 fingerprint 与 tree_sha256",
     }
@@ -1330,7 +1407,7 @@ if __name__ == "__main__":
         print("ℹ️ 单文件模式：已按标准技能目录包装评测（%s）" % os.path.basename(args.skill_path))
         print("   仅能评文本质量；结构/目录维度会因缺 LICENSE、README、scripts/ 扣分。完整评测请传目录。")
 
-    score, grade, dims, findings, warnings = evaluate_skill(target)
+    score, grade, dims, findings, warnings, veto_info = evaluate_skill(target)
 
     
     if args.ascii:
@@ -1350,7 +1427,7 @@ if __name__ == "__main__":
 
     if args.evidence_json or args.detail or args.sarif or args.llm_review:
         evidence = build_evidence(target, findings, warnings)
-        att = build_attestation(target, score, grade, dims, evidence)
+        att = build_attestation(target, score, grade, dims, evidence, veto_info)
 
         if args.evidence_json:
             with open(args.evidence_json, 'w', encoding='utf-8', newline='\n') as f:
