@@ -1,4 +1,4 @@
-<!-- LGD-SCORE -->**LGD Trust Score: 89/100**（本仓自评：评的是仓库目录，非标准技能包结构；缺 scripts/ 与 examples/ 各扣分，安全维度满分）<!-- /LGD-SCORE -->
+<!-- LGD-SCORE -->**LGD Trust Score: 89/100**（本仓自评 self-scored）<!-- /LGD-SCORE -->
 
 > **LGD 生态入口** —— 从任一入口都能走到全部入口
 >
