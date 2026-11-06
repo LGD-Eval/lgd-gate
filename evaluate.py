@@ -378,42 +378,77 @@ def render_radar_svg(dims, out_path):
 
 
 def map_fix(issue):
-    """把评测发现映射为机器可读整改动作（AI 自主整改的依据）。"""
+    """把评测发现映射为「动作 + 落点 + 可判定验收」，供 AI 自主整改。"""
     i = issue.lower()
-    if "skill.md" in i and "缺少" in i:
-        return "创建 SKILL.md（frontmatter: name/description/version/license/author + 使用场景/方法/示例）", "SKILL.md", "评测结构完整性维度通过"
+    # frontmatter 字段优先：'缺少 license 字段' 不能当成缺 LICENSE 文件
+    if "字段" in i or "frontmatter" in i:
+        return ("补齐 SKILL.md frontmatter 五个必填字段：name、description、version、license、author",
+                "SKILL.md",
+                "SKILL.md frontmatter 同时含 name/description/version/license/author 且均非空")
+    if "缺少 skill.md" in i:
+        return ("创建 SKILL.md：frontmatter 五字段 + 何时用/怎么用/示例/已知限制四章",
+                "SKILL.md",
+                "包根存在 SKILL.md 且四章齐全")
     if "license" in i:
-        return "添加 LICENSE（建议 MIT）", "LICENSE", "存在 LICENSE 文件"
+        return ("在包根新建 LICENSE，粘贴 MIT 全文（Copyright 2026 <作者名>）",
+                "LICENSE",
+                "包根存在 LICENSE，内容含 'MIT License' 与版权行")
     if "readme" in i:
-        return "创建 README.md（项目说明 + 使用示例）", "README.md", "存在 README.md 文件"
+        return ("创建 README.md：一句话定位 + 安装/使用命令 + 一次真实输出样例",
+                "README.md",
+                "包根存在 README.md，含安装命令与输出样例，正文 ≥500 字")
     if "scripts" in i:
-        return "创建 scripts/ 目录并放入可执行 Python 脚本", "scripts/", "评测目录结构维度通过"
+        return ("创建 scripts/ 并放入至少 1 个 .py，只用标准库（平台运行时无第三方依赖）",
+                "scripts/",
+                "存在 scripts/ 且至少 1 个 .py，import 仅标准库")
     if "examples" in i:
-        return "创建 examples/ 目录并放入示例文件", "examples/", "评测目录结构维度通过"
+        return ("创建 examples/ 并放入 1 个完整对答示例（用户输入 → 技能输出）",
+                "examples/",
+                "存在 examples/ 且至少 1 个文件同时含输入段与输出段")
     if "示例" in i:
-        return "在 SKILL.md 增加 Examples/示例 章节", "SKILL.md", "评测文档质量维度通过"
+        return ("在 SKILL.md 增加 `## 示例`，贴一次真实输入输出，不要写占位",
+                "SKILL.md",
+                "SKILL.md 含 '## 示例' 或 '## Examples' 章节")
     if "场景" in i:
-        return "在 SKILL.md 增加 When to Use/使用场景 章节", "SKILL.md", "评测文档质量维度通过"
+        return ("在 SKILL.md 增加 `## When to Use`，列 3 条以上具体触发场景",
+                "SKILL.md",
+                "SKILL.md 含 '## When to Use' 或 '## 使用场景'")
     if "方法" in i:
-        return "在 SKILL.md 增加 Usage/使用方法 章节", "SKILL.md", "评测文档质量维度通过"
-    if "字段" in i:
-        return "在 SKILL.md frontmatter 补齐缺失字段（name/description/version/license/author）", "SKILL.md", "frontmatter 字段完整"
+        return ("在 SKILL.md 增加 `## 使用方法`，写清步骤与可直接复制的命令",
+                "SKILL.md",
+                "SKILL.md 含 '## Usage' 或 '## 使用方法'")
+    if "限制" in i:
+        return ("在 SKILL.md 增加 `## 已知限制`，列 3 条以上做不到的事",
+                "SKILL.md",
+                "SKILL.md 含 '## 已知限制' 且列 ≥3 条")
+    if "tags" in i:
+        return ("在 frontmatter 补 tags，写 3-5 个用户会搜的场景词",
+                "SKILL.md",
+                "frontmatter tags 含 ≥3 个标签")
     if any(k in i for k in ("eval/exec", "os.system", "密钥", "危险", "风险", "注入", "绕过", "网络", "泄漏", "硬编码")):
-        return "修复安全问题：确认真实调用必要性；规则定义字符串加行级抑制注释（# skillgate: ignore）", "scripts/", "安全维度无 HIGH/CRITICAL 且 Trust Score ≥ 90"
-    return "按评测建议人工确认并改进", ".", "评测对应维度通过"
+        return ("修复安全问题：先确认调用是否必要；确属规则定义的字符串加行级抑制注释（# skillgate: ignore）",
+                "scripts/",
+                "安全维度无 HIGH/CRITICAL 且 Trust Score ≥ 90")
+    return ("按 issue 原文逐项定位并修复", ".", "重新评测后该项不再出现")
 
 
 def build_fix_plan(findings, warnings):
-    """输出机器可读整改清单 JSON（AI 拿到即可自主整改）。"""
-    plan = []
-    seen = set()
+    """输出机器可读整改清单：同一动作合并，避免 AI 重复执行同一件事。"""
+    groups = {}
+    order = []
     for issue in findings + warnings:
         key = issue.strip()
-        if not key or key in seen:
+        if not key:
             continue
-        seen.add(key)
         action, target, acceptance = map_fix(issue)
-        plan.append({"issue": key, "action": action, "target": target, "acceptance": acceptance})
+        gkey = (action, target)
+        if gkey not in groups:
+            groups[gkey] = {"issue": key, "action": action, "target": target,
+                            "acceptance": acceptance, "issues": []}
+            order.append(gkey)
+        if key not in groups[gkey]["issues"]:
+            groups[gkey]["issues"].append(key)
+    plan = [groups[k] for k in order]
     return {"fix_plan": plan, "count": len(plan), "framework": "LGD 三律（有籍/有证/有门禁）"}
 
 
@@ -424,6 +459,8 @@ if __name__ == "__main__":
     ap.add_argument("--chart", action="store_true", help="生成五维雷达图 radar.svg")
     ap.add_argument("--ascii", action="store_true", help="输出五维 ASCII 雷达条形图")
     ap.add_argument("--fix-json", metavar="PATH", help="输出机器可读整改清单 JSON（供 AI 自主整改）")
+    ap.add_argument("--fail-under", type=int, default=0, metavar="N",
+                    help="门禁模式：分数低于 N 时以退出码 1 结束，可直接用于 CI 卡 PR")
     args = ap.parse_args()
     
     if not args.skill_path:
@@ -450,3 +487,11 @@ if __name__ == "__main__":
             json.dump(plan, f, ensure_ascii=False, indent=2)
         print()
         print(f"  🔧 机器可读整改清单已生成: {args.fix_json}（{plan['count']} 项，AI 可自主整改）")
+
+    if args.fail_under:
+        if score < args.fail_under:
+            print()
+            print(f"  ⛔ 门禁未通过：{score} < {args.fail_under}（退出码 1）")
+            sys.exit(1)
+        print()
+        print(f"  ✅ 门禁通过：{score} ≥ {args.fail_under}")
