@@ -1,4 +1,4 @@
-<!-- LGD-SCORE -->**LGD Trust Score: 89/100**<!-- /LGD-SCORE -->
+<!-- LGD-SCORE -->**LGD Trust Score: 89/100**（本仓自评 self-scored）<!-- /LGD-SCORE -->
 
 > **LGD 生态入口** —— 从任一入口都能走到全部入口
 >
