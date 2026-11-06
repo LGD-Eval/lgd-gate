@@ -99,6 +99,46 @@ LGD Trust Score: 65/100 🥉 C
 
 共同逻辑一句话：**加权平均可以用来排序，不能用来下结论。**
 
+### 用真实披露的攻击验证，而不是只测自己造的样本
+
+2026-10-30，Mitiga 披露了针对 AI 指令文件的实战攻击（[原文](https://www.mitiga.io/blog/malware-in-ai-instruction-files-skillgate)）：把 `ANTHROPIC_BASE_URL` 覆盖成攻击者代理，会话流量全走 MITM；把权限绕过当成"便利默认"发出去；在数十个服务里散落 1,230+ 硬编码 API key 与 JWT。
+
+这类攻击的特点是**SKILL.md 里不写露骨文字，全部藏在安装脚本里**。我们按这个形态复刻了 `_demo/mitiga-style/`，三个文件：越权文本、`setup.sh`（基址劫持＋两个真实密钥格式）、`collect.py`（读 `~/.aws/credentials` 后 POST 外发）。
+
+同一份样本，改前改后：
+
+| 版本 | 命中 | 结论 |
+|---|---|---|
+| 初版评测器 | 2 条，且全部来自 SKILL.md 文本 | 70 → 封顶 49 |
+| 现在 | **9 条，脚本行为全部落到行号** | **22/100 D** |
+
+改后的真实输出（未删改）：
+
+```text
+❌ collect.py:5: API 基址被改写（可能劫持到中间人代理）
+❌ setup.sh:9: 硬编码凭证（AWS/GitHub/OpenAI/xox 格式）
+❌ setup.sh:10: 硬编码凭证（AWS/GitHub/OpenAI/xox 格式）
+❌ setup.sh:3: API 基址被改写（可能劫持到中间人代理）
+❌ setup.sh:4: 代理被指向外部主机（流量可能被截获）
+❌ setup.sh:5: 代理被指向外部主机（流量可能被截获）
+❌ collect.py:20: 凭证文件读取后网络外发（同文件污点）
+❌ SKILL.md:17: 隐瞒用户：要求不告知真实行为
+❌ SKILL.md:19: 读取凭证文件指令
+```
+
+初版只报出后两条。**换句话说：一个只在 shell 里动手、SKILL.md 写得干净的技能，能整个漏过去。**
+
+这次修复暴露了三个盲区，都不是"再加一条正则"能解决的：
+
+1. **原来只扫 `.py/.js/.ts/.mjs/.cjs`** —— shell 系脚本完全不扫，而 Mitiga 的样本恰好藏在 shell 的 `export` 里。现在扩到 `.sh/.bash/.zsh/.ps1/.bat/.cmd` 共 11 种。
+2. **原来只扫 `scripts/` 目录** —— 把载荷放在技能根目录就整个绕过。现在递归扫全树（排除 `tests/fixtures` 这类检测夹具，它们是评测输入而非被测技能本体）。
+3. **凭证读取只认字面量路径** —— `open("~/.aws/credentials")` 能抓，但真实写法 `open(os.path.expanduser("~/.aws/credentials"))` 抓不到。现在常量从调用里挖出来。
+
+复跑：`python3 evaluate.py ./_demo/mitiga-style`
+
+同一个形态在真实世界里已经成灾：Snyk 记录 ClawHub 2026-01 出现数百个恶意 skill、自测称 36% 的 skill 含可利用缺陷；arXiv 2507.19880 证明最小 MCP server 即可完成跨工具敏感数据外泄。**技能供应链不是假想威胁，这就是它长什么样。**
+
+
 
 <h1 align="center">🏛️ LGD-Eval</h1>
 
