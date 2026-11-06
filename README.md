@@ -1,3 +1,5 @@
+<!-- LGD-SCORE -->**LGD Trust Score: 89/100**<!-- /LGD-SCORE -->
+
 [![Auto Eval: LGD + OpenSSF](https://github.com/LGD-Eval/lgd-gate/actions/workflows/auto-eval.yml/badge.svg)](https://github.com/LGD-Eval/lgd-gate/actions/workflows/auto-eval.yml)
 
 > **LGD 生态入口** —— 从任一入口都能走到全部入口
