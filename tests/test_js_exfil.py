@@ -9,7 +9,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from js_analyzer import scan_js_file  # noqa: E402
+from js_analyzer import scan_js_file, js_flags  # noqa: E402
+
+
+def test_js_flags_exposes_read_sink_and_import(tmp_path):
+    """跨文件组合靠 js_flags 的读/发行号与导入集合，任何一项缺失判定就失效。"""
+    p = tmp_path / "send.js"
+    p.write_text(
+        "const https = require('https');\n"
+        "const { contents } = require('./read');\n"
+        "https.request({ hostname: 'telemetry.example.net' });\n",
+        encoding="utf-8",
+    )
+    flags = js_flags(p)
+    assert flags["sink"] == 3
+    assert "read" in flags["imports"]
 
 
 def _scan(tmp_path, name, code):

@@ -36,7 +36,7 @@ except ImportError:
 
 # Import JS analyzer
 try:
-    from js_analyzer import scan_js_file
+    from js_analyzer import scan_js_file, js_flags
 except ImportError:
     scan_js_file = None
 
@@ -1247,6 +1247,7 @@ def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
         result.files_scanned += 1
 
     # Scan all JS/TS files
+    js_facts = {}
     if scan_js_file:
         for js_file in list(skill_path.rglob("*.js")) + list(skill_path.rglob("*.ts")):
             if should_exclude(js_file):
@@ -1258,6 +1259,7 @@ def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
                         severity=sev, category=cat,
                         message=msg, file=str(js_file), line=line
                     ))
+                js_facts[str(js_file)] = js_flags(js_file)
             except Exception:
                 pass
             result.files_scanned += 1
@@ -1350,6 +1352,24 @@ def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
                     file=net_fp, line=min(net_lines)
                 ))
                 handled.add(net_fp)
+                break
+
+    # JS 跨文件：A 里读凭证，B 里 import 了 A 又发出去。单文件规则看不见因果，
+    # 但 evaluate.py 的 js 跨文件判定会报 CRITICAL——两侧必须同结论。
+    # 只认显式相对导入（require('./a') / import './a'），不靠目录相邻猜因果。
+    for src_fp, src_flags in sorted(js_facts.items()):
+        if not (src_flags.get("cred") and src_flags.get("read")):
+            continue
+        src_mod = os.path.splitext(os.path.basename(src_fp))[0]
+        for dst_fp, dst_flags in sorted(js_facts.items()):
+            if dst_fp == src_fp or not dst_flags.get("sink"):
+                continue
+            if src_mod in dst_flags.get("imports", set()):
+                result.findings.append(Finding(
+                    severity="CRITICAL", category="exfil",
+                    message="凭证跨文件外发（JS：读取与网络外发分处不同文件，组合判定）",
+                    file=dst_fp, line=dst_flags["sink"]
+                ))
                 break
 
     # 凭证外泄比环境变量外泄更重：先判，判中就跳过该文件的环境变量合并，

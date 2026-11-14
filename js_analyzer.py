@@ -72,6 +72,41 @@ NET_SINKS = re.compile(
 )
 READ_CALLS = re.compile(r"(?:readFileSync|readFile|createReadStream|fs\.read|open\s*\()")
 
+# 相对导入：跨文件组合要靠它把"A 读"和"B 发"连起来，否则只能靠目录相邻猜因果
+IMPORT_RE = re.compile(r"(?:require\s*\(\s*['\"]\./([^'\"]+)['\"]"
+                       r"|from\s*['\"]\./([^'\"]+)['\"]"
+                       r"|import\s*\(\s*['\"]\./([^'\"]+)['\"]\s*\))")
+
+
+def js_flags(filepath):
+    """返回 {"cred","read","sink","env"} 首次出现行号（0 = 未出现）与 imports 集合。
+
+    跨文件判定需要"哪个文件读、哪个文件发"，单文件扫描器自己拼不出来。
+    """
+    flags = {"cred": 0, "read": 0, "sink": 0, "env": 0, "imports": set()}
+    try:
+        with open(filepath, encoding="utf-8", errors="ignore") as f:
+            lines = f.read().splitlines()
+    except OSError:
+        return flags
+    for i, line in enumerate(lines, 1):
+        if not line.strip() or _is_comment(line):
+            continue
+        if not flags["cred"] and any(p.search(line) for p, _s, _m in CRED_PATHS):
+            flags["cred"] = i
+        if not flags["read"] and READ_CALLS.search(line):
+            flags["read"] = i
+        if not flags["sink"] and NET_SINKS.search(line):
+            flags["sink"] = i
+        if not flags["env"] and any(p.search(line) for p, _s, m in EXFIL
+                                   if "process.env" in m):
+            flags["env"] = i
+        for m in IMPORT_RE.finditer(line):
+            mod = m.group(1) or m.group(2) or m.group(3)
+            if mod:
+                flags["imports"].add(os.path.basename(mod))
+    return flags
+
 FS_DANGER = [
     (re.compile(r"\brmSync\s*\("), "MEDIUM", "rmSync 删除"),
     (re.compile(r"\brimraf\b"), "MEDIUM", "rimraf 递归删除"),
