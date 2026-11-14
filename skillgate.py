@@ -1047,6 +1047,15 @@ def compute_trust_score(result: ScanResult) -> int:
     if injection_critical:
         score = min(score, 40)  # 存在 CRITICAL 注入/外泄 → 最高 D 档；_ci_exit 同时 exit 1 阻断
 
+    # 封顶必须覆盖**所有阻断档**，不能只覆盖注入/外泄：
+    # 实测一个读凭证并外发的样本被判 HIGH（组合判定为 exfil），扣 8 分后仍得
+    # 87/100（A）—— 门禁说"阻断发布"、徽章说"A 级可信"，两句互相打脸。
+    # 与 evaluate.py 的 VETO 语义对齐：CRITICAL → ≤49(D)、HIGH → ≤69(C)。
+    if result.critical_count > 0:
+        score = min(score, 49)
+    elif result.high_count > 0:
+        score = min(score, 69)
+
     # Clamp to 0-100
     return max(0, min(100, score))
 
