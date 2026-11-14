@@ -304,6 +304,7 @@ class ScanResult:
     trust_score: int = 0
     grade: str = ""
     rule_version: str = "v3.1.3"  # 规则版本号（有籍）
+    excluded: list = field(default_factory=list)  # 显式排除的路径（供审计复现）
 
     @property
     def critical_count(self): return len([f for f in self.findings if f.severity == "CRITICAL"])
@@ -749,6 +750,19 @@ def scan_md_file(filepath: Path, result: ScanResult):
         if in_code_block:
             code_lines.add(i)
 
+    def is_suppressed(line_idx: int) -> bool:
+        """与 Python 侧同一约定：当前行或上一行含 skillgate: ignore 即视为
+        已声明的抑制（Bandit # nosec / NOSONAR 的同类做法）。
+
+        md 侧原先没有这段，导致文档里的 `<!-- skillgate: ignore -->` 完全无效——
+        抑制约定只对 .py 生效，对 .md 是装饰。这是一致性缺陷，补上。
+        """
+        if 0 < line_idx <= len(lines) and "skillgate: ignore" in lines[line_idx - 1]:
+            return True
+        if line_idx > 1 and "skillgate: ignore" in lines[line_idx - 2]:
+            return True
+        return False
+
     # frontmatter 区域行号（Muse 复测 P0：frontmatter 的 description 是智能体
     # 运行时实际读取的指令文本，属第一攻击面——注入/外泄扫描不得整段跳过，
     # 仅凭证扫描跳过该区域以防元数据字段名误报）
@@ -786,6 +800,8 @@ def scan_md_file(filepath: Path, result: ScanResult):
             m = re.search(pattern, line, re.IGNORECASE)
             if not m:
                 continue
+            if is_suppressed(i):
+                continue
             if is_safety_discussion(line):
                 continue  # 安全/红队/扫描主题文档提及该词 = 主题词，非注入指令
             # CRITICAL/HIGH 注入模式只允许安全主题框架跳过；
@@ -804,7 +820,7 @@ def scan_md_file(filepath: Path, result: ScanResult):
     #    跳过 frontmatter 区域避免元数据字段名误报）
     for pattern, severity, msg in CREDENTIAL_PATTERNS:
         for i, line in enumerate(lines, 1):
-            if i in code_lines or i in fm_lines:
+            if i in code_lines or i in fm_lines or is_suppressed(i):
                 continue
             m = pattern.search(line)
             if m:
@@ -818,7 +834,7 @@ def scan_md_file(filepath: Path, result: ScanResult):
     # 3. 数字诚实性规则（仅剩高特异性模式，普通宣称数字不再报）
     for pattern, severity, msg in HONESTY_PATTERNS:
         for i, line in enumerate(lines, 1):
-            if i in code_lines:
+            if i in code_lines or is_suppressed(i):
                 continue
             if re.search(pattern, line, re.IGNORECASE):
                 result.findings.append(Finding(
@@ -834,6 +850,8 @@ def scan_md_file(filepath: Path, result: ScanResult):
                 continue
             m = re.search(pattern, line, re.IGNORECASE)
             if not m:
+                continue
+            if is_suppressed(i):
                 continue
             if is_safety_discussion(line):
                 continue  # 安全/红队/扫描主题文档提及该词 = 主题词，非外泄指令
@@ -1135,7 +1153,7 @@ def find_skill_documents(skill_path: Path) -> list[Path]:
     return docs
 
 
-def scan_skill(skill_dir: str) -> ScanResult:
+def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
     skill_path = Path(skill_dir).resolve()
     if not skill_path.is_dir():
         print(f"错误: 目录不存在 - {skill_dir}", file=sys.stderr)
@@ -1153,8 +1171,25 @@ def scan_skill(skill_dir: str) -> ScanResult:
     # Default excluded directories
     DEFAULT_EXCLUDES = {"tests", "test", "docs", "doc", ".git", "__pycache__", "node_modules", "._test_scratch", "_backup"}
 
+    # 显式排除（--exclude）：用于把"故意投毒的检测夹具"排除出发布门禁，
+    # 同时把排除项写进结果里，保证别人能复现"我到底扫了什么"。
+    # 注意：这是报告字段，不是隐身衣——被排除的路径会打印出来。
+    ex_parts = []
+    for e in (excludes or []):
+        p = str(e).replace("\\", "/").strip()
+        while p.startswith("./"):
+            p = p[2:]
+        p = p.strip("/")
+        if p:
+            ex_parts.append(p)
+    result.excluded = ex_parts
+
     def should_exclude(filepath: Path) -> bool:
         """Check if a file should be excluded from scanning."""
+        rel = filepath.relative_to(skill_path).as_posix()
+        for e in ex_parts:
+            if rel == e or rel.startswith(e + "/"):
+                return True
         parts = filepath.relative_to(skill_path).parts
         for part in parts:
             if part in DEFAULT_EXCLUDES:
@@ -1297,6 +1332,8 @@ def print_terminal_report(result: ScanResult, fail_under: int = None):
     print(f"  Skill: {result.skill_name}")
     print(f"  目录: {result.skill_dir}")
     print(f"  扫描文件数: {result.files_scanned}")
+    if result.excluded:
+        print(f"  显式排除: {', '.join(result.excluded)}")
     print(f"{'='*60}")
     print(f"  Trust Score: {result.trust_score}/100  ({result.grade})")
     print(f"{'='*60}")
@@ -1515,6 +1552,9 @@ def main():
                              help="批量扫描：扫描目录下所有子目录")
     scan_parser.add_argument("--lenient", action="store_true",
                              help="宽松模式：所有规则降一级别（减少误报）")
+    scan_parser.add_argument("--exclude", nargs="*", default=[], metavar="PATH",
+                             help="显式排除的路径（相对 skill_dir），如 _demo；"
+                                  "排除项会记入结果，用于复现")
 
     # Quickstart subcommand
     quickstart_parser = sub.add_parser("quickstart", help="快速演示 SkillGate 怎么用")
@@ -1582,7 +1622,7 @@ def main():
             else:
                 sys.exit(0)
 
-        result = scan_skill(args.skill_dir)
+        result = scan_skill(args.skill_dir, args.exclude)
 
         # Lenient mode: downgrade all findings by one level
         if args.lenient:
@@ -1651,6 +1691,7 @@ def main():
                 f"- **Skill**: {result.skill_name}",
                 f"- **Trust Score**: {result.trust_score}/100 ({result.grade})",
                 f"- **扫描文件数**: {result.files_scanned}",
+                (f"- **显式排除**: {', '.join(result.excluded)}" if result.excluded else ""),
                 f"",
                 f"## Findings",
                 f"",

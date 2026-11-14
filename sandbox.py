@@ -7,7 +7,7 @@
   ✅ 看得见：读了哪些敏感文件、解析了哪些域名、连了哪些地址、起了哪些子进程
   ✅ 抓得住：编码后外泄、DNS 隧道——因为它们最终都要落到一次 dns/connect
   ❌ 挡不住：直接 syscall、C 扩展、外部二进制。那需要 strace/eBPF，Linux 才有权限
-  ❌ 不做容器隔离：公司机无 docker，本实现用"进程内审计 + 超时 + 环境变量清洗"
+  ❌ 不做容器隔离：公司机无 docker，本实现用"进程内审计 + 超时 + 环境变量白名单"
 
 用法：
   python sandbox.py <脚本或技能目录> [--timeout 10] [--json]
@@ -30,6 +30,31 @@ BOOT = (
 # 代理会把沙箱内所有流量改道，审计目标就不再是程序真实意图
 PROXY_VARS = ("http_proxy", "https_proxy", "HTTP_PROXY", "HTTPS_PROXY",
               "all_proxy", "ALL_PROXY", "ftp_proxy", "FTP_PROXY", "no_proxy", "NO_PROXY")
+
+# 环境变量白名单：沙箱里跑的是**未经审查的第三方代码**，
+# 把宿主全量环境传进去，等于把本机凭证（AWS / GitHub / 模型 API key）直接
+# 递到被测代码手上——它只要读 env 再外发就能拿走。所以只传"运行必需、
+# 且不含秘密"的变量，其余一律不传。
+ENV_ALLOW = ("PATH", "HOME", "TMP", "TEMP", "TMPDIR", "LANG", "LC_ALL", "LANGUAGE",
+             "SYSTEMROOT", "SYSTEMDRIVE", "COMSPEC", "PATHEXT", "WINDIR",
+             "NUMBER_OF_PROCESSORS", "PROCESSOR_ARCHITECTURE", "OS",
+             "PYTHONPATH", "PYTHONIOENCODING", "PYTHONUTF8", "TERM")
+
+# 即便白名单本身写错，也按关键词再剔一遍（双保险）
+SECRET_KEY_HINTS = ("KEY", "TOKEN", "SECRET", "PASSWORD", "PASSWD",
+                    "CREDENTIAL", "AUTH", "PRIVATE")
+
+
+def clean_env(extra=None):
+    """构造沙箱子进程环境：白名单 + 关键词兜底 + 调用方附加项。"""
+    env = {k: os.environ[k] for k in ENV_ALLOW if k in os.environ}
+    for k in list(env):
+        if any(t in k.upper() for t in SECRET_KEY_HINTS):
+            env.pop(k, None)
+    if extra:
+        env.update(extra)
+    return env
+
 
 # 保留域名：永远解析不到真实主机，样本不会真的把数据送出去
 SAFE_SUFFIX = (".example.com", ".example.org", ".test", ".invalid", "localhost")
@@ -78,9 +103,9 @@ def run(target, timeout=10):
     if not entry:
         return {"error": "没有找到可执行的 .py 入口"}
     log = tempfile.NamedTemporaryFile(delete=False, suffix=".jsonl").name
-    env = {k: v for k, v in os.environ.items() if k not in PROXY_VARS}
-    env["LGD_AUDIT_LOG"] = log
-    env["PYTHONPATH"] = HERE + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    py_path = HERE + (os.pathsep + os.environ["PYTHONPATH"] if os.environ.get("PYTHONPATH") else "")
+    # 只给白名单环境（PROXY_* 天然不在白名单里，无需单独剔除）
+    env = clean_env({"LGD_AUDIT_LOG": log, "PYTHONPATH": py_path})
     try:
         p = subprocess.run([sys.executable, "-c", BOOT, entry], cwd=os.path.dirname(entry) or ".",
                            env=env, capture_output=True, text=True, timeout=timeout,
