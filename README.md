@@ -152,9 +152,11 @@ python3 lgd-gate-main/evaluate.py lgd-gate-main/_demo/mitiga-style
 
 | 工具 | 回答什么 | 是否产出对外分数 |
 |---|---|---|
-| `evaluate.py` | 这个技能能不能信任 → **一个分数 + 一档执行权限** | ✅ 唯一对外口径 |
+| `evaluate.py` | 这个技能能不能信任 → **一个分数 + 一个风险档位（不签发权限）** | ✅ 唯一对外口径 |
 | `skillgate.py` | 代码级危险模式（开发者自查） | ❌ 不评总分 |
 | `lgd_audit.py` | 18 维完整性审计（开发者自查） | ❌ 不评总分 |
+
+**这份 `evaluate.py` 不是独立实现，是正典的逐字节副本。** 正典在 `LGD-Eval/skills/lgd-eval/scripts/evaluate.py`；本仓这份此前悄悄分叉过（79,256 B，少了 JS 组合规则），对跨文件凭证外泄的技能给 73/B——而 Marketplace 上的 Action 跑的就是它。现在 `tests/test_evaluator_provenance.py` 用固定 sha256 钉住副本，任何改动都必须先改正典再整文件复制过来，否则测试直接失败。
 
 **为什么它们对同一份代码可能给出不同数字？** 因为扫描器扫自己时会出现自证误报——`skillgate.py` 曾把 `evaluate.py` 里的检测正则 `secret_re` 判成"硬编码凭证"、把规则词表里的 `~/.aws/credentials` 判成"读取凭证"，一度给自己打 0 分并"阻断发布"，而 `evaluate.py` 给同一目录 100 分。这不是能力问题，是**规则表被当成了行为**。<!-- skillgate: ignore — 文档在复盘自证误报，不是行为 -->
 

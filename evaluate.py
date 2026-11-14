@@ -50,8 +50,111 @@ def _rule_ids_for(findings):
 
 
 CRIT_IDS = {"R-SEC-09", "R-SEC-10", "R-SEC-21"}          # 已证实的凭证 / 环境变量外泄
+
+# 评分与授权分离：评测只给结论，授权只能由人单独授予。
+# 此前按分数直接打印「L0 免审批（可直接运行）」，等于一个数字替人签了授权。
+AUTHORIZATION_STATUS = "NOT_GRANTED"
+
+# 评测来源必须可区分：维护者自评 / 自动化评测 / 无关联第三方复核。
+# 自评不得对外称第三方认证，这条是审计里的 P0。
+PROVENANCE_LABELS = {
+    "self": "维护者自评",
+    "automated": "自动化评测（CI，仍属自评范畴）",
+    "third_party": "无关联第三方复核",
+}
 HIGH_IDS = {"R-SEC-01", "R-SEC-02", "R-SEC-03", "R-SEC-04", "R-SEC-05",
             "R-SEC-15", "R-SEC-16", "R-SEC-17", "R-SEC-18", "R-SEC-11"}
+
+# ============================================================
+# JS / TS 组合判定（R-SEC-09/21 的 JS 侧）
+# ------------------------------------------------------------
+# 问题：Python 侧有 AST + 污点分析，JS 侧只有几条正则。结果是同一个行为
+# 换个后缀就换个结论——JS 技能读 ~/.aws/credentials 并 POST 出去，
+# evaluate.py 给 77/B、skillgate 给 100/A+，而 Python 孪生样本 49/D。
+# 反例已实测（audit2/probe/js-env-exfil）。
+#
+# 做法：不做完整污点分析，只做「文件级三项共存」的保守近似——
+#   1) 出现凭证路径标记（.aws / .ssh / credentials / id_rsa / .npmrc …）
+#   2) 出现文件读取调用
+#   3) 出现网络发送 sink
+# 三项同文件共存即判 CRITICAL。误报代价只是降档（两种状态都阻断发布），
+# 漏报代价是两个引擎对同一技能给出两个结论。
+# 已知边界：跨文件的 JS 组合（A 读、B 发）暂不判，见 SKILL.md 限制说明。
+# ============================================================
+
+JS_CRED_PATH_RE = re.compile(
+    r"['\"](?:\.aws|\.ssh|\.npmrc|\.netrc|netrc|credentials|id_rsa|id_ed25519"
+    r"|\.kube|\.docker|\.pgpass|\.config/gcloud)['\"]"
+    r"|['\"][^'\"\n]*(?:/\.aws/|/\.ssh/|\.aws/credentials|/credentials\b|id_rsa"
+    r"|id_ed25519|\.pgpass|/\.npmrc)[^'\"\n]*['\"]"
+    r"|(?:homedir\(\)|HOME|USERPROFILE)\s*,\s*['\"]\.(?:aws|ssh|kube|docker)"
+)
+JS_READ_CALL_RE = re.compile(
+    r"(?:readFileSync|readFile|createReadStream|readFileSync\s*\(|fs\.read|open\s*\()"
+)
+JS_NET_SINK_RE = re.compile(
+    r"(?:https?\.(?:request|get)\s*\(|\bfetch\s*\(|axios\.(?:post|put|get|request)"
+    r"|\bnet\.connect\s*\(|new\s+WebSocket|sendBeacon|got\s*\()"
+)
+JS_ENV_BULK_RE = re.compile(
+    r"(?:\{\s*\.\.\.\s*process\.env\s*\}"
+    r"|Object\.keys\s*\(\s*process\.env\s*\)"
+    r"|Object\.assign\s*\(\s*\{\s*\}\s*,\s*process\.env\s*\)"
+    r"|Object\.entries\s*\(\s*process\.env\s*\)"
+    r"|JSON\.stringify\s*\(\s*(?:\{\s*\.\.\.\s*)?process\.env)"
+)
+
+
+def _js_lines(code):
+    """返回 [(行号, 该行)]，跳过空行与注释行——规则文案写到注释里不算行为。"""
+    out = []
+    for i, line in enumerate(code.splitlines(), 1):
+        s = line.strip()
+        if not s or s.startswith("//") or s.startswith("*") or s.startswith("/*"):
+            continue
+        out.append((i, s))
+    return out
+
+
+JS_IMPORT_RE = re.compile(
+    r"(?:require\s*\(\s*['\"]\./([^'\"]+)['\"]"
+    r"|from\s*['\"]\./([^'\"]+)['\"]"
+    r"|import\s*\(\s*['\"]\./([^'\"]+)['\"]\s*\))")
+
+
+def js_flags(code):
+    """返回首次出现的行号 {cred, read, sink, env} 与相对导入模块集合。
+
+    跨文件判定需要"哪个文件读、哪个文件发"，单文件规则拼不出因果。
+    """
+    flags = {"cred": 0, "read": 0, "sink": 0, "env": 0, "imports": set()}
+    for ln, s in _js_lines(code):
+        if not flags["cred"] and JS_CRED_PATH_RE.search(s):
+            flags["cred"] = ln
+        if not flags["read"] and JS_READ_CALL_RE.search(s):
+            flags["read"] = ln
+        if not flags["sink"] and JS_NET_SINK_RE.search(s):
+            flags["sink"] = ln
+        if not flags["env"] and JS_ENV_BULK_RE.search(s):
+            flags["env"] = ln
+        for m in JS_IMPORT_RE.finditer(s):
+            mod = m.group(1) or m.group(2) or m.group(3)
+            if mod:
+                flags["imports"].add(os.path.basename(mod))
+    return flags
+
+
+def js_combination(code):
+    """JS/TS 文件级组合判定，返回 [(行号, 结论文案)]。"""
+    flags = js_flags(code)
+    hits = []
+    if flags["sink"] and flags["cred"] and flags["read"]:
+        hits.append((flags["sink"],
+                     "凭证文件读取后网络外发（JS 组合判定：凭证路径 + 读取 + 发送）"))
+    if flags["sink"] and flags["env"]:
+        hits.append((flags["sink"],
+                     "环境变量批量外发（JS：整份 process.env 发往网络）"))
+    return hits
 
 
 def safety_cap(findings):
@@ -90,13 +193,40 @@ def safety_cap(findings):
     return 100, "", ""
 
 
-# 固化 UTF-8 输出，避免 Windows GBK 控制台打印 emoji/中文时 UnicodeEncodeError 崩溃
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-if hasattr(sys.stderr, "reconfigure"):
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+def grade_for(score):
+    """等级刻度：与 README 和 skillgate 同表（A+ ≥90 / A ≥80 / B ≥70 / C ≥60 / D ≥40 / F <40）。
 
-def evaluate_skill(skill_path):
+    此前这里 40 以下落到 D、skillgate 印 F，同一个 34 分两个字母。
+    """
+    if score >= 90:
+        return "A+", "🏆"
+    if score >= 80:
+        return "A", "🥇"
+    if score >= 70:
+        return "B", "🥈"
+    if score >= 60:
+        return "C", "🥉"
+    if score >= 40:
+        return "D", "⚠️"
+    return "F", "⛔"
+
+
+def risk_tier_for(score):
+    """风险档位（仅供参考）。这不是授权——授权恒为 NOT_GRANTED。"""
+    if score >= 96:
+        return "T0 风险极低"
+    if score >= 81:
+        return "T1 风险低"
+    if score >= 51:
+        return "T2 风险中等"
+    if score >= 31:
+        return "T3 风险较高"
+    if score >= 11:
+        return "T4 风险高"
+    return "T5 风险极高"
+
+
+def evaluate_skill(skill_path, provenance="self"):
     """评测一个技能。"""
     start_time = time.time()
     
@@ -417,6 +547,7 @@ def evaluate_skill(skill_path):
 
     taint = {}
     env_bulk = {}
+    js_facts = {}
     # 只认「整份」环境变量导出；单项 os.environ["KEY"] 是正常配置读取，不报。
     # 这是 Mitiga 类样本最爱的偷渡方式：把全部变量（含云厂商密钥）打包发走。
     ENV_BULK_RE = re.compile(
@@ -622,6 +753,17 @@ def evaluate_skill(skill_path):
                 if msg not in security_issues:
                     security_issues.append(msg)
                     score -= points
+        # JS/TS 组合判定：JS 没有 AST 层，正则也看不到"读取 + 发送"的组合，
+        # 不补这一步，同一行为换后缀就从 49/D 变成 77/B。
+        if ext in (".js", ".ts", ".mjs", ".cjs"):
+            _jsf = js_flags(code)
+            js_facts[script_file] = _jsf
+            for _jln, _jreason in js_combination(code):
+                _jmsg = "%s:%d: %s" % (script_file, _jln, _jreason)
+                if _jmsg not in security_issues:
+                    security_issues.append(_jmsg)
+                    score -= 10
+
         # AST 语义扫描：补正则抓不到的规避写法
         if ext != ".py":
             continue
@@ -638,6 +780,23 @@ def evaluate_skill(skill_path):
             if msg not in security_issues:
                 security_issues.append(msg)
                 score -= points
+
+    # ---- JS 跨文件：A 里读凭证，B 里 import 了 A 又发出去 ----
+    # 只认显式相对导入，不靠目录相邻猜因果。
+    for a_fp, a_flags in sorted(js_facts.items()):
+        if not (a_flags.get("cred") and a_flags.get("read")):
+            continue
+        mod_a = os.path.splitext(os.path.basename(a_fp))[0]
+        for b_fp, b_flags in sorted(js_facts.items()):
+            if b_fp == a_fp or not b_flags.get("sink"):
+                continue
+            if mod_a not in b_flags.get("imports", set()):
+                continue
+            js_msg = "%s:%d: 跨文件凭证外泄（JS 组合判定：%s 读取，本文件发送）" % (
+                b_fp, b_flags["sink"], mod_a)
+            if js_msg not in security_issues:
+                security_issues.append(js_msg)
+                score -= 10
 
     # ---- 环境变量批量外发：整份 os.environ 打包送出 ----
     for f_, l_env in sorted(env_bulk.items()):
@@ -784,47 +943,19 @@ def evaluate_skill(skill_path):
 
     print("=" * 70)
     
-    if score >= 90:
-        grade = "A+"
-        emoji = "🏆"
-    elif score >= 80:
-        grade = "A"
-        emoji = "🥇"
-    elif score >= 70:
-        grade = "B"
-        emoji = "🥈"
-    elif score >= 60:
-        grade = "C"
-        emoji = "🥉"
-    elif score >= 40:
-        grade = "D"
-        emoji = "⚠️"
-    else:
-        # 与 action.yml 的 GRADE 表同档：0–39 是 F，不是 D
-        grade = "F"
-        emoji = "⛔"
-    
+    grade, emoji = grade_for(score)
+
     # 对外唯一分数：一行给完，不分列其他分数
     print(f"  LGD Trust Score: {score}/100  {emoji} {grade}")
     if raw_score != score:
         print(f"  ⛔ 安全否决：原始分 {raw_score} → 封顶 {score}（{veto_level}：{veto_reason}）")
-    # 评分与授权分离：分数只给风险档位，不签发执行权限。
-    # 此文件是 lgd-gate 自带的评测器副本（与 LGD-Eval 的 skills/lgd-eval/scripts/evaluate.py
-    # 已经分叉，见审计报告"三份评估器、两个哈希"），这里只改输出语义，不做算法同步。
-    if score >= 96:
-        tier = "T0 风险极低"
-    elif score >= 81:
-        tier = "T1 风险低"
-    elif score >= 51:
-        tier = "T2 风险中等"
-    elif score >= 31:
-        tier = "T3 风险较高"
-    elif score >= 11:
-        tier = "T4 风险高"
-    else:
-        tier = "T5 风险极高"
+    # 评分与授权分离：分数只给"风险档位"，不签发任何执行权限。
+    # 此前这里按分数直接打印「L0 免审批（可直接运行）」，等于让一个数字签了授权。
+    tier = risk_tier_for(score)
     print(f"  🚦 风险档位（仅供参考，不构成授权）: {tier}")
-    print("  🔐 授权状态: NOT_GRANTED（评测只产出结论，不签发执行权限）")
+    print(f"  🔐 授权状态: {AUTHORIZATION_STATUS}（评测只产出结论，不签发执行权限）")
+    print(f"  🧾 评测来源: {PROVENANCE_LABELS.get(provenance, provenance)}"
+          f"{'（非第三方复核，不得对外称第三方认证）' if provenance != 'third_party' else ''}")
     print(f"  评测耗时: {elapsed:.2f}s")
     print("=" * 70)
     
@@ -1218,7 +1349,7 @@ def _tree_hashes(root):
     return files, "sha256:" + tree
 
 
-def build_attestation(root, score, grade, dims, evidence, veto=None):
+def build_attestation(root, score, grade, dims, evidence, veto=None, provenance="self"):
     """生成可复现的评测证明。fingerprint 只取自被测内容，不含路径与时间。"""
     payload = {
         "object": {"score": score, "grade": grade},
@@ -1243,6 +1374,12 @@ def build_attestation(root, score, grade, dims, evidence, veto=None):
         "engine_version": "1.1.0",
         "score": score,
         "grade": grade,
+        # 评测与授权分离，且来源可区分：这两项是要给下游（CI / 注册表 / 人工复核）看的，
+        # 不能只存在终端输出里，否则换个人读 JSON 就又把分数当成了通行证。
+        "authorization_status": AUTHORIZATION_STATUS,
+        "authorization_note": "评测不签发执行权限；如需授权，须由维护者/无关联第三方另行书面授予",
+        "evaluation_provenance": provenance,
+        "provenance_label": PROVENANCE_LABELS.get(provenance, provenance),
         "dims": payload["dims"],
         "findings": payload["findings"],
         "fingerprint": "sha256:" + fp,
@@ -1369,6 +1506,7 @@ def _sbox_env(tree, logp):
 
     被测脚本是**未经审查的第三方代码**。把宿主全量环境传进去，等于把本机凭证
     （AWS / GitHub / 模型 API key）递到它手上，它读 env 再外发就能拿走。
+    这段此前只存在于 lgd-gate 的副本里，正典这份漏了——两份评估器互相缺对方的一处修正。
     """
     allow = ("PATH", "TMP", "TEMP", "TMPDIR", "LANG", "LC_ALL", "LANGUAGE",
              "SYSTEMROOT", "SYSTEMDRIVE", "COMSPEC", "PATHEXT", "WINDIR",
@@ -1531,6 +1669,10 @@ if __name__ == "__main__":
                     help="在终端打印证据链：规则 → 文件:行 → 证据 → 整改 → 复验")
     ap.add_argument("--fail-under", type=int, default=0, metavar="N",
                     help="门禁模式：分数低于 N 时以退出码 1 结束，可直接用于 CI 卡 PR")
+    ap.add_argument("--provenance", choices=["self", "automated", "third_party"],
+                    default="self",
+                    help="评测来源声明：self=维护者自评（默认）、automated=CI 自动跑、"
+                         "third_party=无关联第三方复核。自评不会被标成第三方认证。")
     ap.add_argument("--sarif", metavar="PATH",
                     help="输出 SARIF 2.1.0（GitHub Code Scanning 可直接消费）")
     ap.add_argument("--llm-review", action="store_true",
@@ -1567,7 +1709,7 @@ if __name__ == "__main__":
         print("ℹ️ 单文件模式：已按标准技能目录包装评测（%s）" % os.path.basename(args.skill_path))
         print("   仅能评文本质量；结构/目录维度会因缺 LICENSE、README、scripts/ 扣分。完整评测请传目录。")
 
-    score, grade, dims, findings, warnings, veto_info = evaluate_skill(target)
+    score, grade, dims, findings, warnings, veto_info = evaluate_skill(target, provenance=args.provenance)
 
     
     if args.ascii:
@@ -1587,7 +1729,8 @@ if __name__ == "__main__":
 
     if args.evidence_json or args.detail or args.sarif or args.llm_review:
         evidence = build_evidence(target, findings, warnings)
-        att = build_attestation(target, score, grade, dims, evidence, veto_info)
+        att = build_attestation(target, score, grade, dims, evidence, veto_info,
+                                provenance=args.provenance)
 
         if args.evidence_json:
             with open(args.evidence_json, 'w', encoding='utf-8', newline='\n') as f:
