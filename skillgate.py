@@ -124,6 +124,12 @@ CREDENTIAL_PATTERNS = [
      "HIGH", "访问 SSH 密钥目录"),
     (re.compile(r"\.aws/credentials", re.IGNORECASE),  # skillgate: ignore
      "HIGH", "访问 AWS 凭证文件"),
+    # 路径分段拼接：os.path.join(home, ".aws", "credentials") 是恶意包最常见的写法，
+    # 字面匹配在上面那一条永远命不中——第三方实测样本就是这么躲过去的。
+    (re.compile(r"['\"]\.?aws['\"]\s*[\),]\s*['\"]?credentials", re.IGNORECASE),  # skillgate: ignore
+     "HIGH", "访问 AWS 凭证文件（路径分段拼接）"),
+    (re.compile(r"['\"]\.ssh['\"]\s*[\)]\s*[^\n]*['\"]id_", re.IGNORECASE),  # skillgate: ignore
+     "HIGH", "访问 SSH 私钥（路径分段拼接）"),
     (re.compile(r"\.git-credentials", re.IGNORECASE),  # skillgate: ignore
      "HIGH", "访问 Git 凭证文件"),
     (re.compile(r"\.netrc", re.IGNORECASE),  # skillgate: ignore
@@ -1290,25 +1296,83 @@ def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
             return False
         return True
 
+    def _line_has(fp, ln, needles):
+        """这一行里是否出现了某个"读动作"记号。用来区分「只是提到了密钥路径」
+        和「真的把它读进来了」——后者才够得上跨文件外发的读取端。"""
+        try:
+            with open(fp, encoding="utf-8", errors="ignore") as _f:
+                _lines = _f.read().splitlines()
+        except OSError:
+            return False
+        if not (0 < ln <= len(_lines)):
+            return False
+        return any(n in _lines[ln - 1] for n in needles)
+
     # 只认两类：整份导出（前兆）与真实外发动作。
     # "遍历全部环境变量"不算导出——构造子进程环境变量（env={**os.environ}）是正常做法；
     # "网络库（常见）"这类 INFO 也不算外发，否则同一个文件里既有 environ 又有 import 就误报。
     _ENV_MSGS = ("整份环境变量导出（外泄前兆）", "整份环境变量复制（外泄前兆）")
     _NET_MSGS = ("POST 数据到外部 URL", "urlopen 网络请求", "向外发请求",
                  "原始 socket 网络连接", "向外发 POST 请求", "发送邮件")
-    env_by_file, net_by_file = {}, {}
+    # 凭证类：单条规则只能说"碰了这个文件"，碰了之后有没有发出去要看同一文件里
+    # 后面还有没有网络动作。evaluate.py 的口径是 R-SEC-09/10（凭证外泄）= CRITICAL，
+    # 这边若只报 HIGH，同一个技能就会被两个引擎判成两个等级。
+    _CRED_MSGS = ("访问 AWS 凭证文件", "访问 SSH 密钥目录", "访问 Git 凭证文件",
+                 "访问 SSH 私钥", "访问 AWS 凭证文件（路径分段拼接）",
+                 "访问 SSH 私钥（路径分段拼接）")
+    env_by_file, net_by_file, cred_by_file = {}, {}, {}
     for f in result.findings:
         if f.message in _ENV_MSGS and _behaviour_line(f.file, f.line):
             env_by_file.setdefault(f.file, []).append(f.line)
         elif f.message in _NET_MSGS and _behaviour_line(f.file, f.line):
             net_by_file.setdefault(f.file, []).append(f.line)
+        elif f.message in _CRED_MSGS and _behaviour_line(f.file, f.line):
+            cred_by_file.setdefault(f.file, []).append(f.line)
+
+    handled = set()
+    # 跨文件：读凭证在一个文件、发出去在另一个文件 —— 单个文件看不出因果，
+    # 但 evaluate.py 的 AST 污点分析把这种情形判 CRITICAL（R-SEC-10 跨文件线性）。
+    # 这里没有污点分析，用"读动作 + 网络 sink 分处两个文件"做保守近似：
+    # 代价只是等级从 C 降到 D（本来两者都阻断发布），换来的是两个引擎对同一技能
+    # 给出同一个结论——不一致本身就是缺陷。
+    _READ_HINTS = ("open(", "read(", "read_text", "Path(", "expanduser", ".load(")
+    for cred_fp, cred_lines in sorted(cred_by_file.items()):
+        read_lines = [ln for ln in cred_lines if _line_has(cred_fp, ln, _READ_HINTS)]
+        if not read_lines:
+            continue
+        for net_fp, net_lines in sorted(net_by_file.items()):
+            if net_fp == cred_fp or net_fp in handled:
+                continue
+            if read_lines and net_lines:
+                result.findings.append(Finding(
+                    severity="CRITICAL", category="exfil",
+                    message="凭证跨文件外发（读取与网络外发分处不同文件，组合判定）",
+                    file=net_fp, line=min(net_lines)
+                ))
+                handled.add(net_fp)
+                break
+
+    # 凭证外泄比环境变量外泄更重：先判，判中就跳过该文件的环境变量合并，
+    # 免得同一份证据被报成两条 CRITICAL（重复计数会虚增发现数）。
+    for fp, cred_lines in sorted(cred_by_file.items()):
+        first_cred = min(cred_lines)
+        if any(ln >= first_cred for ln in net_by_file.get(fp, [])):
+            result.findings.append(Finding(
+                severity="CRITICAL", category="exfil",
+                message="凭证读取后网络外发（凭证文件 + 网络外发同文件，组合判定）",
+                file=fp, line=1
+            ))
+            handled.add(fp)
+
     # 与 evaluate.py R-SEC-21 同序：外发必须发生在导出之后，才构成"导出了又发出去"。
     # 只是同一个文件里先有网络代码、后面才构造环境变量，不构成因果。
     for fp, env_lines in sorted(env_by_file.items()):
+        if fp in handled:
+            continue
         first_env = min(env_lines)
         if any(ln >= first_env for ln in net_by_file.get(fp, [])):
             result.findings.append(Finding(
-                severity="HIGH", category="exfil",
+                severity="CRITICAL", category="exfil",
                 message="环境变量整份外发（导出 + 网络外发同文件，组合判定）",
                 file=fp, line=1
             ))
