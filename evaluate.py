@@ -796,28 +796,35 @@ def evaluate_skill(skill_path):
     elif score >= 60:
         grade = "C"
         emoji = "🥉"
-    else:
+    elif score >= 40:
         grade = "D"
         emoji = "⚠️"
+    else:
+        # 与 action.yml 的 GRADE 表同档：0–39 是 F，不是 D
+        grade = "F"
+        emoji = "⛔"
     
     # 对外唯一分数：一行给完，不分列其他分数
     print(f"  LGD Trust Score: {score}/100  {emoji} {grade}")
     if raw_score != score:
         print(f"  ⛔ 安全否决：原始分 {raw_score} → 封顶 {score}（{veto_level}：{veto_reason}）")
-    # 分数 → 执行权限分档（竞品只给分数，这里给出可直接落地的限权建议）
+    # 评分与授权分离：分数只给风险档位，不签发执行权限。
+    # 此文件是 lgd-gate 自带的评测器副本（与 LGD-Eval 的 skills/lgd-eval/scripts/evaluate.py
+    # 已经分叉，见审计报告"三份评估器、两个哈希"），这里只改输出语义，不做算法同步。
     if score >= 96:
-        gate = "L0 免审批（可直接运行，无需限流）"
+        tier = "T0 风险极低"
     elif score >= 81:
-        gate = "L1 一次性确认（限流 60 次/分）"
+        tier = "T1 风险低"
     elif score >= 51:
-        gate = "L2 人工复核（限流 30 次/分）"
+        tier = "T2 风险中等"
     elif score >= 31:
-        gate = "L3 沙箱运行（每次调用强制确认）"
+        tier = "T3 风险较高"
     elif score >= 11:
-        gate = "L4 隔离环境（仅允许只读调用）"
+        tier = "T4 风险高"
     else:
-        gate = "L5 拒绝执行（需重写后重新评测）"
-    print(f"  🚦 建议执行权限: {gate}")
+        tier = "T5 风险极高"
+    print(f"  🚦 风险档位（仅供参考，不构成授权）: {tier}")
+    print("  🔐 授权状态: NOT_GRANTED（评测只产出结论，不签发执行权限）")
     print(f"  评测耗时: {elapsed:.2f}s")
     print("=" * 70)
     
