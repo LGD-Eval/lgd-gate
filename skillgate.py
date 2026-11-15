@@ -183,22 +183,52 @@ PROMPT_INJECTION_PATTERNS = [
 #   U+E0000–U+E007F  Tags 块，逐字对应 ASCII，屏幕上完全不显示，模型照读
 #   U+200B–U+200F  零宽空格/连接符
 #   U+2060–U+2064  词连接符/不可见运算符
+#
+# 2026-11-15 红队复测（灭类不灭例）：上面三段只覆盖了"Tags 类""零宽类""格式类"三个例，
+# 同一风险类里还有一批能被静默承载的字符完全没被看到——9 类全部漏检。已按"类"补齐，
+# 并给每段一个最小出现次数（min_count）：像软连字符、盲文空白、谚文填充符这类
+# 在正常排版里偶尔出现一次不算攻击，出现≥2 次才报；承载 ASCII 的强载体（Tags 块、
+# 变体选择符补充区、双向控制符、音乐格式控制符）出现 1 个就报。
+# 刻意**不**收 U+FE00–U+FE0F：那是 emoji 的合法变体选择符（"❤️"就含 FE0F），
+# 收进来等于给所有带 emoji 的 README 报 CRITICAL，是拿误报换覆盖。
 INVISIBLE_RANGES = (
-    (0xE0000, 0xE007F, "Unicode Tags 块（隐形承载 ASCII 指令）"),
-    (0x200B, 0x200F, "零宽字符"),
-    (0x2060, 0x2064, "不可见格式字符"),
+    (0xE0000, 0xE007F, "Unicode Tags 块（隐形承载 ASCII 指令）", 1),
+    (0x200B, 0x200F, "零宽字符", 1),
+    (0x2060, 0x2064, "不可见格式字符", 1),
+    (0x061C, 0x061C, "阿拉伯字母标记（控制阅读方向）", 1),
+    (0x202A, 0x202E, "双向控制符（可反转显示顺序）", 1),
+    (0x2066, 0x2069, "双向隔离符", 1),
+    (0xFEFF, 0xFEFF, "零宽不换行空格（BOM 字符）", 1),
+    (0x1D173, 0x1D17A, "音乐符号格式控制符", 1),
+    (0xE0100, 0xE01EF, "变体选择符补充区（隐形承载数据）", 1),
+    (0x00AD, 0x00AD, "软连字符", 2),
+    (0x180E, 0x180E, "蒙古文元音分隔符", 2),
+    (0x2800, 0x2800, "盲文空白", 2),
+    (0x3164, 0x3164, "谚文填充符", 2),
+    (0xFFA0, 0xFFA0, "半角谚文填充符", 2),
 )
 
 
 def invisible_payloads(text):
-    """返回 [(码位, 区间名, 上下文片段)]。同一区间只报一次，避免刷屏。"""
+    """返回 [(码位, 区间名, 上下文片段)]。同一区间只报一次，避免刷屏。
+
+    min_count 语义：该区间字符在全文出现次数达到阈值才报，
+    避免"软连字符出现一次"这种正常排版被当成注入。
+    """
     hits = {}
+    counts = {}
+    first = {}
     for idx, ch in enumerate(text):
         cp = ord(ch)
-        for lo, hi, label in INVISIBLE_RANGES:
+        for lo, hi, label, min_n in INVISIBLE_RANGES:
             if lo <= cp <= hi:
-                hits.setdefault(label, (cp, text[max(0, idx - 20):idx + 20]))
+                counts[label] = counts.get(label, 0) + 1
+                if label not in first:
+                    first[label] = (cp, text[max(0, idx - 20):idx + 20])
                 break
+    for label, n in counts.items():
+        if n >= next(r[3] for r in INVISIBLE_RANGES if r[2] == label):
+            hits[label] = first[label]
     return [(v[0], label, v[1]) for label, v in hits.items()]
 
 # 5.5 数字诚实性规则（防止吹牛）
