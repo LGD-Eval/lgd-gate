@@ -24,7 +24,7 @@ sys.path.insert(0, HERE)
 PIN = {
     "skillgate.py": "ce3f98bbd0dfec40",
     "js_analyzer.py": "97bce99b6ba580aa",
-    "ast_analyzer.py": "2e32b9dbbd76b2d9",
+    "ast_analyzer.py": "535ee7dddacef6d9",
 }
 
 # 同机另两份副本（相对本仓的兄弟目录）。CI 上不存在就跳过比对，但 PIN 不跳过。
