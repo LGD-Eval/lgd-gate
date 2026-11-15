@@ -944,7 +944,8 @@ def _declared_dependency_files(skill_path: Path):
     于是"扫过依赖"这句话在那类仓里其实是"什么都没扫"。
     """
     files = []
-    for name in ("requirements.txt", "pyproject.toml", "package.json"):
+    for name in ("requirements.txt", "pyproject.toml", "package.json",
+                 "package-lock.json", "poetry.lock"):
         p = skill_path / name
         if p.exists():
             files.append(p)
@@ -1045,6 +1046,59 @@ def _deps_from_package_json(text):
     return specs
 
 
+def _deps_from_package_lock(text):
+    """package-lock.json（v2/v3 用 packages，v1 用嵌套 dependencies）。
+
+    清单里的范围只是**声明**，锁文件里才是真正装到机器上的那一个版本。
+    供应链核查要的是后者：声明写 `^4.17.15` 时，实际装的是哪一版只有锁文件知道。
+    """
+    try:
+        data = json.loads(text)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    specs = []
+    pkgs = data.get("packages")
+    if isinstance(pkgs, dict):
+        for path, meta in pkgs.items():
+            if not isinstance(meta, dict) or not path:
+                continue
+            name = meta.get("name") or path.split("node_modules/")[-1]
+            version = str(meta.get("version") or "")
+            if not name or not version:
+                continue
+            specs.append(("%s@%s" % (name, version), bool(meta.get("dev"))))
+    elif isinstance(data.get("dependencies"), dict):
+        for name, meta in data["dependencies"].items():
+            if not isinstance(meta, dict):
+                continue
+            version = str(meta.get("version") or "")
+            if version:
+                specs.append(("%s@%s" % (name, version), bool(meta.get("dev"))))
+    return specs
+
+
+def _deps_from_poetry_lock(text):
+    """poetry.lock 的 [[package]]：锁定后的确切版本。"""
+    try:
+        import tomllib
+    except ImportError:
+        return None
+    try:
+        data = tomllib.loads(text)
+    except Exception:
+        return None
+    specs = []
+    for item in data.get("package") or []:
+        if not isinstance(item, dict):
+            continue
+        name, version = item.get("name"), item.get("version")
+        if name and version:
+            specs.append(("%s==%s" % (name, version), False))
+    return specs
+
+
 def _write_ranged(result, ranged, severity, message_of, file_of):
     if not ranged:
         return
@@ -1069,7 +1123,25 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
             content = dep_file.read_text(encoding="utf-8", errors="replace")
         except Exception:
             continue
-        if dep_file.suffix == ".toml":
+        if dep_file.name == "poetry.lock":
+            specs = _deps_from_poetry_lock(content)
+            if specs is None:
+                unparsed.append(dep_file)
+                continue
+            lines = specs
+            eco = "PyPI"
+            parse = None
+            js = False
+        elif dep_file.name == "package-lock.json":
+            specs = _deps_from_package_lock(content)
+            if specs is None:
+                unparsed.append(dep_file)
+                continue
+            lines = specs
+            eco = "npm"
+            parse = None
+            js = True
+        elif dep_file.suffix == ".toml":
             specs = _deps_from_pyproject(content)
             if specs is None:
                 unparsed.append(dep_file)
@@ -1077,6 +1149,7 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
             lines = specs
             eco = "PyPI"
             parse = _parse_requirement_line
+            js = False
         elif dep_file.name == "package.json":
             specs = _deps_from_package_json(content)
             if specs is None:
@@ -1085,25 +1158,45 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
             lines = specs
             eco = "npm"
             parse = None
+            js = True
         else:
             lines = [(ln, False) for ln in content.splitlines()]
             eco = "PyPI"
             parse = _parse_requirement_line
+            js = False
         for line, is_dev in lines:
-            if parse is None:
-                name, spec = line.split("@", 1) if "@" in line else (line, "")
+            if js:
+                # npm 侧（清单与锁文件）：统一改成 name@version 形状
+                name, spec = (line.rsplit("@", 1) if "@" in line else (line, ""))
                 version, raw = _parse_js_range(spec)
                 if version:
-                    deps.append((name.strip(), version, eco, dep_file))
+                    deps.append((name.strip(), version, eco, dep_file, is_dev))
                 elif raw:
                     (dev_ranged if is_dev else ranged).append(
                         ("%s@%s" % (name.strip(), raw), dep_file))
                 continue
+            if parse is None:
+                # 锁文件（poetry.lock）：已经写死为 name==version
+                name, version = (line.split("==", 1) if "==" in line else ("", ""))
+                if name.strip() and version.strip():
+                    deps.append((name.strip(), version.strip(), eco, dep_file, is_dev))
+                continue
             name, tail = parse(line)
             if name:
-                deps.append((name, tail, eco, dep_file))
+                deps.append((name, tail, eco, dep_file, is_dev))
             elif tail:
                 (dev_ranged if is_dev else ranged).append((tail, dep_file))
+
+    # 同一 (包, 版本, 生态) 只查一次：清单与锁文件会给出重复项
+    seen = set()
+    uniq = []
+    for d in deps:
+        key = (d[0].lower(), d[1], d[2])
+        if key in seen:
+            continue
+        seen.add(key)
+        uniq.append(d)
+    deps = uniq
 
     for f in unparsed:
         result.findings.append(Finding(
@@ -1121,8 +1214,20 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
     if not deps:
         return
 
+    # 上限是性能决定，但不能是沉默的：查了 10 个就说查了 10 个，
+    # 剩下的必须报出来。修复前超出的部分既不查也不说，报告上看起来"已扫完"。
+    CAP = 10
+    if len(deps) > CAP:
+        result.findings.append(Finding(
+            severity="LOW", category="dependency-scan",
+            message="共 %d 个固定版本依赖，本次只查了前 %d 个；其余 %d 个未查漏洞库"
+                    "（上限是性能折中，不代表已扫完）" % (len(deps), CAP, len(deps) - CAP),
+            file=str(deps[CAP][3])
+        ))
+
     # Query OSV.dev for each dependency
-    for name, version, eco, dep_file in deps[:10]:  # limit to 10 deps to avoid timeout
+    for name, version, eco, dep_file, is_dev in deps[:CAP]:  # limit to avoid timeout
+        dev_note = "（开发依赖，不进运行时）" if is_dev else ""
         try:
             payload = json.dumps({
                 "package": {"name": name, "ecosystem": eco},
@@ -1143,15 +1248,16 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
                         else ("%s==%s" % (name, version))
                     for v in vulns[:3]:  # top 3 vulns per dep
                         result.findings.append(Finding(
-                            severity="HIGH", category="dependency-vuln",
-                            message=f"{label}: {v.get('summary', 'known vulnerability')}",
+                            severity="LOW" if is_dev else "HIGH",
+                            category="dependency-vuln",
+                            message=f"{label}{dev_note}: {v.get('summary', 'known vulnerability')}",
                             file=str(dep_file)
                         ))
         except Exception:
             # Offline fallback: just note that we couldn't check
             result.findings.append(Finding(
                 severity="LOW", category="dependency-scan",
-                message=f"无法联网检查 {name} 的已知漏洞",
+                message=f"无法联网检查 {name} 的已知漏洞{dev_note}",
                 file=str(dep_file)
             ))
 

@@ -108,6 +108,57 @@ def test_package_json_dependencies_are_parsed(tmp_path, monkeypatch):
                for f in _deps_findings(skill)), [f.message for f in _deps_findings(skill)]
 
 
+def test_package_lock_resolved_version_is_what_gets_checked(tmp_path, monkeypatch):
+    """声明写 ^4.17.15，锁文件写 4.17.15——查的是装到机器上的那个版本。"""
+    _offline(monkeypatch)
+    lock = ('{"name":"t","lockfileVersion":3,"packages":{'
+            '"":{"name":"t","version":"1.0.0"},'
+            '"node_modules/lodash":{"version":"4.17.15"}}}')
+    skill = _skill(tmp_path / "s", {"package-lock.json": lock})
+    msgs = " ".join(f.message for f in _deps_findings(skill))
+    assert "lodash" in msgs, msgs
+
+
+def test_package_lock_dev_flag_becomes_development_semantics(tmp_path, monkeypatch):
+    _offline(monkeypatch)
+    lock = ('{"lockfileVersion":3,"packages":{'
+            '"node_modules/jest":{"version":"29.0.0","dev":true},'
+            '"node_modules/lodash":{"version":"4.17.15"}}}')
+    skill = _skill(tmp_path / "s", {"package-lock.json": lock})
+    dev = [f for f in _deps_findings(skill) if "jest" in f.message]
+    assert dev and "开发依赖" in dev[0].message, [f.message for f in dev]
+
+
+def test_poetry_lock_packages_are_parsed(tmp_path, monkeypatch):
+    _offline(monkeypatch)
+    lock = '[[package]]\nname = "django"\nversion = "4.2.0"\ndescription = "x"\n'
+    skill = _skill(tmp_path / "s", {"poetry.lock": lock})
+    msgs = " ".join(f.message for f in _deps_findings(skill))
+    assert "django" in msgs, msgs
+
+
+def test_dependency_cap_is_disclosed_not_silent(tmp_path, monkeypatch):
+    """超过查询上限的依赖必须被报出来。
+
+    修复前超出的部分既不查也不说，报告上看起来像"全部扫过"。
+    """
+    _offline(monkeypatch)
+    lines = "\n".join("pkg%02d==1.0.%d" % (i, i) for i in range(13))
+    skill = _skill(tmp_path / "s", {"requirements.txt": lines + "\n"})
+    cap_hits = [f for f in _deps_findings(skill) if "只查了" in f.message]
+    assert cap_hits and "13" in cap_hits[0].message, \
+        [f.message for f in _deps_findings(skill)]
+
+
+def test_manifest_and_lock_deduped(tmp_path, monkeypatch):
+    _offline(monkeypatch)
+    pkg = '{"name":"t","dependencies":{"lodash":"4.17.15"}}'
+    lock = '{"lockfileVersion":3,"packages":{"node_modules/lodash":{"version":"4.17.15"}}}'
+    skill = _skill(tmp_path / "s", {"package.json": pkg, "package-lock.json": lock})
+    hits = [f for f in _deps_findings(skill) if "lodash" in f.message]
+    assert len(hits) == 1, [f.message for f in hits]
+
+
 def test_caret_range_is_undecidable_not_a_fake_version(tmp_path):
     pkg = '{"name":"t","dependencies":{"lodash":"^4.17.15"}}'
     skill = _skill(tmp_path / "s", {"package.json": pkg})
