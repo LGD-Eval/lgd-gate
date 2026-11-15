@@ -178,6 +178,29 @@ PROMPT_INJECTION_PATTERNS = [
     (r"ignore\s+your\s+training", "CRITICAL", "Ignore training"),
 ]
 
+# 5.4 不可见字符承载的指令（CSA 2026-03 报告的 Unicode Tags 注入）
+# 正则看不见它们，所以写在文本规则里等于没有。这里按码位单独扫：
+#   U+E0000–U+E007F  Tags 块，逐字对应 ASCII，屏幕上完全不显示，模型照读
+#   U+200B–U+200F  零宽空格/连接符
+#   U+2060–U+2064  词连接符/不可见运算符
+INVISIBLE_RANGES = (
+    (0xE0000, 0xE007F, "Unicode Tags 块（隐形承载 ASCII 指令）"),
+    (0x200B, 0x200F, "零宽字符"),
+    (0x2060, 0x2064, "不可见格式字符"),
+)
+
+
+def invisible_payloads(text):
+    """返回 [(码位, 区间名, 上下文片段)]。同一区间只报一次，避免刷屏。"""
+    hits = {}
+    for idx, ch in enumerate(text):
+        cp = ord(ch)
+        for lo, hi, label in INVISIBLE_RANGES:
+            if lo <= cp <= hi:
+                hits.setdefault(label, (cp, text[max(0, idx - 20):idx + 20]))
+                break
+    return [(v[0], label, v[1]) for label, v in hits.items()]
+
 # 5.5 数字诚实性规则（防止吹牛）
 HONESTY_PATTERNS = [
     # 注：删除了过宽的 \b\d{3,}\+ 规则（"1000+" "5000+" 等正常能力宣称均误报，
@@ -822,6 +845,21 @@ def scan_md_file(filepath: Path, result: ScanResult):
                 message=msg, file=str(filepath), line=i
             ))
 
+    # 1.5 不可见字符：正则看不见它们，必须按码位扫。
+    #     只在文档类文件（.md/.txt）里查——源码里的零宽字符是编码事故，
+    #     但 SKILL.md 里的隐形段落是给人读不到、给模型读得到的指令通道。
+    if filepath.suffix.lower() in (".md", ".txt", ".markdown"):
+        for cp, label, ctx in invisible_payloads(content):
+            marker = chr(cp)
+            line_no = content[:content.find(marker)].count("\n") + 1
+            if is_suppressed(line_no):
+                continue
+            result.findings.append(Finding(
+                severity="CRITICAL", category="prompt-injection",
+                message="不可见字符承载指令：%s（U+%04X）" % (label, cp),
+                file=str(filepath), line=line_no
+            ))
+
     # 2. Credential / secret patterns（.md 也检查，但过滤占位符与示例值；
     #    跳过 frontmatter 区域避免元数据字段名误报）
     for pattern, severity, msg in CREDENTIAL_PATTERNS:
@@ -1168,6 +1206,47 @@ def find_skill_documents(skill_path: Path) -> list[Path]:
     return docs
 
 
+# 安装期钩子：这些生命周期脚本会在 `npm install` 时自动执行
+INSTALL_HOOKS = ("preinstall", "install", "postinstall", "prepare", "prepublish")
+
+# 远程取码并执行的形态：curl/wget 接管道进 shell，或 PowerShell 的 iex
+REMOTE_EXEC_PATTERNS = (
+    r"curl[^|]*\|\s*(?:sudo\s+)?(?:sh|bash|zsh)",
+    r"wget[^|]*\|\s*(?:sudo\s+)?(?:sh|bash|zsh)",
+    r"\b(?:sh|bash|zsh)\s+<\(\s*(?:curl|wget)",
+    r"(?:iwr|invoke-webrequest|curl)[^;]*\|\s*(?:iex|invoke-expression)",
+    r"\bnode\s+-e\b",
+)
+
+
+def scan_package_install_scripts(pkg_file: Path, result: ScanResult):
+    """package.json 的安装钩子里出现远程取码执行 → CRITICAL。
+
+    只判"取远程代码并执行"这一类，不把所有 postinstall 都算风险：
+    本地脚本（node ./scripts/x.mjs）是正常构建动作，报了就是误伤。
+    """
+    try:
+        pkg = json.loads(pkg_file.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, ValueError):
+        return
+    scripts = pkg.get("scripts") or {}
+    if not isinstance(scripts, dict):
+        return
+    for hook in INSTALL_HOOKS:
+        cmd = scripts.get(hook)
+        if not isinstance(cmd, str) or not cmd.strip():
+            continue
+        low = cmd.lower()
+        for pat in REMOTE_EXEC_PATTERNS:
+            if re.search(pat, low):
+                result.findings.append(Finding(
+                    severity="CRITICAL", category="supply-chain",
+                    message="安装钩子 %s 在执行期从远程取代码并运行：%s" % (hook, cmd[:80]),
+                    file=str(pkg_file), line=1
+                ))
+                break
+
+
 def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
     skill_path = Path(skill_dir).resolve()
     if not skill_path.is_dir():
@@ -1271,6 +1350,15 @@ def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
         if should_exclude(md_file):
             continue
         scan_md_file(md_file, result)
+        result.files_scanned += 1
+
+    # 安装期脚本：package.json 的 postinstall 是一条装载代码的执行通道。
+    # OWASP AST02 与 arXiv 2601.10338 都把它列为供应链风险的典型形态；
+    # 修复前实测 curl | sh 的 postinstall 样本在本引擎拿 100/A+（完全放行）。
+    for pkg_file in skill_path.rglob("package.json"):
+        if should_exclude(pkg_file):
+            continue
+        scan_package_install_scripts(pkg_file, result)
         result.files_scanned += 1
 
     # Scan dependencies for known vulnerabilities
