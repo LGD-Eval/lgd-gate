@@ -374,6 +374,42 @@ EXFIL_PATTERNS = [
     (r"\bsocket\.socket\(", "MEDIUM", "原始 socket 网络连接"),
 ]
 
+# ------------------------------------------------------------------
+# 规则表接线声明（2026-11-15）
+#
+# AUTH_PATTERNS 被查出"从定义起就没被任何循环引用"之后，静态核对发现同类问题
+# 不止一张：EXFIL / LICENSE / QUALITY / VALIDATION 四张表同样零引用。
+# 死规则表比错规则更危险——错规则至少会响，死规则让"我们能检出 X"变成一句空话。
+#
+# 从此每张表必须落到两类之一，二选一都要写明理由：
+#   ACTIVE_RULE_TABLES —— 扫描循环真的在读（tests/test_rule_table_wiring.py 会核）
+#   RULE_TABLES_DECLARED_OFF —— 有意关闭，且必须给理由，不能只留空表
+# 新增规则表而不登记，守卫测试直接红。
+# ------------------------------------------------------------------
+ACTIVE_RULE_TABLES = (
+    "DANGEROUS_CODE_PATTERNS",
+    "NETWORK_PATTERNS",
+    "CREDENTIAL_PATTERNS",
+    "FILESYSTEM_PATTERNS",
+    "EXCESSIVE_AGENCY_PATTERNS",
+    "HONESTY_PATTERNS",
+    "AUTH_PATTERNS",
+    "PROMPT_INJECTION_PATTERNS",
+    "INSTALL_HOOKS",
+    "REMOTE_EXEC_PATTERNS",
+)
+
+RULE_TABLES_DECLARED_OFF = {
+    "EXFIL_PATTERNS": "独有规则已并入 NETWORK_PATTERNS，保留此表仅为兼容旧引用",
+    "LICENSE_PATTERNS": ("未接入：扫描对象是技能仓，README 里提到 GPL/AGPL 属于叙述，"
+                         "按行报会把许可证讨论一律打成分；许可证判断走仓库级 LICENSE 文件核对，不走行级正则"),
+    "QUALITY_PATTERNS": ("未接入：TODO/FIXME/print 属风格噪声，不是安全信号；"
+                         "接进来会把每个正常仓库都降一档，与「检出风险」这一声称无关"),
+    "VALIDATION_PATTERNS": ("未接入：request.args/input/sys.argv 是常规入口，单看入口判不出未校验；"
+                            "真正的注入判断在 DANGEROUS_CODE_PATTERNS 与 AST 层"),
+}
+
+
 FRONTMATTER_REQUIRED_FIELDS = ["name", "description"]
 FRONTMATTER_OPTIONAL_FIELDS = ["version", "license", "author", "tags"]
 
