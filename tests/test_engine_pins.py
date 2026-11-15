@@ -22,7 +22,7 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, HERE)
 
 PIN = {
-    "skillgate.py": "85e20c3d399fd9df",
+    "skillgate.py": "1e4822f51ce25e23",
     "js_analyzer.py": "97bce99b6ba580aa",
 }
 
