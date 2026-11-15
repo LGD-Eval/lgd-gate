@@ -14,7 +14,7 @@ import os
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 CANONICAL_SOURCE = "LGD-Eval/skills/lgd-eval/scripts/evaluate.py"
-PINNED_SHA256 = "c33039a611781ba6bbc5d3519000118eb8b7efec3929a02f1f484d5b054a5e3c"
+PINNED_SHA256 = "fab359a90119570a4e1a9d82b0160e75b6694e0567408a5430647b4379ee7850"
 
 
 def _sha256(path):

@@ -60,3 +60,18 @@ def test_fixture_sample_is_exempt_but_counted():
         out = _run(td)
         assert "豁免" in out, "夹具豁免也必须落账"
         assert "tests/sample.py" in out
+
+
+def test_exempted_hits_are_listed_one_by_one():
+    """外部席当场问了这一条：夹具里的真凭证会不会被吞掉、且看不出来。
+
+    答案是"会被豁免"。既然豁免不取消，就让它**看得见**：每一条被豁免的命中
+    都要带 file:line 与规则号逐条列出，末尾还要写"这条路下真凭证不会报错"。
+    条数不够看不是理由——看不见才是。
+    """
+    with tempfile.TemporaryDirectory() as td:
+        _mk(td, "tests/sample.py", 'TOKEN = "%s"\n' % CRED)
+        out = _run(td)
+        assert "tests/sample.py:1" in out, "被豁免的命中必须带行号逐条列出：%r" % out[-300:]
+        assert "R-SEC-01" in out, "列出时必须带规则号，否则人无法判断该不该放过"
+        assert "不会报错" in out, "必须在清单后明写这条路的风险，不许让读者以为彻底安全"
