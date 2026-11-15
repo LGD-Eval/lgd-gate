@@ -66,12 +66,13 @@
 
 ## Publication checklist (requires approval) / 发布清单（需批准）
 
-**EN** — In this order, none of which I will execute without a separate go-ahead:
+**EN** — In this order, none of which I will execute without a separate go-ahead. Steps 0–1 come first because they address claims that are already public, and a new release does not retract them by itself:
 
-1. Edit the **already-published `v1.1.0` release body** to retract the `L0 free-run` claim and point to `MIGRATION.md`. This is a write on shared state.
+0. **Merge the branch** (so the corrected READMEs on `main` stop saying `分数决定权限` / `免审批直接执行` — both main READMEs still carry it today).
+1. **Publish `docs/AMENDMENT_v1.1.0.md`** and prepend its one-line note to the **already-published `v1.1.0` release body**; also rewrite the two repository descriptions that repeat the claim (`lgd-gate`: "One score, one permission tier"; `LGD-Eval`: "a score that ends in a permission decision"). All three are writes on shared state.
 2. Tag **`v2.0.0`** (immutable) and move the rolling **`v2`** alias to it; keep `v1` / `v1.1.0` frozen, never force-pushed.
 3. Publish these notes as the `v2.0.0` release body.
 4. Only after the tag exists, switch README pins from `@v1` to `@v2` (3 places: `lgd-gate/README.md`, `LGD-Eval/README.md`, `LGD-Eval` docs) — pointing at `@v2` before the tag exists would 404.
 5. Announce the `tier` semantics change wherever the Action is listed.
 
-**中文** — 五步，顺序不能乱：先改已发布的 `v1.1.0` 说明撤回"L0 自由运行"那句（这是对共享状态的写入）；再打不可变 `v2.0.0` 并把滚动 `v2` 别名移过去，`v1`/`v1.1.0` 冻结、绝不强推；然后把这版说明作为 `v2.0.0` 发布正文；标签存在后，才把 README 里的 `@v1` 改成 `@v2`（三处，提前改会 404）；最后在 Action 出现的所有位置公告 `tier` 语义变更。
+**中文** — 六步，顺序不能乱。第 0–1 步排在最前，因为它们处理的是**已经公开**的主张，发一个新版本本身并不能把它们收回：先合并分支（两个仓 main 上的 README 今天还在写"分数决定权限"/"免审批直接执行"）；再发布 `docs/AMENDMENT_v1.1.0.md` 并把那一行更正加到已发布的 `v1.1.0` 正文首行，同时改掉重复这句话的两处仓库简介（这三处都是对共享状态的写入）；然后打不可变 `v2.0.0` 并移 `v2` 别名，`v1`/`v1.1.0` 冻结、绝不强推；然后把这版说明作为 `v2.0.0` 正文；标签存在后才改 README 的 `@v1`→`@v2`（提前改会 404）；最后公告 `tier` 语义变更。

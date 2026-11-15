@@ -91,6 +91,18 @@ def test_release_notes_exist_and_are_marked_draft():
     assert "retract" in body.lower() or "撤回" in body
 
 
+def test_amendment_exists_and_retracts_the_public_claim():
+    """已发布的 v1.1.0 正文承诺过"分数映射执行档位"，更正必须成文。"""
+    path = os.path.join(HERE, "docs", "AMENDMENT_v1.1.0.md")
+    assert os.path.exists(path), "缺少 v1.1.0 更正说明"
+    body = open(path, encoding="utf-8").read()
+    assert "free-run" in body and "3bff151" in body
+    # 更正范围必须点明 v1 冻结、不强推——读者要能判断自己装的是哪一版
+    assert "frozen" in body.lower() or "冻结" in body
+    # 未获批准前不得声称已发布
+    assert "DRAFT" in body
+
+
 def test_readme_pin_matches_the_published_major():
     """README 里的 @vN 必须指向已存在的标签；v2 未发布前仍应是 @v1。"""
     body = _read("README.md")
