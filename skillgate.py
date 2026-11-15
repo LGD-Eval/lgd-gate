@@ -110,6 +110,11 @@ NETWORK_PATTERNS = [
     (r"\bdict\s*\(\s*os\.environ\b", "MEDIUM", "整份环境变量导出（外泄前兆）"),
     (r"\bos\.environ\.copy\s*\(", "MEDIUM", "整份环境变量复制（外泄前兆）"),
     (r"\bin\s+os\.environ\.items\s*\(", "MEDIUM", "遍历全部环境变量"),
+    # 2026-11-15 类覆盖：上一轮只认"打包成 dict/copy/items"三种形状，直接打印、
+    # 直接塞进子进程 env、直接 json 序列化三种同样把全量环境变量抖出去的写法放行。
+    (r"print\s*\(\s*os\.environ", "MEDIUM", "打印全部环境变量"),
+    (r"env\s*=\s*(?:dict\s*\(\s*)?os\.environ", "INFO", "全量环境变量传入子进程（默认继承行为，仅在与外发组合时才是信号）"),
+    (r"json\.dumps?\s*\([^\n]*os\.environ", "MEDIUM", "环境变量序列化（外泄前兆）"),
 ]
 
 # 3. Credential / secret access
@@ -122,6 +127,21 @@ CREDENTIAL_PATTERNS = [
      "INFO", "从环境变量读凭证（安全做法）"),
     (re.compile(r"~\.ssh/", re.IGNORECASE),
      "HIGH", "访问 SSH 密钥目录"),
+
+    # 2026-11-15 类覆盖（灭类不灭例）：凭证这一类原先只认"字段名 + 冒号 + 长字符串"一种形状。
+    # 10 种真实凭证形态里 8 种放行——AWS、GitHub PAT、Slack、Google、Stripe、私钥块、
+    # 带口令的数据库 DSN、Azure 存储密钥，全是"没有字段名也一眼能认"的硬凭证。
+    # 按前缀/形状认，比按变量名认可靠。
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "CRITICAL", "AWS Access Key ID"),
+    (re.compile(r"\bASIA[0-9A-Z]{16}\b"), "CRITICAL", "AWS 临时访问密钥 ID"),
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"), "CRITICAL", "GitHub 令牌"),
+    (re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}\b"), "CRITICAL", "Slack 令牌"),
+    (re.compile(r"\bAIza[0-9A-Za-z_\-]{35}\b"), "CRITICAL", "Google API Key"),
+    (re.compile(r"\b[sr]k_live_[0-9A-Za-z]{20,}\b"), "CRITICAL", "Stripe 线上密钥"),
+    (re.compile(r"-----BEGIN[ A-Z]*PRIVATE KEY-----"), "CRITICAL", "私钥块"),
+    (re.compile(r"\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis|amqp)://[^:\s/]+:[^@\s]{3,}@",
+                re.IGNORECASE), "CRITICAL", "带口令的连接串"),
+    (re.compile(r"AccountKey\s*=\s*[A-Za-z0-9+/]{20,}={0,2}"), "CRITICAL", "Azure 存储账户密钥"),
     (re.compile(r"\.aws/credentials", re.IGNORECASE),  # skillgate: ignore
      "HIGH", "访问 AWS 凭证文件"),
     # 路径分段拼接：os.path.join(home, ".aws", "credentials") 是恶意包最常见的写法，
@@ -150,6 +170,13 @@ FILESYSTEM_PATTERNS = [
     (r"\bos\.remove\s*\(", "INFO", "os.remove 删除文件（常见）"),
     (r"\bos\.rmdir\s*\(", "INFO", "os.rmdir 删除目录（常见）"),
     (r"\bos\.unlink\s*\(", "MEDIUM", "os.unlink 删除文件"),
+    # 2026-11-15 类覆盖（灭类不灭例）：同一类"批量删除"里另有两条被放行——
+    # pathlib 的 rglob 循环 unlink、以及 Windows 侧 Remove-Item -Recurse。
+    # 只在 POSIX 语境测过，Windows 上的等价写法等于没被看见。
+    (r"(?:rglob|glob)\s*\([^)]*\)[^\n]*(?:unlink|remove|rmdir)",
+     "MEDIUM", "通配递归删除（pathlib/glob）"),
+    (r"remove-item[^\n]*-recurse", "HIGH", "PowerShell 递归删除"),
+    (r"del\s+/[sfq][^\n]*[/]s", "HIGH", "cmd 递归删除（del /s）"),
     (r"\bopen\s*\([^)]*['\"]/etc/", "HIGH", "写入 /etc/ 系统目录"),
     (r"\bopen\s*\([^)]*['\"]C:\\\\Windows\\\\", "HIGH", "写入 Windows 系统目录"),
     (r"\bopen\s*\([^)]*['\"]/System/", "HIGH", "写入 macOS 系统目录"),
@@ -312,6 +339,16 @@ QUALITY_PATTERNS = [
 AUTH_PATTERNS = [
     (r"\bauth\s*=\s*None\b", "MEDIUM", "认证被禁用"),
     (r"\bverify\s*=\s*False\b", "HIGH", "SSL 验证被禁用"),
+    # 2026-11-15 类覆盖（灭类不灭例）：关 TLS 校验这一类原先只认 requests 的 verify=False。
+    # 7 种真实写法里 4 种放行——ssl.unverified 上下文、CERT_NONE、Node 的
+    # rejectUnauthorized、以及用环境变量关掉整个进程的校验。按语言/容器各补一条。
+    (r"ssl\._create_unverified_context\s*\(", "HIGH", "SSL 校验关闭（unverified context）"),
+    (r"verify_mode\s*=\s*(?:ssl\.)?CERT_NONE", "HIGH", "SSL 校验关闭（CERT_NONE）"),
+    (r"check_hostname\s*=\s*False", "HIGH", "SSL 主机名校验关闭"),
+    (r"rejectUnauthorized\s*:\s*false", "HIGH", "Node TLS 校验关闭（rejectUnauthorized）"),
+    (r"NODE_TLS_REJECT_UNAUTHORIZED[^\n]{0,20}['\"]?\s*=?\s*['\"]?0", "HIGH", "Node TLS 校验关闭（环境变量）"),
+    (r"PYTHONHTTPSVERIFY[^\n]{0,20}['\"]?\s*=?\s*['\"]?0", "HIGH", "进程级 TLS 校验关闭（环境变量）"),
+    (r"CURL_CA_BUNDLE\s*=\s*['\"]{2}|GIT_SSL_NO_VERIFY", "HIGH", "TLS 校验关闭（环境变量）"),
     (r"\bALLOW_ALL\b", "HIGH", "允许所有访问"),
     (r"\bCORS.*\*\b", "MEDIUM", "CORS 允许所有来源"),
     (r"\bpassword\s*=\s*['\"][^'\"]+['\"]", "CRITICAL", "硬编码密码"),
@@ -808,6 +845,63 @@ def scan_python_file(filepath: Path, result: ScanResult):
                 result.findings.append(Finding(
                     severity=severity, category="filesystem",
                     message=msg, file=str(filepath), line=i
+                ))
+
+    # 4.5 Auth / TLS 类（AUTH_PATTERNS）
+    #     2026-11-15 类覆盖时发现：这张表自建立起就没被任何扫描循环引用过，
+    #     是死代码。于是 "verify=False / CERT_NONE / rejectUnauthorized:false"
+    #     这些声称"能检出 TLS 校验关闭"的规则，实际上一条都没生效——
+    #     7 种写法里只有 3 种被别的规则（network 的通用 INFO）顺带撞上。
+    #     接进来，并给独立 category，避免和 network 的通用命中混在一起。
+    for pattern, severity, msg in AUTH_PATTERNS:
+        for i, line in enumerate(lines, 1):
+            if is_comment_line(line):
+                continue
+            if is_suppressed(i):
+                continue
+            # TLS 环境变量名本身写在字符串里（os.environ['PYTHONHTTPSVERIFY']），
+            # code_lines 会把字符串剥掉，所以这一组对原始行判；
+            # 同时必须绕开规则定义行，否则扫描器扫自己的规则表就自命中。
+            if is_rule_literal_line(line):
+                continue
+            if re.search(pattern, line, re.IGNORECASE):
+                result.findings.append(Finding(
+                    severity=severity, category="auth",
+                    message=msg, file=str(filepath), line=i
+                ))
+
+    # 4.6 跨行"通配 + 删除"组合
+    #     pathlib 的 rglob 循环里 unlink 是两行三行分开写的，单行正则永远看不到它们
+    #     在一起。按"同一文件内同时出现"判，才抓到这一类。
+    _has_glob = re.search(r"\b(?:rglob|glob)\s*\(", content)
+    _has_del = re.search(r"(?:unlink|rmtree|rmdir|remove)\s*\(", content)
+    if _has_glob and _has_del:
+        _ln = content[:_has_del.start()].count("\n") + 1
+        result.findings.append(Finding(
+            severity="MEDIUM", category="filesystem",
+            message="通配遍历 + 删除组合（可能批量清除）",
+            file=str(filepath), line=_ln
+        ))
+
+    # 4.7 写在字符串里的 shell 删除命令
+    #     code_lines 会把字符串剥掉，于是 os.system("Remove-Item -Recurse …") 这种
+    #     "把危险命令当字符串传下去"的写法被剥离后看不见。这里对原始行再看一遍。
+    _SHELL_DEL = (
+        (r"remove-item[^\n]*-(?:recurse|force)[^\n]*", "HIGH", "PowerShell 递归删除（字符串内）"),
+        (r"\brd\s+/s\b|\brmdir\s+/s\b", "HIGH", "cmd 递归删除目录（字符串内）"),
+        (r"\bdel\s+/[sfq][^\n]*/s\b", "HIGH", "cmd 递归删除文件（字符串内）"),
+        (r"\brm\s+-rf?\s+(?:/|~|\*)[^\n]*", "HIGH", "rm -rf 删除根/家目录/通配（字符串内）"),
+    )
+    for _pat, _sev, _msg in _SHELL_DEL:
+        for i, line in enumerate(lines, 1):
+            if is_comment_line(line) or is_suppressed(i):
+                continue
+            if is_rule_literal_line(line):
+                continue  # 规则定义行（本文件里的模式字面量）不自命中
+            if re.search(_pat, line, re.IGNORECASE):
+                result.findings.append(Finding(
+                    severity=_sev, category="dangerous-shell",
+                    message=_msg, file=str(filepath), line=i
                 ))
 
     # 5. Excessive agency patterns
