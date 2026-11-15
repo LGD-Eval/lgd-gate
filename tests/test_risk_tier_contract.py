@@ -67,7 +67,34 @@ def test_action_declares_risk_tier_and_never_grants():
 
 
 def test_readme_does_not_reissue_permission():
-    for name in ("README.md",):
-        body = _read(name)
-        for bad in ("L0 免审批", "免审批直接执行", "分数决定权限"):
-            assert bad not in body, "%s 仍含旧表述：%s" % (name, bad)
+    body = _read("README.md")
+    for bad in ("L0 免审批", "免审批直接执行", "分数决定权限"):
+        assert bad not in body, "README.md 仍含旧表述：%s" % bad
+
+
+def test_deprecation_schedule_is_anchored_to_publication():
+    """排期不能挂在"今天"，只能挂发布日——否则写下的日期是假的。"""
+    body = _read("MIGRATION.md")
+    for milestone in ("`W`", "`W+90d`", "`W+180d`"):
+        assert milestone in body, "MIGRATION.md 缺少里程碑 %s" % milestone
+    assert "publication" in body.lower() or "发布日" in body
+
+
+def test_release_notes_exist_and_are_marked_draft():
+    """发布说明必须先成稿；未获批准前不得声称已发布。"""
+    path = os.path.join(HERE, "docs", "RELEASE_NOTES_v2.0.0_DRAFT.md")
+    assert os.path.exists(path), "缺少 v2.0.0 发布说明草稿"
+    body = open(path, encoding="utf-8").read()
+    assert "DRAFT" in body
+    # 必须点明旧版本曾公开声称分数决定权限，并撤回这句
+    assert "v1.1.0" in body
+    assert "retract" in body.lower() or "撤回" in body
+
+
+def test_readme_pin_matches_the_published_major():
+    """README 里的 @vN 必须指向已存在的标签；v2 未发布前仍应是 @v1。"""
+    body = _read("README.md")
+    assert "LGD-Eval/lgd-gate@v1" in body
+    assert "LGD-Eval/lgd-gate@v2" not in body, (
+        "v2.0.0 标签尚未发布，README 不应提前指向 @v2（会 404）"
+    )
