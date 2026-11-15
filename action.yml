@@ -82,13 +82,12 @@ runs:
         SCORE=$(grep -o 'Trust Score: [0-9]*' "$RUNNER_TEMP/lgd-eval.log" | head -1 | grep -o '[0-9]*')
         SCORE=${SCORE:-0}
 
-        if   [ "$SCORE" -ge 90 ]; then GRADE="A+"
-        elif [ "$SCORE" -ge 80 ]; then GRADE="A"
-        elif [ "$SCORE" -ge 70 ]; then GRADE="B"
-        elif [ "$SCORE" -ge 60 ]; then GRADE="C"
-        elif [ "$SCORE" -ge 40 ]; then GRADE="D"
-        else                           GRADE="F"
-        fi
+        # 等级不在这里重算，从评测器自己的输出里取。
+        # 曾经这里有一份独立映射（<40 记 F），而 evaluate.py 只发 A+/A/B/C/D——
+        # 同一个 12 分，工具说 D、Action 说 F，对外两个等级都出现过。
+        # 判定只能有一个来源，否则「徽章/等级与实际一致」这条永远说不清。
+        GRADE=$(awk '/Trust Score: [0-9]+[0-9]*\/100/ {print $NF; exit}' "$RUNNER_TEMP/lgd-eval.log")
+        GRADE=${GRADE:-?}
 
         # 评分与授权分离：TIER 是风险档位，不是执行许可；授权恒为 NOT_GRANTED。
         if   [ "$SCORE" -ge 96 ]; then TIER="T0"; SUGGEST="风险极低（仅供参考）"
