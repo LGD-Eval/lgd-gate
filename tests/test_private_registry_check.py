@@ -64,6 +64,20 @@ def test_occupied_name_is_at_risk():
     assert prc.verdict(rows)[0] == "AT RISK"
 
 
+def test_at_risk_outranks_unverified_and_unknown():
+    """混合清单的优先级：已经确认被占，不能因为还有没核到的就降级成 NOT VERIFIED。
+
+    真实场景：一轮 20 个名字，5 个联网核到被占、15 个因限流没核。
+    若结论落到 NOT VERIFIED，读的人会以为"只是没查"，而事实上已经有人抢注了。
+    """
+    taken = prc.run(["acme"], fetcher=_taken, live=True)
+    unchecked = prc.run(["other"], live=False)
+    unknown = prc.run(["third"], fetcher=_500, live=True)
+    for extra in (unchecked, unknown):
+        verdict, _ = prc.verdict(taken + extra)
+        assert verdict == "AT RISK", "已确认被占时不得降级为 %s" % verdict
+
+
 def test_empty_inventory_is_empty_not_clear():
     assert prc.verdict([])[0] == "EMPTY"
 
