@@ -60,3 +60,26 @@ def test_audit_no_longer_hardcodes_ninety():
     """字面量 90 不许再出现在退出码里（豁免只给规则定义行与夹具，不给门槛）。"""
     src = open(os.path.join(HERE, "lgd_audit.py"), encoding="utf-8").read()
     assert "score >= 90" not in src, "lgd_audit 又把门槛写死了；应走 _ci_threshold()"
+
+
+def test_grade_ladder_exists_in_one_function_only():
+    """刻度只许有一份实现，其余模块必须委托。
+
+    此前在 13 个边界点上验过"四份刻度一致"，但一致不等于同源——
+    改一次刻度、另外三份不动，Web/MCP 会继续发旧字母，而没有任何测试会红。
+    所以这里不比数值，比"谁拥有刻度"。
+    """
+    owners = []
+    for fn in ("evaluate.py", "skillgate.py", "lgd_web.py", "eval_mcp.py", "lgd_mcp_server.py"):
+        src = open(os.path.join(HERE, fn), encoding="utf-8").read()
+        if "if s >= 90:" in src or "if score >= 90:" in src:
+            owners.append(fn)
+    # 允许两个持有者：evaluate 是评测器的刻度，skillgate 是单文件分发、不能反向依赖评测器。
+    # 其余（Web / MCP / 直属脚本）必须委托，否则就是第三、第四份。
+    assert set(owners) <= {"evaluate.py", "skillgate.py"}, (
+        "等级阶梯被不该持有的模块实现：%r" % [x for x in owners
+                                            if x not in ("evaluate.py", "skillgate.py")])
+    for fn in ("lgd_web.py", "eval_mcp.py"):
+        src = open(os.path.join(HERE, fn), encoding="utf-8").read()
+        assert "grade_for" in src, "%s 没有委托 evaluate.grade_for" % fn
+

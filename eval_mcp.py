@@ -181,20 +181,14 @@ def score_eco(root):
 def grade_of(s):
     """只返回字母。此前把 🏆/🥇/🥈/🥉 拼进等级字符串，下游拿 grade == "C" 比较必然失配。
 
-    等级刻度与 evaluate.grade_for / skillgate.grade_from_score 同一张表，
-    tests/test_grade_single_source.py 在边界值上逐点比对，防止四处漂移。
+    刻度本身不再由本文件实现：委托 evaluate.grade_for。同表不等于同一来源——
+    §3n 里 Web 那份已经改成委托，这份留着的第四份属同一类问题（一个判断两处实现）。
     """
-    if s >= 90:
-        return "A+"
-    if s >= 80:
-        return "A"
-    if s >= 70:
-        return "B"
-    if s >= 60:
-        return "C"
-    if s >= 40:
-        return "D"
-    return "F"
+    try:
+        from evaluate import grade_for
+        return grade_for(s)[0]
+    except Exception:  # 极端情况下（evaluate 缺失）仍给一个字母，但不假装是评测器的答案
+        return "?"
 
 
 def main():
