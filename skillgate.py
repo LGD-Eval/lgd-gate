@@ -1319,7 +1319,12 @@ def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
     result = ScanResult(skill_dir=str(skill_path))
 
     # Default excluded directories
-    DEFAULT_EXCLUDES = {"tests", "test", "docs", "doc", ".git", "__pycache__", "node_modules", "._test_scratch", "_backup"}
+    # 故意投毒的检测夹具目录：评测器（evaluate.py）早就跳过它们，gate 不跳，
+    # 结果就是"安全工具扫自己得 0/F"——那是对外最难解释的一种自相矛盾。
+    DEFAULT_EXCLUDES = {"tests", "test", "docs", "doc", ".git", "__pycache__",
+                        "node_modules", "._test_scratch", "_backup",
+                        "_demo", "demo", "samples", "benchmarks", "corpus",
+                        "fixtures", "testdata", "red-team"}
 
     # 显式排除（--exclude）：用于把"故意投毒的检测夹具"排除出发布门禁，
     # 同时把排除项写进结果里，保证别人能复现"我到底扫了什么"。
@@ -1398,6 +1403,18 @@ def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
             except Exception:
                 pass
             result.files_scanned += 1
+
+    # 夹具目录只豁免"语义规则"，不豁免"隐形字符"：
+    # 默认排除（_demo/samples/fixtures…）是必要的，否则安全工具扫自己得 0/F；
+    # 但它同时是一条规避通道——把载荷放进叫 demo 的目录就没人看。
+    # 实测证据：audit2/probe/_evasion-demo 的 Tags 载荷修复前两引擎均无否决。
+    # 干净夹具里不会有不可见字符，所以这里报出来的一定是有人放进去的。
+    for any_file in skill_path.rglob("*"):
+        if not any_file.is_file() or any_file.suffix.lower() not in (
+                ".md", ".markdown", ".txt", ".json", ".yaml", ".yml"):
+            continue
+        if should_exclude(any_file):
+            scan_invisible_file(any_file, result)
 
     # Scan all Markdown files (excluding already-scanned skill docs)
     for md_file in skill_path.rglob("*.md"):
@@ -1799,7 +1816,8 @@ def main():
     scan_parser.add_argument("--lenient", action="store_true",
                              help="宽松模式：所有规则降一级别（减少误报）")
     scan_parser.add_argument("--exclude", nargs="*", default=[], metavar="PATH",
-                             help="显式排除的路径（相对 skill_dir），如 _demo；"
+                             action="extend",
+                             help="显式排除的路径（相对 skill_dir），如 _demo；可重复指定，"
                                   "排除项会记入结果，用于复现")
 
     # Quickstart subcommand

@@ -257,7 +257,8 @@ def main(argv=None):
 
     p_sign = sub.add_parser("sign", help="用 SSH 私钥对记录做分离签名")
     p_sign.add_argument("path")
-    p_sign.add_argument("-f", "--key", required=True, help="SSH 私钥，例如 ~/.ssh/id_ed25519")
+    p_sign.add_argument("-f", "--key", required=True,
+                        help="SSH 私钥，例如 ~/.ssh/id_ed25519")  # skillgate: ignore — 帮助文本，非读取行为
     p_sign.add_argument("--namespace", default=SIG_NAMESPACE)
 
     p_ver = sub.add_parser("verify", help="用 allowed_signers 验签")
