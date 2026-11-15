@@ -45,7 +45,20 @@ def test_locked_file_is_disclosed(tmp_path):
         ["powershell", "-NoProfile", "-Command",
          "$f=[IO.File]::Open('%s','Open','Read','None'); Start-Sleep -Seconds 8" % str(f)])
     try:
-        time.sleep(2.5)
+        # 等锁"真的生效"再扫，而不是 sleep 一个猜出来的秒数：
+        # powershell 冷启动在负载高时会超过 2.5 s，锁还没加上就先扫了，
+        # 这条测试就会以"引擎没披露"的假象变红（装置自错第 15 次，只落在测试里）。
+        deadline = time.time() + 15
+        locked = False
+        while time.time() < deadline:
+            try:
+                with open(f, "rb"):
+                    pass
+            except PermissionError:
+                locked = True
+                break
+            time.sleep(0.25)
+        assert locked, "锁没加上（powershell 很可能没起来），本用例无效，不能判引擎"
         found = _unreadable(sg.scan_skill(str(d)).findings)
         assert found and found[0].severity == "MEDIUM", "被独占锁定的文件未被披露"
     finally:

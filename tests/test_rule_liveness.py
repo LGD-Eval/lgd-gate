@@ -31,7 +31,7 @@ EXPECTED_COUNTS = {
     "PROMPT_INJECTION_PATTERNS": 27,
     "REMOTE_EXEC_PATTERNS": 11,
     "HONESTY_PATTERNS": 2,
-    "DANGEROUS_CODE_PATTERNS": 34,
+    "DANGEROUS_CODE_PATTERNS": 41,
     "INSTALL_HOOKS": 7,
 }
 
@@ -42,6 +42,14 @@ def _patterns(name):
     for entry in table:
         out.append(entry[0] if isinstance(entry, (list, tuple)) else entry)
     return out
+
+
+# 取样器处理不了负向前瞻/条件断言这类非常规语法，会给出一条**反例**样例。
+# 这类规则必须由人给一条正例见证（写在这里，测试照旧校验它能被匹配）。
+HANDWRITTEN_WITNESS = {
+    # §3bd：断言在括号内——SafeLoader 不该命中，没写 Loader 的应当命中
+    r"\byaml\.load\s*\((?![^)]*Loader\s*=\s*[^)]*SafeLoader)": "yaml.load(payload)\n",
+}
 
 
 def test_table_sizes_are_pinned():
@@ -61,7 +69,7 @@ def test_every_pattern_has_a_witness():
             except re.error as e:
                 bad.append("%s 编译失败 %r：%s" % (name, pat[:50], e))
                 continue
-            w = sample_for(pat)
+            w = HANDWRITTEN_WITNESS.get(pat) or sample_for(pat)
             if not rx.search(w):
                 bad.append("%s 无见证 %r（样例 %r）" % (name, pat[:50], w[:30]))
     assert not bad, "\n".join(bad[:10])
