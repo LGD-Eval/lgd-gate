@@ -944,7 +944,7 @@ def _declared_dependency_files(skill_path: Path):
     于是"扫过依赖"这句话在那类仓里其实是"什么都没扫"。
     """
     files = []
-    for name in ("requirements.txt", "pyproject.toml"):
+    for name in ("requirements.txt", "pyproject.toml", "package.json"):
         p = skill_path / name
         if p.exists():
             files.append(p)
@@ -1002,16 +1002,68 @@ def _deps_from_pyproject(text):
     return specs
 
 
+def _parse_js_range(spec):
+    """npm 版本说明 → (精确版本, 原始说明)。
+
+    `^1.2.3` / `~1.2.3` / `>=1.2.3` 都不是"就是这个版本"，
+    与 Python 侧同理：只查能得到确切版本的，其余报"无法判定"，不编版本号。
+    """
+    spec = (spec or "").strip()
+    if not spec:
+        return "", ""
+    if spec.startswith("="):
+        spec = spec[1:].strip()
+    if spec[:1] in "^~<>*" or " " in spec or spec.startswith("workspace"):
+        return "", spec
+    if any(c in spec for c in ("x", "X", "*")):
+        return "", spec
+    if spec.startswith("http") or spec.startswith("file:") or spec.startswith("git"):
+        return "", spec
+    return spec, spec
+
+
+def _deps_from_package_json(text):
+    """package.json 的 dependencies / devDependencies / optionalDependencies。
+
+    修复前 package.json 只被查安装钩子，依赖从不进漏洞库——
+    JS 侧那条"依赖扫描"其实是空的，一个生态的整块缺口。
+    """
+    try:
+        data = json.loads(text)
+    except Exception:
+        return None
+    if not isinstance(data, dict):
+        return None
+    specs = []
+    for key, is_dev in (("dependencies", False), ("optionalDependencies", True),
+                        ("devDependencies", True)):
+        block = data.get(key) or {}
+        if not isinstance(block, dict):
+            continue
+        for name, spec in block.items():
+            specs.append(("%s@%s" % (name, spec), is_dev))
+    return specs
+
+
+def _write_ranged(result, ranged, severity, message_of, file_of):
+    if not ranged:
+        return
+    names = ", ".join(raw for raw, _ in ranged[:5])
+    result.findings.append(Finding(
+        severity=severity, category="dependency-scan",
+        message=message_of % names, file=str(file_of[0][1])))
+
+
 def scan_dependencies(skill_path: Path, result: ScanResult):
     """Scan declared dependencies for known vulnerabilities via OSV.dev."""
     dep_files = _declared_dependency_files(skill_path)
     if not dep_files:
         return
 
-    deps = []            # (name, version, file)
+    deps = []            # (name, version, ecosystem, file)
     ranged = []          # (raw, file)           运行时依赖
     dev_ranged = []      # (raw, file)           开发依赖
-    unparsed = []        # pyproject 在没有 tomllib 时
+    unparsed = []        # pyproject 在没有 tomllib 时 / package.json 坏了
     for dep_file in dep_files:
         try:
             content = dep_file.read_text(encoding="utf-8", errors="replace")
@@ -1023,47 +1075,57 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
                 unparsed.append(dep_file)
                 continue
             lines = specs
+            eco = "PyPI"
+            parse = _parse_requirement_line
+        elif dep_file.name == "package.json":
+            specs = _deps_from_package_json(content)
+            if specs is None:
+                unparsed.append(dep_file)
+                continue
+            lines = specs
+            eco = "npm"
+            parse = None
         else:
             lines = [(ln, False) for ln in content.splitlines()]
+            eco = "PyPI"
+            parse = _parse_requirement_line
         for line, is_dev in lines:
-            name, tail = _parse_requirement_line(line)
+            if parse is None:
+                name, spec = line.split("@", 1) if "@" in line else (line, "")
+                version, raw = _parse_js_range(spec)
+                if version:
+                    deps.append((name.strip(), version, eco, dep_file))
+                elif raw:
+                    (dev_ranged if is_dev else ranged).append(
+                        ("%s@%s" % (name.strip(), raw), dep_file))
+                continue
+            name, tail = parse(line)
             if name:
-                deps.append((name, tail, dep_file))
+                deps.append((name, tail, eco, dep_file))
             elif tail:
                 (dev_ranged if is_dev else ranged).append((tail, dep_file))
 
     for f in unparsed:
         result.findings.append(Finding(
             severity="LOW", category="dependency-scan",
-            message="pyproject.toml 未能解析（需要 Python 3.11+ 的 tomllib），依赖未检查",
+            message="%s 未能解析，依赖未检查" % f.name,
             file=str(f)
         ))
 
-    if ranged:
-        names = ", ".join(raw for raw, _ in ranged[:5])
-        result.findings.append(Finding(
-            severity="MEDIUM", category="dependency-scan",
-            message="依赖版本为范围约束，无法判定具体受影响版本：%s（请固定为 ==x.y.z 后复核）"
-                    % names,
-            file=str(ranged[0][1])
-        ))
-
-    if dev_ranged:
-        names = ", ".join(raw for raw, _ in dev_ranged[:5])
-        result.findings.append(Finding(
-            severity="LOW", category="dependency-scan",
-            message="开发依赖未固定版本：%s（不进运行时，不作运行时风险计）" % names,
-            file=str(dev_ranged[0][1])
-        ))
+    _write_ranged(result, ranged, "MEDIUM",
+                  "依赖版本为范围约束，无法判定具体受影响版本：%s"
+                  "（请固定为 ==x.y.z 或 1.2.3 后复核）", ranged)
+    _write_ranged(result, dev_ranged, "LOW",
+                  "开发依赖未固定版本：%s（不进运行时，不作运行时风险计）", dev_ranged)
 
     if not deps:
         return
 
     # Query OSV.dev for each dependency
-    for name, version, dep_file in deps[:10]:  # limit to 10 deps to avoid timeout
+    for name, version, eco, dep_file in deps[:10]:  # limit to 10 deps to avoid timeout
         try:
             payload = json.dumps({
-                "package": {"name": name, "ecosystem": "PyPI"},
+                "package": {"name": name, "ecosystem": eco},
                 "version": version
             }).encode()
 
@@ -1077,10 +1139,12 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
                 data = json.loads(resp.read())
                 vulns = data.get("vulns", [])
                 if vulns:
+                    label = ("%s@%s" % (name, version)) if eco == "npm" \
+                        else ("%s==%s" % (name, version))
                     for v in vulns[:3]:  # top 3 vulns per dep
                         result.findings.append(Finding(
                             severity="HIGH", category="dependency-vuln",
-                            message=f"{name}=={version}: {v.get('summary', 'known vulnerability')}",
+                            message=f"{label}: {v.get('summary', 'known vulnerability')}",
                             file=str(dep_file)
                         ))
         except Exception:

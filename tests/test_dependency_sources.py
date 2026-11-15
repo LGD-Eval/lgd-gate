@@ -93,3 +93,24 @@ def test_dev_dependency_range_is_informational_not_a_runtime_finding(tmp_path):
     assert hits and hits[0].severity == "LOW", [(f.severity, f.message) for f in hits]
     assert not [f for f in _deps_findings(skill)
                 if "无法判定" in f.message and "pytest" in f.message]
+
+
+def test_package_json_dependencies_are_parsed(tmp_path, monkeypatch):
+    """修复前 package.json 只查安装钩子，依赖从不进漏洞库——一个生态的整块缺口。"""
+    _offline(monkeypatch)
+    pkg = ('{"name":"t","version":"1.0.0",'
+           '"dependencies":{"lodash":"4.17.15"},'
+           '"devDependencies":{"jest":"^29.0.0"}}')
+    skill = _skill(tmp_path / "s", {"package.json": pkg})
+    msgs = " ".join(f.message for f in _deps_findings(skill))
+    assert "lodash" in msgs, msgs
+    assert any("开发依赖" in f.message and "jest" in f.message
+               for f in _deps_findings(skill)), [f.message for f in _deps_findings(skill)]
+
+
+def test_caret_range_is_undecidable_not_a_fake_version(tmp_path):
+    pkg = '{"name":"t","dependencies":{"lodash":"^4.17.15"}}'
+    skill = _skill(tmp_path / "s", {"package.json": pkg})
+    hits = _deps_findings(skill)
+    assert any("无法判定" in f.message for f in hits), [f.message for f in hits]
+    assert all("latest" not in f.message and "lodash==4" not in f.message for f in hits)
