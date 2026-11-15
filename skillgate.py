@@ -593,10 +593,16 @@ def scan_python_file(filepath: Path, result: ScanResult):
                 cur = lines[af.line - 1]
                 if "skillgate: ignore" in cur or "lgd: ignore" in cur:
                     continue
+            sev, msg = af.severity, af.message
+            # 递归删除：写了路径守卫就是"可以接受的删除"，不写才是风险。
+            # 修复前实测：带 startswith 守卫的干净样本仍被判 HIGH 69/C，
+            # 而没有守卫的同类样本也是 HIGH —— 两条都报等于规则没用信息量。
+            if "递归删除" in msg and has_path_guard(lines, af.line):
+                sev, msg = "LOW", msg + "（同文件检测到路径守卫）"
             result.findings.append(Finding(
-                severity=af.severity,
+                severity=sev,
                 category="ast-analysis",
-                message=f"[AST] {af.message}",
+                message=f"[AST] {msg}",
                 file=str(filepath),
                 line=af.line
             ))
@@ -923,17 +929,30 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
         return
 
     deps = []
+    ranged = []
     for line in content.splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
             continue
-        # Parse package name and version
+        # 只对**精确固定版本**的依赖查漏洞库。
+        # 修复前：`requests>=2.31` 被写成 `==latest` 送去 OSV，回来的
+        # 一堆漏洞被按 HIGH 报成"requests==latest 存在 XX 漏洞"——
+        # 那是一个不存在的版本号，属于假精确，比漏报更难被使用者识破。
+        # 范围约束只能说明"不低于某版本"，判不出具体受影响版本，
+        # 所以这里只报一条 MEDIUM 的"无法判定"，不再伪造版本号。
         if "==" in line:
             name, version = line.split("==", 1)
             deps.append((name.strip(), version.strip()))
-        elif ">=" in line:
-            name = line.split(">=", 1)[0].strip()
-            deps.append((name, "latest"))
+        elif any(op in line for op in (">=", "~=", "<=", ">", "<", "*")):
+            ranged.append(line.split(";")[0].strip())
+
+    if ranged:
+        result.findings.append(Finding(
+            severity="MEDIUM", category="dependency-scan",
+            message="依赖版本为范围约束，无法判定具体受影响版本：%s（请固定为 ==x.y.z 后复核）"
+                    % ", ".join(ranged[:5]),
+            file=str(req_file)
+        ))
 
     if not deps:
         return
@@ -1247,6 +1266,43 @@ def scan_package_install_scripts(pkg_file: Path, result: ScanResult):
                 break
 
 
+# 路径守卫的写法：删除前先校验"目标在工作目录内"。只认这些具体惯用法，
+# 不认"文件里出现过 raise"这类宽泛信号（那样恶意样本也能被放过）。
+PATH_GUARD_MARKERS = (
+    "is_relative_to",
+    ".startswith(",
+    "realpath(",
+    "abspath(",
+    "raise SystemExit",
+    "raise ValueError",
+    "raise RuntimeError",
+    "raise PermissionError",
+)
+
+
+def has_path_guard(lines, line_no):
+    """在命中行之前（同文件）找路径守卫。找不到就认为没有守卫。"""
+    if not line_no or line_no < 1:
+        return False
+    head = "\n".join(lines[:line_no - 1])
+    return any(m in head for m in PATH_GUARD_MARKERS)
+
+
+def scan_invisible_file(filepath: Path, result: ScanResult):
+    """对任意文本文件做不可见字符扫描（元数据、配置同样承载指令）。"""
+    try:
+        text = filepath.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return
+    for cp, label, _ctx in invisible_payloads(text):
+        line_no = text[:text.find(chr(cp))].count("\n") + 1
+        result.findings.append(Finding(
+            severity="CRITICAL", category="prompt-injection",
+            message="不可见字符承载指令：%s（U+%04X）" % (label, cp),
+            file=str(filepath), line=line_no
+        ))
+
+
 def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
     skill_path = Path(skill_dir).resolve()
     if not skill_path.is_dir():
@@ -1351,6 +1407,15 @@ def scan_skill(skill_dir: str, excludes=None) -> ScanResult:
             continue
         scan_md_file(md_file, result)
         result.files_scanned += 1
+
+    # 元数据文件也承载指令：MCP 服务器把工具描述直接注入模型上下文，
+    # arXiv 2607.05744 证明的正是"审批视图与送进模型的字节可以不一致"。
+    for meta_glob in ("*.json", "*.yaml", "*.yml"):
+        for meta_file in skill_path.rglob(meta_glob):
+            if should_exclude(meta_file):
+                continue
+            scan_invisible_file(meta_file, result)
+            result.files_scanned += 1
 
     # 安装期脚本：package.json 的 postinstall 是一条装载代码的执行通道。
     # OWASP AST02 与 arXiv 2601.10338 都把它列为供应链风险的典型形态；
