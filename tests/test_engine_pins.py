@@ -22,9 +22,9 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, HERE)
 
 PIN = {
-    "skillgate.py": "3cdaa024c0e1608a",
+    "skillgate.py": "41d23a012e8d5a88",
     "js_analyzer.py": "97bce99b6ba580aa",
-    "ast_analyzer.py": "54b5bcfad400b3c8",
+    "ast_analyzer.py": "86d4b2363576c66a",
 }
 
 # 同机另两份副本（相对本仓的兄弟目录）。CI 上不存在就跳过比对，但 PIN 不跳过。
