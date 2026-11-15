@@ -763,7 +763,11 @@ class ComprehensiveReview:
         print("  📊 审查总结")
         print("=" * 60)
         print()
-        print(f"  Trust Score: {self.score}/100")
+        # 这里原来也印 "Trust Score: N/100"。同一个标签、两套刻度——
+        # 同一个最小技能，评测器给 61/C，审计器给 1/100。数字并排放着，
+        # 读者只能得出"太严"或"坏了"两种错误结论。改成分开命名。
+        print(f"  完整性审计分: {self.score}/100（18 维完整性口径，**不是** Trust Score，不可与评测器分数互比）")
+        print(f"  引擎: lgd_audit.py（项目完整性审计口径；对外 Trust Score 只由 evaluate.py 给出）")
         print(f"  发现问题数: {len(self.findings)}")
         print()
         

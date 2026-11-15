@@ -141,8 +141,10 @@ LGD Trust Score: 65/100 🥉 C
 
 ```bash
 curl -L https://codeload.github.com/LGD-Eval/lgd-gate/tar.gz/refs/heads/main | tar xz
-python3 lgd-gate-main/evaluate.py lgd-gate-main/_demo/mitiga-style
+cd lgd-gate-main
+python3 evaluate.py _demo/mitiga-style
 ```
+（2026-11-15 复跑修正：原写法把解压目录名 `lgd-gate-main/` 写进了命令里，等于要求你先站在上一层、再用一个只在压缩包解压后才存在的目录名执行。实测 `python3 lgd-gate-main/evaluate.py ...` 在仓库内直接跑会 `exit 2`（找不到文件）。改成先 `cd` 进解压目录。）
 
 2026-11-06 在**干净环境、只下压缩包、未装 git** 的条件下实测：**22/100 D，9 条命中逐字一致**。这不是我们机器上的数字，是任何人拿到这个仓库都能跑出来的数字。
 
@@ -155,8 +157,11 @@ python3 lgd-gate-main/evaluate.py lgd-gate-main/_demo/mitiga-style
 | 工具 | 回答什么 | 是否产出对外分数 |
 |---|---|---|
 | `evaluate.py` | 这个技能能不能信任 → **一个分数 + 一个风险档位（不签发权限）** | ✅ 唯一对外口径 |
-| `skillgate.py` | 代码级危险模式（开发者自查） | ❌ 不评总分 |
-| `lgd_audit.py` | 18 维完整性审计（开发者自查） | ❌ 不评总分 |
+| `skillgate.py` | 代码级危险模式（开发者自查） | ❌ 只给等级，不评总分 |
+| `lgd_audit.py` | 18 维完整性审计（开发者自查） | ❌ **不是** Trust Score：它有自己的完整性分（本项目实测一个最小可用技能得 1/100），退出码按该分与门槛比较 |
+
+> 2026-11-15 更正：本表原来写 `lgd_audit.py`"不评总分"，与代码不符——它确实算一个完整性分，并把它用在 `sys.exit`。那个分与 `evaluate.py` 的 Trust Score **不同刻度、不可互比**：同一个最小技能，评测器给 61/C，审计器给 1/100。把两个数字放在一起看，读者只会得出"这工具太严"或"这工具坏了"两种错误结论。
+
 
 **这份 `evaluate.py` 不是独立实现，是正典的逐字节副本。** 正典在 `LGD-Eval/skills/lgd-eval/scripts/evaluate.py`；本仓这份此前悄悄分叉过（79,256 B，少了 JS 组合规则），对跨文件凭证外泄的技能给 73/B——而 Marketplace 上的 Action 跑的就是它。现在 `tests/test_evaluator_provenance.py` 用固定 sha256 钉住副本，任何改动都必须先改正典再整文件复制过来，否则测试直接失败。
 
