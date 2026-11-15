@@ -778,6 +778,29 @@ class ComprehensiveReview:
         return self.score
 
 
+def _ci_threshold():
+    """CI 门槛只有一个来源：evaluate.DEFAULT_THRESHOLD（且与 action.yml 一致）。
+
+    这里原来把门槛写成一个字面量常量。和 action.yml 里的默认值是两份互不相干的东西，
+    改一处另一处不动，就会出现"本地退出码放行、CI 拦截"这种没人能解释的分裂。
+    """
+    try:
+        from evaluate import DEFAULT_THRESHOLD
+        return int(DEFAULT_THRESHOLD)
+    except Exception:
+        import re as _re
+        from pathlib import Path as _P
+        yml = _P(__file__).parent / "action.yml"
+        try:
+            txt = yml.read_text(encoding="utf-8")
+            m = _re.search(r"threshold:.*?default:\s*'([0-9]+)'", txt, _re.S)
+            if m:
+                return int(m.group(1))
+        except Exception:
+            pass
+        return 90
+
+
 def main():
     args = sys.argv[1:]
     is_internal = '--internal' in args
@@ -785,7 +808,11 @@ def main():
     
     reviewer = ComprehensiveReview(project_dir, is_internal_skill=is_internal)
     score = reviewer.run_all()
-    sys.exit(0 if score >= 90 else 1)
+    threshold = _ci_threshold()
+    if score < threshold:
+        print("CI 门槛 %d，实得 %d —— 不放行（门槛来源：evaluate.DEFAULT_THRESHOLD）"
+              % (threshold, score))
+    sys.exit(0 if score >= threshold else 1)
 
 
 if __name__ == "__main__":
