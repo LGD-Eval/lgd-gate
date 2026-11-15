@@ -1007,6 +1007,50 @@ def _typosquat_suspects(name, ecosystem):
     return hits[:2]
 
 
+def _load_private_inventory(skill_path: Path):
+    """读使用者提供的私有包清单（`private-packages.json`）。
+
+    dependency confusion 的可验证形态需要两样东西：哪些名字是我的，
+    以及这些名字在公开 registry 上是否已被别人占用。第一件只能由使用者提供，
+    第二件要联网（不在本引擎内做）。
+    清单格式：{"names": ["acme-utils"], "scopes": ["@acme"]}
+    """
+    p = skill_path / "private-packages.json"
+    if not p.exists():
+        return None
+    try:
+        data = json.loads(p.read_text(encoding="utf-8", errors="replace"))
+    except Exception:
+        return {"error": "无法解析 private-packages.json"}
+    if not isinstance(data, dict):
+        return {"error": "private-packages.json 顶层应为对象"}
+    names = {str(n).lower() for n in data.get("names", []) if str(n).strip()}
+    scopes = {str(s).lower() for s in data.get("scopes", []) if str(s).strip()}
+    return {"names": names, "scopes": scopes, "error": ""}
+
+
+def _private_name_hits(deps, inventory):
+    """私有包名被声明成公开名、或不带 scope —— 这是 dependency confusion 的前置条件。
+
+    只报 LOW 且措辞写明"需 registry 侧核对占用"：清单说明它是私有包，
+    但"这个公开名字现在是否被别人占着"本引擎看不到。
+    """
+    if not inventory or inventory.get("error"):
+        return []
+    out = []
+    for d in deps:
+        name = d[0].lower()
+        eco = d[2]
+        scopes = inventory.get("scopes", set())
+        bare = name if eco == "PyPI" else name.split("/")[-1]
+        has_scope = name.startswith("@") and any(name.startswith(s + "/") for s in scopes)
+        if bare in inventory.get("names", set()) and not has_scope:
+            out.append((name, d[3],
+                        "私有包 %s 以公开名（无 scope）声明：公开 registry 上同名包可能被"
+                        "他人抢注并优先解析。需 registry 侧核对归属后锁定来源" % name))
+    return out
+
+
 def _declared_dependency_files(skill_path: Path):
     """声明依赖的所有文件：requirements.txt、requirements-*.txt、pyproject.toml。
 
@@ -1294,6 +1338,18 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
                     "（上限是性能折中，不代表已扫完）" % (len(deps), CAP, len(deps) - CAP),
             file=str(deps[CAP][3])
         ))
+
+    # 私有包名以公开名声明（dependency confusion 的前置条件）
+    inv = _load_private_inventory(skill_path)
+    if inv and inv.get("error"):
+        result.findings.append(Finding(
+            severity="LOW", category="dependency-name",
+            message=inv["error"] + "：未做私有包名核对（不猜）",
+            file=str(skill_path / "private-packages.json")))
+    for name, dep_file, msg in _private_name_hits(deps, inv):
+        result.findings.append(Finding(
+            severity="LOW", category="dependency-name",
+            message=msg, file=str(dep_file)))
 
     # 名称相似度只提示、不定罪（LOW）：
     # 一个包名长得像热门包，可能只是有人随手命名；只有当它与热门包

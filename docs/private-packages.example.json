@@ -1,0 +1,15 @@
+{
+  "_comment": "私有包清单模板 / Private package inventory template. 复制到技能根目录并改名为 private-packages.json。只写你确实私有的名字；写错会造成误报。/ Copy to the skill root as private-packages.json. List only names you actually own privately; a wrong entry causes false positives.",
+  "_why": "dependency confusion 需要两件事同时为真：名字是你的，且同名包在公开 registry 上可被他人发布并被优先解析。清单提供第一件；第二件必须联网核对，扫描器不做，也不该假装做了。/ Dependency confusion needs both: the name is yours, and a same-named package can be published publicly and resolved first. This file supplies the first; the second requires a registry lookup, which the scanner does not do and must not pretend to do.",
+  "names": [
+    "acme-utils",
+    "acme-internal-api"
+  ],
+  "scopes": [
+    "@acme"
+  ],
+  "_format": {
+    "names": "不带 scope 的裸包名（PyPI 与 npm 通用）/ bare package names, both ecosystems",
+    "scopes": "你拥有的 npm scope，形如 @org / npm scopes you own, e.g. @org"
+  }
+}
