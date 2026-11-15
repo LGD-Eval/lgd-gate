@@ -1667,15 +1667,32 @@ def find_skill_documents(skill_path: Path) -> list[Path]:
 
 
 # 安装期钩子：这些生命周期脚本会在 `npm install` 时自动执行
-INSTALL_HOOKS = ("preinstall", "install", "postinstall", "prepare", "prepublish")
+INSTALL_HOOKS = ("preinstall", "install", "postinstall", "prepare", "prepublish",
+                 "prepublishOnly", "prepack")
 
 # 远程取码并执行的形态：curl/wget 接管道进 shell，或 PowerShell 的 iex
+#
+# 2026-11-15 红队复测（灭类不灭例）：原先 5 条只覆盖"管道进 shell"和"node -e"两个例，
+# 同类里另有 7 种真实在用的写法全漏——bash -c "$(curl …)"、node <(curl …)、
+# python -c 里 urlopen+exec、npx/npm exec 直接拉远程包、curl -o 落地再执行。
+# 已按类补齐。仍守一条边界：本地脚本（node ./scripts/build.mjs）不算，报了就是误伤。
 REMOTE_EXEC_PATTERNS = (
     r"curl[^|]*\|\s*(?:sudo\s+)?(?:sh|bash|zsh)",
     r"wget[^|]*\|\s*(?:sudo\s+)?(?:sh|bash|zsh)",
     r"\b(?:sh|bash|zsh)\s+<\(\s*(?:curl|wget)",
     r"(?:iwr|invoke-webrequest|curl)[^;]*\|\s*(?:iex|invoke-expression)",
     r"\bnode\s+-e\b",
+    # bash -c "$(curl …)" / bash -lc "$(wget …)"：命令替换里取码，再交给 shell 执行
+    r"\b(?:sh|bash|zsh)\s+-[a-z]*c\b[^\n]*\$\(\s*(?:curl|wget)",
+    # node <(curl …)：进程替换把远程脚本当成文件参数喂给解释器
+    r"\b(?:node|python|python3)\s+<\(\s*(?:curl|wget)",
+    # python -c 一条命令里"取远程 + 执行"（两个特征不分先后，故用前视）
+    r"\b(?:python|python3)\s+-c\b(?=[^\n]*(?:urlopen|urlretrieve|requests\.get))[^\n]*(?:exec|eval)",
+    # npx / npm exec 直接拉远程包执行（只认带 URL 或 --package= 的形态，不误伤 npx tsc）
+    r"\bnpx\b[^|;]*(?:https?://|--package=)",
+    r"\bnpm\s+exec\b[^|;]*--package=",
+    # 先落盘再执行：curl -o 写文件，同一条命令里接着 sh/node/python 它
+    r"(?:curl|wget)[^\n]*\s-o\s+\S+[^\n]*&&\s*(?:sh|bash|zsh|node|python|python3)",
 )
 
 
