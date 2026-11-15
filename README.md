@@ -220,6 +220,22 @@ python3 lgd-gate-main/evaluate.py lgd-gate-main/_demo/mitiga-style
 > 📖 完整的 L0-L13 企业级标准 → [evaluation-protocol.md](./docs/evaluation-protocol.md)
 > 📖 Trust Score 双引擎口径声明：skillgate 扫描器（v3.1.2）与 evaluate.py 五维评测为两套评分口径，引用须标注引擎 + rule_version + 扫描对象 + 日期，详见 [SCORE-COMPARISON.md](https://github.com/LGD-Eval/evaluation-evidence/blob/main/evidence/71repo-scan-v3.1.0/SCORE-COMPARISON.md)。
 
+### 已知限制（照实写，不修饰）
+
+Known limits — stated plainly
+
+| 限制 | 使用者该知道的事 |
+|---|---|
+| 依赖扫描的覆盖面 | 只读清单与锁文件（`requirements.txt`、`requirements-*.txt`、`pyproject.toml`、`package.json`、`package-lock.json`、`poetry.lock`）。每次最多查询 **10 个固定版本依赖**，其余会明确报"未查"；版本范围（`>=2.31`、`^1.2.3`）不猜具体版本，只报"无法判定"；**离线时降级为"无法核查"——那是更弱的结论，不是通过** |
+| 开发依赖的定位 | 开发依赖若命中漏洞仍会报，但降为 LOW 并标注"不进运行时"。它确实可能影响贡献者机器，但不是产品运行时风险 |
+| typosquatting / 依赖混淆 | **未处理**。没有针对热门包名的相似度检查，也没有 registry scope 校验 |
+| 目录排除既是必要也是通道 | `demo`、`fixtures`、`samples` 等目录默认豁免语义规则（否则自带攻击样本的技能会被自己拖垮）。这条豁免同时是一条规避通道：同名目录分不出正当与恶意。隐形字符扫描**不**豁免夹具，只收窄伤害、不消除歧义 |
+| 否决状态两个字段 | 门禁请判 `safety_veto.triggered` 与分数，**不要只判 `applied`**：`applied` 表示"封顶是否真的压低了分数"，低分技能命中关键规则时它可以是 false |
+| 隐形字符的扫描范围 | 只覆盖 `.md`/`.markdown`/`.txt`/`.json`/`.yaml`/`.yml` 里的三个码位区间（Tags 块、零宽、不可见格式字符）。二进制、图片里的文字、PDF 不在覆盖内 |
+| 自测不等于第三方核验 | 仓库自带的回归测试证明"规则在样本上按预期工作"，不构成外部评审结论 |
+
+**English** — the table above in one paragraph: dependency scanning reads manifests and lockfiles only, queries at most 10 pinned dependencies per run (the rest is reported as unqueried), never invents a version for a range, and **degrades to "could not check" when offline, which is weaker than a pass**; dev dependencies that are vulnerable are reported at LOW and marked as non-runtime; typosquatting and dependency confusion are not handled at all; default directory exclusions are necessary but also an evasion channel, since a legitimate and a malicious `demo/` cannot be distinguished by name, and only the invisible-character pass survives that exemption; gate on `safety_veto.triggered` plus the score rather than `applied` alone; invisible-character coverage is limited to six text extensions and three code-point ranges — binaries, text inside images and PDFs are not covered; and the repository's own regression tests are not a third-party review.
+
 ### 风险分类（EU AI Act）
 
 | 等级 | 说明 | 例子 |
