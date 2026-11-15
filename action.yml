@@ -51,8 +51,11 @@ outputs:
     description: 'Grade (A+/A/B/C/D)'
     value: ${{ steps.eval.outputs.grade }}
   tier:
-    description: 'Suggested execution tier (L0-L5)'
+    description: 'DEPRECATED alias for risk_tier. Advisory risk tier T0-T5 - never an execution permission. Was an L0-L5 permission ladder; see MIGRATION.md.'
     value: ${{ steps.eval.outputs.tier }}
+  risk_tier:
+    description: 'Advisory risk tier (T0-T5). T0 means low risk, NOT approved. Authorization is separate and always requires NOT_GRANTED to be resolved by a person.'
+    value: ${{ steps.eval.outputs.risk_tier }}
   sarif:
     description: 'Path of the generated SARIF file (empty when skipped)'
     value: ${{ steps.eval.outputs.sarif }}
@@ -99,8 +102,13 @@ runs:
         echo "score=$SCORE"     >> "$GITHUB_OUTPUT"
         echo "grade=$GRADE"     >> "$GITHUB_OUTPUT"
         echo "tier=$TIER"       >> "$GITHUB_OUTPUT"
+        echo "risk_tier=$TIER"  >> "$GITHUB_OUTPUT"
         echo "authorization_status=NOT_GRANTED" >> "$GITHUB_OUTPUT"
         echo "sarif=${{ inputs.sarif }}" >> "$GITHUB_OUTPUT"
+
+        # Breaking-change visibility (brownout analogue): the alias keeps its name
+        # but its meaning changed, so say it in the job log rather than silently.
+        echo "::warning::lgd-skill-gate: the 'tier' output is deprecated. It now emits advisory risk tier T0-T5 (was an L0-L5 permission ladder). T0 means low risk, NOT approved. Use 'risk_tier'; see MIGRATION.md."
 
         {
           echo "## LGD Trust Score: **$SCORE/100** ($GRADE)"
