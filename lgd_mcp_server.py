@@ -31,8 +31,14 @@ sys.path.insert(0, HERE)
 
 try:
     from evaluate import evaluate_skill as _eval_skill
+    from evaluate import evaluate_skill_result as _eval_result
+    from evaluate import ENGINE_NAME as _ENGINE_NAME, ENGINE_VERSION as _ENGINE_VERSION
 except Exception:
+    # 不写"兜底版本号"：导不进来就说明评测器不在，报 unknown 是诚实的，
+    # 报一个写死的数字只会再造一份真相。
     _eval_skill = None
+    _eval_result = None
+    _ENGINE_NAME, _ENGINE_VERSION = None, None
 try:
     import importlib.util
     _spec = importlib.util.spec_from_file_location("eval_mcp_mod", os.path.join(HERE, "eval_mcp.py"))
@@ -83,16 +89,24 @@ def call_tool(name, args):
         raise ValueError("路径不存在：%s" % path)
 
     if name == "evaluate_skill":
-        if _eval_skill is None:
+        if _eval_result is None:
             raise ValueError("评测模块加载失败")
         # evaluate_skill 会把人类可读报告 print 到 stdout；MCP 的 stdio 通道
         # 只允许 JSON-RPC 消息，混入报告会让客户端解析失败，必须就地捕获
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
-            score, grade, dims, findings, warnings = _eval_skill(path)
+            r = _eval_result(path)
+        score, grade = r["score"], r["grade"]
+        dims, findings = r["dims"], r["findings"]
         return {
             "content": [{"type": "text", "text": json.dumps({
+                # 两个工具的返回形状一样（score + grade），若不说出自哪个引擎，
+                # 调用方会把两个不同尺子的分数当成同一个数比较。
+                "engine": _ENGINE_NAME or "unknown",
+                "engine_version": _ENGINE_VERSION or "unknown",
+                "scale": "技能五维（结构/目录/文档/安全/生态）",
                 "score": score, "grade": grade,
+                "authorization_status": "NOT_GRANTED",
                 "dims": {k: v for k, v in (dims or {}).items()} if isinstance(dims, dict) else dims,
                 "findings": findings[:20] if isinstance(findings, list) else findings,
             }, ensure_ascii=False, indent=2)}],
@@ -112,6 +126,9 @@ def call_tool(name, args):
         total = sum(dims.values())
         return {
             "content": [{"type": "text", "text": json.dumps({
+                "engine": "eval_mcp.py",
+                "engine_version": _ENGINE_VERSION or "unknown",
+                "scale": _mcp_mod.SCALE,
                 "score": total, "grade": _mcp_mod.grade_of(total),
                 "dims": dims, "notes": notes,
             }, ensure_ascii=False, indent=2)}],
@@ -128,7 +145,7 @@ def handle(msg):
         return _ok(mid, {
             "protocolVersion": PROTO,
             "capabilities": {"tools": {}},
-            "serverInfo": {"name": "lgd-eval", "version": "1.0.0"},
+            "serverInfo": {"name": "lgd-eval", "version": _ENGINE_VERSION or "unknown"},
             "instructions": "LGD 独立技能评测：给技能或 MCP server 打分、找出缺口、给出可执行整改清单。",
         })
     if method in ("notifications/initialized", "initialized"):

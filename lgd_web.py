@@ -37,24 +37,25 @@ sys.path.insert(0, HERE)
 
 try:
     from evaluate import evaluate_skill as _eval_skill
+    from evaluate import evaluate_skill_result as _eval_result
+    from evaluate import ENGINE_NAME as _ENGINE_NAME, ENGINE_VERSION as _ENGINE_VERSION
 except Exception:
     _eval_skill = None
+    _eval_result = None
+    _ENGINE_NAME, _ENGINE_VERSION = None, None
 
 MAX_BODY = 1 * 1024 * 1024  # 单次请求上限 1MB
 
 
 def grade_of(score):
-    if score >= 90:
-        return "A+"
-    if score >= 80:
-        return "A"
-    if score >= 70:
-        return "B"
-    if score >= 60:
-        return "C"
-    if score >= 40:
-        return "D"
-    return "F"
+    """**已废弃**：等级只能来自评测器（evaluate.grade_for）。
+
+    这里原有一份独立刻度（<40 记 F 之外与评测器同表）。同表不等于同一来源：
+    评测器改一次刻度，这份不动，Web 端就会给出和 CLI 不一样的字母，而且没人会发现。
+    保留函数仅为兼容旧调用，值改为从评测器取。
+    """
+    from evaluate import grade_for
+    return grade_for(score)[0]
 
 
 def laws_of(text, findings):
@@ -85,10 +86,16 @@ def evaluate_text(text):
             f.write(text)
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
-            score, grade, dims, findings, warnings = _eval_skill(tmp)
+            r = _eval_result(tmp)
+        score, grade = r["score"], r["grade"]
+        dims, findings = r["dims"], r["findings"]
         return {
             "score": score,
-            "grade": grade_of(score),
+            "grade": grade,
+            "engine": _ENGINE_NAME or "unknown",
+            "engine_version": _ENGINE_VERSION or "unknown",
+            "scale": "技能五维（结构/目录/文档/安全/生态）",
+            "authorization_status": "NOT_GRANTED",
             "dims": dims,
             "findings": findings[:30] if isinstance(findings, list) else findings,
             "lgd_laws": laws_of(text, findings),
@@ -117,7 +124,9 @@ def evaluate_path(path):
     try:
         buf = io.StringIO()
         with contextlib.redirect_stdout(buf):
-            score, grade, dims, findings, warnings = _eval_skill(target)
+            r = _eval_result(target)
+        score, grade = r["score"], r["grade"]
+        dims, findings = r["dims"], r["findings"]
         try:
             with open(docp, "r", encoding="utf-8", errors="ignore") as f:
                 doc = f.read()
@@ -125,7 +134,11 @@ def evaluate_path(path):
             doc = ""
         return {
             "score": score,
-            "grade": grade_of(score),
+            "grade": grade,
+            "engine": _ENGINE_NAME or "unknown",
+            "engine_version": _ENGINE_VERSION or "unknown",
+            "scale": "技能五维（结构/目录/文档/安全/生态）",
+            "authorization_status": "NOT_GRANTED",
             "dims": dims,
             "findings": findings[:30] if isinstance(findings, list) else findings,
             "lgd_laws": laws_of(doc, findings),
@@ -209,7 +222,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path.startswith("/api/health"):
-            self._send(200, json.dumps({"ok": True, "engine": "lgd-eval", "version": "1.0.0"}))
+            self._send(200, json.dumps({"ok": True, "engine": _ENGINE_NAME or "unknown",
+                                        "version": _ENGINE_VERSION or "unknown",
+                                        "scale": "技能五维（结构/目录/文档/安全/生态）"}))
         elif self.path in ("/", "/index.html"):
             self._send(200, PAGE, "text/html")
         else:
@@ -232,7 +247,8 @@ class Handler(BaseHTTPRequestHandler):
             else:
                 self._send(400, json.dumps({"error": "需要 text 或 path"}))
                 return
-            res["engine"] = "lgd-eval 1.0.0"
+            # 不再覆盖 res 里的 engine/engine_version：上面 evaluate_text / evaluate_path
+            # 已经把身份与口径带出来了，这里再写一遍就是第二份真相。
             self._send(200, json.dumps(res, ensure_ascii=False))
         except Exception as e:
             self._send(500, json.dumps({"error": str(e)}, ensure_ascii=False))

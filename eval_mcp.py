@@ -20,6 +20,11 @@ import re
 import sys
 
 DIMS = [("工具定义", 25), ("权限与安全", 25), ("可运行性", 20), ("文档与示例", 15), ("生态兼容", 15)]
+
+# 口径必须随分数一起出去：本引擎与 evaluate.py 的技能五维不是同一把尺子，
+# 两者的输出形状却都是 {score, grade}。不说清楚，调用方一定会混着比。
+SCALE = "MCP Server 五维（工具定义25/权限与安全25/可运行性20/文档与示例15/生态兼容15），与技能五维不同口径"
+ENGINE_NAME = "eval_mcp.py"
 DANGER = [
     (r"\bexec\b|\bspawn\b|\bsystem\(", "执行外部命令"),
     (r"writeFile|write_file|unlink|rmdir|rm -rf|rmSync", "写/删文件"),
@@ -174,14 +179,19 @@ def score_eco(root):
 
 
 def grade_of(s):
+    """只返回字母。此前把 🏆/🥇/🥈/🥉 拼进等级字符串，下游拿 grade == "C" 比较必然失配。
+
+    等级刻度与 evaluate.grade_for / skillgate.grade_from_score 同一张表，
+    tests/test_grade_single_source.py 在边界值上逐点比对，防止四处漂移。
+    """
     if s >= 90:
-        return "🏆 A+"
+        return "A+"
     if s >= 80:
-        return "🥇 A"
+        return "A"
     if s >= 70:
-        return "🥈 B"
+        return "B"
     if s >= 60:
-        return "🥉 C"
+        return "C"
     if s >= 40:
         return "D"
     return "F"
@@ -210,7 +220,9 @@ def main():
     grade = grade_of(total)
 
     if args.json:
-        print(json.dumps({"target": root, "kind": "mcp-server", "score": total,
+        print(json.dumps({"target": root, "kind": "mcp-server",
+                          "engine": ENGINE_NAME, "scale": SCALE,
+                          "score": total,
                           "grade": grade, "dims": dims, "notes": notes},
                          ensure_ascii=False, indent=2))
     else:
