@@ -1,8 +1,9 @@
 """action.yml 与评测器的口径一致性守卫。
 
-缘由：action.yml 里曾有一份独立的等级映射（<40 记 F），而 evaluate.py 只发
-A+/A/B/C/D，从不发 F。同一个 12 分，工具说 D、Action 说 F——
-"徽章/等级与实际一致"这条（G5）就没法成立。
+缘由：action.yml 里曾有一份独立的等级映射（>=60 C / >=40 D / 其余 F），
+与 evaluate.py 的 grade_for **当时恰好同表**（实测 13 个边界分数逐点相等）。
+同表不等于同源：评测器改一次刻度，Action 这份不动，CI 就会发出与工具不一致的等级，
+而且没有任何测试会红。
 
 判据只有一条：等级必须来自评测器的输出，不能二次计算。
 """
@@ -27,13 +28,16 @@ def test_grade_is_parsed_not_recomputed():
     )
 
 
-def test_action_never_emits_a_grade_the_tool_cannot_emit():
-    """evaluate.py 只发 A+/A/B/C/D；action.yml 不得出现 F 这个等级。"""
-    tool = open(EVAL, encoding="utf-8").read()
-    for grade in ("A+", "A", "B", "C", "D"):
-        assert '"%s"' % grade in tool, "评测器应当能产出 %s" % grade
+def test_action_hardcodes_no_grade_letters():
+    """Action 不得自己写出任何等级字母（那必然是第二份刻度）。
+
+    等级只能来自评测器输出行；这里只允许 GRADE=$(...) 这种取值写法，
+    不允许 GRADE="A+/A/B/C/D/F" 这类赋值。
+    """
     body = _action()
-    assert 'GRADE="F"' not in body and "F\n" not in body, "action.yml 不得发明评测器不产出的等级"
+    for grade in ("A+", "A", "B", "C", "D", "F"):
+        assert 'GRADE="%s"' % grade not in body, "action.yml 里出现了写死的等级 %s" % grade
+    assert "GRADE=$(awk" in body
 
 
 def test_threshold_default_is_documented_value():
