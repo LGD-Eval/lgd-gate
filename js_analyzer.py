@@ -113,6 +113,23 @@ FS_DANGER = [
     (re.compile(r"\bunlinkSync\s*\("), "LOW", "unlinkSync 删除文件"),
 ]
 
+# 2026-11-15 类覆盖：JS 侧一直缺 TLS 这一整类。
+# evaluate.py 的 R-SEC-26 早就认 rejectUnauthorized，但本模块不认，
+# 于是同一个技能走库扫描时放行、走 CLI 时拦下——两个引擎口径不一，等于都不算数。
+TLS_OFF = [
+    (re.compile(r"rejectUnauthorized\s*:\s*false"), "HIGH",
+     "TLS 校验被关闭（rejectUnauthorized:false）"),
+    (re.compile(r"NODE_TLS_REJECT_UNAUTHORIZED\s*['\"]?\s*[=:]\s*['\"]?0"), "HIGH",
+     "TLS 校验被关闭（NODE_TLS_REJECT_UNAUTHORIZED=0）"),
+    (re.compile(r"NODE_TLS_REJECT_UNAUTHORIZED\s*['\"]?\s*,\s*['\"]0['\"]"), "HIGH",
+     "TLS 校验被关闭（environment 注入 0）"),
+    (re.compile(r"checkServerIdentity\s*:\s*(?:\(\s*\)\s*=>\s*(?:null|undefined|true)"
+                r"|function\s*\(\s*\)\s*\{\s*return\s+(?:null|undefined|true))"), "HIGH",
+     "TLS 主机名校验被架空（checkServerIdentity 返回通过）"),
+    (re.compile(r"\bservername\s*:\s*false"), "MEDIUM",
+     "关闭 SNI（与自签证书绕过常成对出现）"),
+]
+
 
 def _is_comment(line):
     s = line.strip()
@@ -155,6 +172,10 @@ def scan_js_file(filepath):
         for pattern, sev, msg in FS_DANGER:
             if pattern.search(line):
                 out.append((sev, "filesystem", msg, i))
+                break
+        for pattern, sev, msg in TLS_OFF:
+            if pattern.search(line):
+                out.append((sev, "tls", msg, i))
                 break
 
     # 组合判定：单条规则只看到一步。凭证路径 + 读取调用 + 网络 sink 同文件共存，
