@@ -11,6 +11,7 @@
 报它等于让所有正常下载物全红——能力直接作废。
 """
 import os
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -25,6 +26,13 @@ import skillgate as sg
 SKILL_MD = "---\nname: demo\ndescription: demo\n---\n\n# demo\n"
 pytestmark = pytest.mark.skipif(os.name != "nt", reason="NTFS 备用数据流仅 Windows 有")
 
+# 不要按裸名调 powershell：PATH 被裁剪的环境里（本机沙箱重启后就是这样）
+# 裸名解析不到，测试会以 FileNotFoundError 红掉，看着像产品坏了，其实是环境。
+# 先查 PATH，查不到再按系统目录兜底。
+POWERSHELL = shutil.which("powershell") or os.path.join(
+    os.environ.get("SystemRoot", r"C:\Windows"),
+    "System32", "WindowsPowerShell", "v1.0", "powershell.exe")
+
 
 def _mk(tmp_path):
     d = tmp_path / "skill"
@@ -37,7 +45,7 @@ def _mk(tmp_path):
 
 def _set_stream(f: Path, stream: str, value: str) -> bool:
     r = subprocess.run(
-        ["powershell", "-NoProfile", "-Command",
+        [POWERSHELL, "-NoProfile", "-Command",
          "Set-Content -LiteralPath '%s' -Stream %s -Value '%s' -Encoding utf8"
          % (str(f), stream, value.replace("'", "''"))],
         capture_output=True, text=True)
