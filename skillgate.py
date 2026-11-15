@@ -916,49 +916,151 @@ def scan_md_file(filepath: Path, result: ScanResult):
             ))
 
 
-def scan_dependencies(skill_path: Path, result: ScanResult):
-    """Scan dependencies for known vulnerabilities via OSV.dev."""
-    # Find requirements.txt
-    req_file = skill_path / "requirements.txt"
-    if not req_file.exists():
-        return
+def _parse_requirement_line(line):
+    """把一行依赖拆成 (name, version) 或 ("", 原始行)。
 
-    try:
-        content = req_file.read_text(encoding="utf-8", errors="replace")
-    except Exception:
-        return
+    只对**精确固定版本**返回版本号：`requests>=2.31` 曾被写成 `==latest`
+    送去 OSV，回来的一堆漏洞被按 HIGH 报成"requests==latest 存在 XX 漏洞"——
+    那是一个不存在的版本号，属于假精确，比漏报更难被使用者识破。
+    范围约束只能说明"不低于某版本"，判不出具体受影响包版本，所以只报"无法判定"。
+    """
+    line = line.split(";")[0].strip()
+    line = line.split("#")[0].strip()
+    if not line:
+        return "", ""
+    if "==" in line:
+        name, version = line.split("==", 1)
+        name = name.strip()
+        version = version.strip().strip("\"'")
+        if name and version and not any(c in version for c in ("*", " ", "<", ">")):
+            return name, version
+    return "", line
 
-    deps = []
-    ranged = []
-    for line in content.splitlines():
-        line = line.strip()
-        if not line or line.startswith("#"):
+
+def _declared_dependency_files(skill_path: Path):
+    """声明依赖的所有文件：requirements.txt、requirements-*.txt、pyproject.toml。
+
+    修复前只读 requirements.txt。真实技能常把依赖写在 pyproject.toml 里，
+    于是"扫过依赖"这句话在那类仓里其实是"什么都没扫"。
+    """
+    files = []
+    for name in ("requirements.txt", "pyproject.toml"):
+        p = skill_path / name
+        if p.exists():
+            files.append(p)
+    for p in sorted(skill_path.glob("requirements-*.txt")):
+        if p.is_file():
+            files.append(p)
+    for sub in ("scripts", "src"):
+        d = skill_path / sub
+        if not d.is_dir():
             continue
-        # 只对**精确固定版本**的依赖查漏洞库。
-        # 修复前：`requests>=2.31` 被写成 `==latest` 送去 OSV，回来的
-        # 一堆漏洞被按 HIGH 报成"requests==latest 存在 XX 漏洞"——
-        # 那是一个不存在的版本号，属于假精确，比漏报更难被使用者识破。
-        # 范围约束只能说明"不低于某版本"，判不出具体受影响版本，
-        # 所以这里只报一条 MEDIUM 的"无法判定"，不再伪造版本号。
-        if "==" in line:
-            name, version = line.split("==", 1)
-            deps.append((name.strip(), version.strip()))
-        elif any(op in line for op in (">=", "~=", "<=", ">", "<", "*")):
-            ranged.append(line.split(";")[0].strip())
+        for name in ("requirements.txt", "pyproject.toml"):
+            p = d / name
+            if p.exists():
+                files.append(p)
+        for p in sorted(d.glob("requirements-*.txt")):
+            if p.is_file():
+                files.append(p)
+    return files
+
+
+def _deps_from_pyproject(text):
+    """取 PEP 621 的 dependencies 与 Poetry 的 [tool.poetry.dependencies]。
+
+    返回 (spec, is_dev) 列表：`optional-dependencies` 与 poetry 的
+    dev/group 是**开发依赖**，它们不进运行时，未固定版本不该按运行时风险算。
+    实测踩到过：lgd-eval 自己的 pyproject 里有 `pytest>=7`，
+    一刀切成 MEDIUM 会把自家技能从 90 扣到 86——理由不成立，属于自伤噪音。
+    """
+    try:
+        import tomllib
+    except ImportError:            # py3.8–3.10：不猜，直接说没解析
+        return None
+    try:
+        data = tomllib.loads(text)
+    except Exception:
+        return None
+    specs = []
+    proj = data.get("project") or {}
+    for item in proj.get("dependencies") or []:
+        specs.append((str(item), False))
+    opt = proj.get("optional-dependencies") or {}
+    for group in opt.values():
+        for item in group or []:
+            specs.append((str(item), True))
+    poetry = ((data.get("tool") or {}).get("poetry") or {})
+    for name, spec in (poetry.get("dependencies") or {}).items():
+        if name.lower() == "python":
+            continue
+        specs.append(("%s%s" % (name, spec if isinstance(spec, str) else ""), False))
+    for name, spec in (poetry.get("dev-dependencies") or {}).items():
+        specs.append(("%s%s" % (name, spec if isinstance(spec, str) else ""), True))
+    for group in (poetry.get("group") or {}).values():
+        for name, spec in (group.get("dependencies") or {}).items():
+            specs.append(("%s%s" % (name, spec if isinstance(spec, str) else ""), True))
+    return specs
+
+
+def scan_dependencies(skill_path: Path, result: ScanResult):
+    """Scan declared dependencies for known vulnerabilities via OSV.dev."""
+    dep_files = _declared_dependency_files(skill_path)
+    if not dep_files:
+        return
+
+    deps = []            # (name, version, file)
+    ranged = []          # (raw, file)           运行时依赖
+    dev_ranged = []      # (raw, file)           开发依赖
+    unparsed = []        # pyproject 在没有 tomllib 时
+    for dep_file in dep_files:
+        try:
+            content = dep_file.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            continue
+        if dep_file.suffix == ".toml":
+            specs = _deps_from_pyproject(content)
+            if specs is None:
+                unparsed.append(dep_file)
+                continue
+            lines = specs
+        else:
+            lines = [(ln, False) for ln in content.splitlines()]
+        for line, is_dev in lines:
+            name, tail = _parse_requirement_line(line)
+            if name:
+                deps.append((name, tail, dep_file))
+            elif tail:
+                (dev_ranged if is_dev else ranged).append((tail, dep_file))
+
+    for f in unparsed:
+        result.findings.append(Finding(
+            severity="LOW", category="dependency-scan",
+            message="pyproject.toml 未能解析（需要 Python 3.11+ 的 tomllib），依赖未检查",
+            file=str(f)
+        ))
 
     if ranged:
+        names = ", ".join(raw for raw, _ in ranged[:5])
         result.findings.append(Finding(
             severity="MEDIUM", category="dependency-scan",
             message="依赖版本为范围约束，无法判定具体受影响版本：%s（请固定为 ==x.y.z 后复核）"
-                    % ", ".join(ranged[:5]),
-            file=str(req_file)
+                    % names,
+            file=str(ranged[0][1])
+        ))
+
+    if dev_ranged:
+        names = ", ".join(raw for raw, _ in dev_ranged[:5])
+        result.findings.append(Finding(
+            severity="LOW", category="dependency-scan",
+            message="开发依赖未固定版本：%s（不进运行时，不作运行时风险计）" % names,
+            file=str(dev_ranged[0][1])
         ))
 
     if not deps:
         return
 
     # Query OSV.dev for each dependency
-    for name, version in deps[:10]:  # limit to 10 deps to avoid timeout
+    for name, version, dep_file in deps[:10]:  # limit to 10 deps to avoid timeout
         try:
             payload = json.dumps({
                 "package": {"name": name, "ecosystem": "PyPI"},
@@ -979,14 +1081,14 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
                         result.findings.append(Finding(
                             severity="HIGH", category="dependency-vuln",
                             message=f"{name}=={version}: {v.get('summary', 'known vulnerability')}",
-                            file=str(req_file)
+                            file=str(dep_file)
                         ))
         except Exception:
             # Offline fallback: just note that we couldn't check
             result.findings.append(Finding(
                 severity="LOW", category="dependency-scan",
                 message=f"无法联网检查 {name} 的已知漏洞",
-                file=str(req_file)
+                file=str(dep_file)
             ))
 
 
