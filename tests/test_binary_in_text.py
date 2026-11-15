@@ -62,3 +62,20 @@ def test_normal_text_files_are_quiet(tmp_path):
     (d / "docs" / "b.md").write_bytes(b"\xff\xfe" + "## UTF-16 文档\n".encode("utf-16-le"))
     r = sg.scan_skill(str(d))
     assert not [f for f in r.findings if f.category == "integrity"], "正常文本被误报为二进制"
+
+
+def test_large_utf8_file_cut_mid_character_is_not_binary(tmp_path):
+    """大文件的 64 KB 窗口正好切在多字节字符中间时，不能被判成二进制。
+
+    这是 §3ap 修复自带假阳性的守卫：判据是"读前 64 KB 再严格解码"，
+    只要第 65536 字节落在一个中文字符中间，正常的大文本文件就会吃一条 HIGH
+    「声明为文本，内容是二进制」。实测触发件是 skillgate.py 自己长到 180 KB 之后
+    ——仪器先把人抓了。
+    """
+    d = _skill(tmp_path, "bigtext")
+    (d / "docs").mkdir()
+    body = "a" * 65535 + "中文说明\n" + "b" * 1000   # 索引 65535 是"中"的首字节
+    (d / "docs" / "big.md").write_text(body, encoding="utf-8")
+    r = sg.scan_skill(str(d))
+    assert not [f for f in r.findings if f.category == "integrity"], \
+        "大 UTF-8 文件被误判为二进制（窗口切在多字节字符中间）"
