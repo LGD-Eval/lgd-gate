@@ -937,6 +937,76 @@ def _parse_requirement_line(line):
     return "", line
 
 
+POPULAR_PY = {
+    "requests", "numpy", "pandas", "flask", "django", "pytest", "setuptools",
+    "urllib3", "boto3", "pyyaml", "cryptography", "pillow", "jinja2", "click",
+    "scipy", "tqdm", "redis", "sqlalchemy", "fastapi", "pydantic", "openai",
+    "anthropic", "matplotlib", "httpx", "aiohttp", "attrs", "packaging",
+    "certifi", "idna", "six",
+}
+POPULAR_NPM = {
+    "lodash", "express", "react", "react-dom", "axios", "chalk", "commander",
+    "moment", "request", "debug", "uuid", "dotenv", "webpack", "tslib",
+    "minimist", "node-fetch", "socket.io", "mongoose", "yargs", "colors",
+    "eslint-plugin-unused-imports",
+}
+# 视觉替换：0→o、1→l、3→e、5→s、7→t，rn→m，分隔符统一。
+_CONFUSE = str.maketrans({"0": "o", "1": "l", "3": "e", "5": "s", "7": "t"})
+
+
+def _norm_name(name):
+    n = name.lower().replace("rn", "m")
+    for sep in ("_", ".", "-"):
+        n = n.replace(sep, "-")
+    return n.translate(_CONFUSE)
+
+
+def _levenshtein(a, b):
+    if a == b:
+        return 0
+    if not a or not b:
+        return max(len(a), len(b))
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1,
+                           prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
+
+
+def _typosquat_suspects(name, ecosystem):
+    """名称相似度只是**怀疑**，不是 registry 事实。
+
+    依据（公开研究）：
+      · Levenshtein 距离 1–2 是主流启发式，已知误报高；
+        40 个已知 typosquat 中 18 个的距离 ≤2（arXiv 2502.20528 综述口径）。
+      · "子集型"（把一个长包名简化）编辑距离可以到 14，
+        只有分词能抓——例如 eslint-plugin-unused-imports → unused-imports。
+      · 依赖混淆的结构性修法是受控 scope + 显式 registry 映射，
+        扫描器能做的只是"提醒核对来源"，不能替代 registry 侧校验。
+    因此这里只产出 LOW，绝不升级为 HIGH：一个名字长得像，不是证据。
+    """
+    popular = POPULAR_NPM if ecosystem == "npm" else POPULAR_PY
+    low = name.lower()
+    if low in popular:
+        return []
+    hits = []
+    for p in popular:
+        if _norm_name(low) == _norm_name(p):
+            hits.append("%s（形近替换 %s）" % (p, p))
+            continue
+        if len(p) >= 5 and len(low) >= 5 and _levenshtein(_norm_name(low), _norm_name(p)) == 1:
+            hits.append("%s（编辑距离 1）" % p)
+            continue
+        pt = set(p.replace("_", "-").split("-"))
+        nt = set(low.replace("_", "-").split("-"))
+        if len(pt) >= 2 and nt and nt < pt:
+            hits.append("%s（子集型：%s ⊂ %s）" % (p, "-".join(sorted(nt)), "-".join(sorted(pt))))
+    return hits[:2]
+
+
 def _declared_dependency_files(skill_path: Path):
     """声明依赖的所有文件：requirements.txt、requirements-*.txt、pyproject.toml。
 
@@ -1224,6 +1294,19 @@ def scan_dependencies(skill_path: Path, result: ScanResult):
                     "（上限是性能折中，不代表已扫完）" % (len(deps), CAP, len(deps) - CAP),
             file=str(deps[CAP][3])
         ))
+
+    # 名称相似度只提示、不定罪（LOW）：
+    # 一个包名长得像热门包，可能只是有人随手命名；只有当它与热门包
+    # 形成"形近替换/编辑距离1/子集型"时才提一句，让人去核对来源。
+    for d in deps[:CAP]:
+        sus = _typosquat_suspects(d[0], d[2])
+        if sus:
+            result.findings.append(Finding(
+                severity="LOW", category="dependency-name",
+                message="%s 疑似仿冒热门包：%s。名称相似度判定，**不是** registry 事实；"
+                        "请核对包来源与发布者" % (d[0], "；".join(sus)),
+                file=str(d[3])
+            ))
 
     # Query OSV.dev for each dependency
     for name, version, eco, dep_file, is_dev in deps[:CAP]:  # limit to avoid timeout
