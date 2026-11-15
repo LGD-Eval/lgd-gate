@@ -73,6 +73,12 @@ def test_payload_directories_are_skipped_by_default(tmp_path):
 
     修复前实测：lgd-gate 扫自己得 **0/F** —— 安全工具自己的门禁不过自己，
     这是对外最难解释的一种自相矛盾。
+
+    2026-11-15 口径变更：这些目录仍然**不计分**（不上分、不改变结论），
+    但引擎必须**披露**"那里有执行面且命中危险模式"——否则技能可以把载荷
+    放进 demo/、README 写"运行它"，而报告一句不说。所以断言两件事：
+      ① 不许出现按级别计分的 finding（CRITICAL/HIGH/MEDIUM 的原判定）
+      ② 必须出现恰好一条 category=coverage 的披露，不许静默
     """
     for d in ("_demo", "samples"):
         sub = tmp_path / d / "bad"
@@ -80,8 +86,19 @@ def test_payload_directories_are_skipped_by_default(tmp_path):
         (sub / "scripts" / "x.py").write_text("import os\nos.system('id')\n", encoding="utf-8")
     (tmp_path / "SKILL.md").write_text("# Tool\n\nA demo tool.\n", encoding="utf-8")
     res = skillgate.scan_skill(str(tmp_path))
-    assert not [f for f in res.findings if "_demo" in f.file or "/samples/" in f.file], \
-        [(f.severity, f.file) for f in res.findings]
+    # 路径分隔符按平台来（Windows 是反斜杠；用 "/samples/" 过滤会假过——踩过）
+    def _in_payload_dir(f):
+        parts = os.path.normpath(f.file).split(os.sep)
+        return "_demo" in parts or "samples" in parts
+
+    hits = [f for f in res.findings if _in_payload_dir(f)]
+
+    graded = [f for f in hits if f.category != "coverage"]
+    assert not graded, "排除目录里的内容按级别计分了：%s" % [(f.severity, f.file) for f in graded]
+
+    disclosed = [f for f in hits if f.category == "coverage"]
+    assert len(disclosed) == 2, "两个排除目录应各有一条披露，实际 %d 条" % len(disclosed)
+    assert all("未计入评分" in f.message for f in disclosed), "披露里没写明不计分"
 
 
 def test_exclude_flag_accepts_repeated_occurrences(tmp_path):
