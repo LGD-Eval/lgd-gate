@@ -96,3 +96,86 @@ def test_accepts_the_fingerprint_format_from_evidence_json():
     rec = _rec(subject="sha256:" + _TREE)
     ok, problems = ar.validate(rec, tree="sha256:" + _TREE)
     assert ok, problems
+
+
+# ---- 签名：让"授予人"是身份，不是一个字符串 ----
+
+import subprocess  # noqa: E402
+
+
+def _keygen(tmpdir):
+    """现造一把一次性密钥；不碰用户真实私钥。"""
+    try:
+        exe = ar._ssh_keygen()
+    except ar.SigningError:
+        pytest.skip("本机无 ssh-keygen")
+    key = str(tmpdir / "id_ed25519")
+    r = subprocess.run([exe, "-t", "ed25519", "-N", "", "-C", "lgd-test",
+                        "-f", key], capture_output=True, text=True)
+    assert r.returncode == 0, r.stderr
+    return key, key + ".pub"
+
+
+def _write(tmpdir, rec, name="auth.json"):
+    p = tmpdir / name
+    p.write_text(json.dumps(rec, ensure_ascii=False, indent=2), encoding="utf-8")
+    return p
+
+
+def test_sign_then_verify_roundtrip(tmp_path):
+    key, pub = _keygen(tmp_path)
+    rec = _rec()
+    rec_path = _write(tmp_path, rec)
+    sig = ar.sign_record(str(rec_path), key)
+    allowed = str(tmp_path / "allowed_signers")
+    with open(allowed, "w", encoding="utf-8", newline="\n") as f:
+        f.write(ar.allow_line(pub, rec["grantor"]))
+    ok, msg = ar.verify_signature(str(rec_path), sig, allowed, rec["grantor"])
+    assert ok, msg
+
+
+def test_tampered_record_fails_verification(tmp_path):
+    """签名绑的是字节；改一个字就必须验不过——否则签名只是装饰。"""
+    key, pub = _keygen(tmp_path)
+    rec = _rec()
+    rec_path = _write(tmp_path, rec)
+    sig = ar.sign_record(str(rec_path), key)
+    allowed = str(tmp_path / "allowed_signers")
+    with open(allowed, "w", encoding="utf-8", newline="\n") as f:
+        f.write(ar.allow_line(pub, rec["grantor"]))
+
+    rec2 = dict(rec, scope="production deploy: everything")
+    rec_path.write_text(json.dumps(rec2, ensure_ascii=False, indent=2), encoding="utf-8")
+    ok, msg = ar.verify_signature(str(rec_path), sig, allowed, rec["grantor"])
+    assert not ok, msg
+
+
+def test_verify_fails_for_a_principal_not_in_allowed_signers(tmp_path):
+    key, pub = _keygen(tmp_path)
+    rec = _rec()
+    rec_path = _write(tmp_path, rec)
+    sig = ar.sign_record(str(rec_path), key)
+    allowed = str(tmp_path / "allowed_signers")
+    with open(allowed, "w", encoding="utf-8", newline="\n") as f:
+        f.write(ar.allow_line(pub, rec["grantor"]))
+    ok, msg = ar.verify_signature(str(rec_path), sig, allowed, "Somebody Else")
+    assert not ok, msg
+
+
+def test_validate_refuses_unsigned_record_when_verification_is_requested(tmp_path):
+    """要验签却没签名：不能当成"通过了"，必须当成不成立。"""
+    rec_path = _write(tmp_path, _rec())
+    empty = tmp_path / "allowed_signers"
+    empty.write_text("", encoding="utf-8")
+    rc = ar.main(["validate", str(rec_path), "--allowed-signers", str(empty)])
+    assert rc == 2
+
+
+def test_sign_reports_a_message_for_a_missing_key(tmp_path):
+    rec_path = _write(tmp_path, _rec())
+    try:
+        ar.sign_record(str(rec_path), str(tmp_path / "nokey"))
+    except ar.SigningError as exc:
+        assert "私钥不存在" in str(exc)
+    else:
+        pytest.fail("缺私钥应当报错")

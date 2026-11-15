@@ -4,19 +4,28 @@
 评测器只产出结论，授权是另一次动作、由另一条命令裁决。把两者放在同一支流程里，
 就是审计第一条 P0 的复发——一个工具同时打分和发许可证。
 
-所以这里只做三件事：
+所以这里只做四件事：
   1. 生成一份可审计的记录（new）
   2. 校验这份记录是否成立（validate）
   3. 打印它说的是什么（show）
+  4. 签名与验签（sign / verify）——让"授予人"是身份，不是一个字符串
 
-校验不追求"防伪造"（本地文件无从防），追求的是**伪造会留下痕迹**：
-授予人、范围、有效期、依据四项缺一不可，且第三方复核必须有可访问的依据。
+签名用 OpenSSH 签名格式（ssh-keygen -Y sign），不用 GPG：
+本机已有 OpenSSH 与 ed25519 密钥，GitHub/GitLab 也用它签提交，验签只需一个
+allowed_signers 文件，不联网、不依赖密钥服务器。
+
+校验不追求"防伪造"，追求的是**伪造会留下痕迹**：
+授予人、范围、有效期、依据四项缺一不可，第三方复核必须有可访问依据，
+签名有效则把授予人绑到一把具体的公钥。
 
 用法：
   python3 authorization_record.py new --grantor "Steven Zhao" --subject <tree_sha256> \
       --scope "production deploy: skill-x" --days 90 --provenance third_party \
       --evidence https://... -o auth.json
-  python3 authorization_record.py validate auth.json --tree <tree_sha256>
+  python3 authorization_record.py sign auth.json -f ~/.ssh/id_ed25519
+  python3 authorization_record.py allow ~/.ssh/id_ed25519.pub --principal "Steven Zhao" -o allowed_signers
+  python3 authorization_record.py validate auth.json --tree <tree_sha256> \
+      --sig auth.json.sig --allowed-signers allowed_signers
 """
 import argparse
 import datetime as _dt
@@ -24,9 +33,12 @@ import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
 
 VERSION = "lgd-auth/1"
+SIG_NAMESPACE = "lgd-auth"
 
 # 这些名字不接受：它们不是"一方"，无法承担后果
 _NON_PERSONS = {"auto", "automated", "bot", "ci", "system", "none", "n/a", "-"}
@@ -152,6 +164,74 @@ def describe(rec):
                rec.get("provenance"), rec.get("record_id")))
 
 
+class SigningError(Exception):
+    """签名/验签失败。带人话原因，不抛裸 traceback。"""
+
+
+def _ssh_keygen():
+    exe = shutil.which("ssh-keygen")
+    if not exe and os.name == "nt":
+        cand = os.path.join(os.environ.get("SystemRoot", r"C:\Windows"),
+                            "System32", "OpenSSH", "ssh-keygen.exe")
+        if os.path.exists(cand):
+            exe = cand
+    if not exe:
+        raise SigningError("找不到 ssh-keygen：签名需要 OpenSSH（本机无 gpg/minisign）")
+    return exe
+
+
+def sign_record(path, key_path, namespace=SIG_NAMESPACE):
+    """对记录做分离签名，产出 <path>.sig。使用现有 SSH 私钥，不新建密钥。"""
+    if not os.path.exists(path):
+        raise SigningError("记录不存在：%s" % path)
+    if not os.path.exists(key_path):
+        raise SigningError("私钥不存在：%s" % key_path)
+    for stale in (path + ".sig",):
+        if os.path.exists(stale):
+            os.remove(stale)
+    cmd = [_ssh_keygen(), "-Y", "sign", "-f", key_path, "-n", namespace, path]
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    if r.returncode != 0:
+        raise SigningError("签名失败：%s" % (r.stderr.strip()[:200] or r.stdout.strip()[:200]))
+    sig = path + ".sig"
+    if not os.path.exists(sig):
+        raise SigningError("ssh-keygen 报成功但没有产出 %s" % sig)
+    return sig
+
+
+def verify_signature(path, sig_path, allowed_signers, principal,
+                     namespace=SIG_NAMESPACE):
+    """用 allowed_signers 验签。成功返回 (True, 说明)。"""
+    for need, label in ((path, "记录"), (sig_path, "签名"), (allowed_signers, "allowed_signers")):
+        if not os.path.exists(need):
+            return False, "%s 不存在：%s" % (label, need)
+    cmd = [_ssh_keygen(), "-Y", "verify", "-f", allowed_signers,
+           "-I", principal, "-n", namespace, "-s", sig_path]
+    with open(path, "rb") as body:
+        r = subprocess.run(cmd, stdin=body, capture_output=True, text=True)
+    if r.returncode == 0:
+        return True, (r.stdout.strip().splitlines() or ["ok"])[-1]
+    msg = (r.stderr.strip() or r.stdout.strip() or "验签失败").splitlines()[-1]
+    return False, msg
+
+
+def allow_line(public_key_path, principal):
+    """生成 allowed_signers 的一行：principal + 公钥主体。"""
+    if not os.path.exists(public_key_path):
+        raise SigningError("公钥不存在：%s" % public_key_path)
+    with open(public_key_path, encoding="utf-8") as f:
+        body = f.read().strip().split()
+    if len(body) < 2:
+        raise SigningError("%s 不像 OpenSSH 公钥（应为 'ssh-ed25519 AAAA…'）" % public_key_path)
+    # allowed_signers 里带空格的主体名必须加引号，否则 ssh-keygen 解析不了
+    principal = principal.strip()
+    if not principal:
+        raise SigningError("principal 不能为空")
+    if any(c.isspace() for c in principal) or principal.startswith('"'):
+        principal = '"%s"' % principal.replace('"', '')
+    return "%s %s %s\n" % (principal, body[0], body[1])
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="LGD 授权记录：生成 / 校验 / 打印")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -169,9 +249,28 @@ def main(argv=None):
     p_val = sub.add_parser("validate", help="校验一份授权记录")
     p_val.add_argument("path")
     p_val.add_argument("--tree", default=None, help="被测目录的 tree_sha256，用于核对记录是否针对这棵树")
+    p_val.add_argument("--sig", default=None, help="分离签名文件（默认 <path>.sig）")
+    p_val.add_argument("--allowed-signers", default=None, help="allowed_signers 文件；给了就要求验签通过")
 
     p_show = sub.add_parser("show", help="打印记录内容与结论")
     p_show.add_argument("path")
+
+    p_sign = sub.add_parser("sign", help="用 SSH 私钥对记录做分离签名")
+    p_sign.add_argument("path")
+    p_sign.add_argument("-f", "--key", required=True, help="SSH 私钥，例如 ~/.ssh/id_ed25519")
+    p_sign.add_argument("--namespace", default=SIG_NAMESPACE)
+
+    p_ver = sub.add_parser("verify", help="用 allowed_signers 验签")
+    p_ver.add_argument("path")
+    p_ver.add_argument("--sig", default=None, help="默认 <path>.sig")
+    p_ver.add_argument("--allowed-signers", required=True)
+    p_ver.add_argument("--principal", required=True, help="allowed_signers 里的主体名")
+    p_ver.add_argument("--namespace", default=SIG_NAMESPACE)
+
+    p_allow = sub.add_parser("allow", help="把公钥写进 allowed_signers 的一行")
+    p_allow.add_argument("pubkey")
+    p_allow.add_argument("--principal", required=True)
+    p_allow.add_argument("-o", "--out", default="", help="追加写入该文件；不填则打印")
 
     args = ap.parse_args(argv)
 
@@ -192,6 +291,37 @@ def main(argv=None):
             print(payload, end="")
         return 0
 
+    if args.cmd == "sign":
+        try:
+            sig = sign_record(args.path, os.path.expanduser(args.key), args.namespace)
+        except SigningError as exc:
+            sys.stderr.write("%s\n" % exc)
+            return 2
+        print("已签名：%s" % sig)
+        return 0
+
+    if args.cmd == "verify":
+        sig = args.sig or (args.path + ".sig")
+        ok, msg = verify_signature(args.path, os.path.expanduser(sig),
+                                   os.path.expanduser(args.allowed_signers),
+                                   args.principal, args.namespace)
+        print("SIGNATURE: %s — %s" % ("VALID" if ok else "INVALID", msg))
+        return 0 if ok else 2
+
+    if args.cmd == "allow":
+        try:
+            line = allow_line(os.path.expanduser(args.pubkey), args.principal)
+        except SigningError as exc:
+            sys.stderr.write("%s\n" % exc)
+            return 2
+        if args.out:
+            with open(os.path.expanduser(args.out), "a", encoding="utf-8", newline="\n") as f:
+                f.write(line)
+            print("已追加到 %s：%s" % (args.out, line.strip()[:60] + "…"))
+        else:
+            print(line, end="")
+        return 0
+
     try:
         with open(args.path, encoding="utf-8") as f:
             rec = json.load(f)
@@ -203,6 +333,18 @@ def main(argv=None):
         sys.stderr.write("记录不是合法 JSON（%s）：%s\n" % (args.path, exc))
         return 2
     ok, problems = validate(rec, tree=getattr(args, "tree", None))
+
+    # 给了 allowed_signers 就要求验签：没签名的记录在"要验签"的语境下等于不成立
+    if getattr(args, "allowed_signers", None):
+        sig = args.sig or (args.path + ".sig")
+        sig_ok, msg = verify_signature(args.path, os.path.expanduser(sig),
+                                       os.path.expanduser(args.allowed_signers),
+                                       rec.get("grantor") or "",
+                                       getattr(args, "namespace", SIG_NAMESPACE))
+        if not sig_ok:
+            problems.append("签名无效：%s" % msg)
+            ok = False
+
     if args.cmd == "show":
         print(describe(rec))
         for p in problems:
