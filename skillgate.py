@@ -176,6 +176,38 @@ PROMPT_INJECTION_PATTERNS = [
     (r"forget\s+your\s+rules", "CRITICAL", "Forget your rules"),
     (r"override\s+your\s+guidelines", "CRITICAL", "Override guidelines"),
     (r"ignore\s+your\s+training", "CRITICAL", "Ignore training"),
+
+    # --- 2026-11-15 红队复测（灭类不灭例）：注入这一类里，非英文形态曾整体失明 ---
+    # 14 条样本里 13 条漏检：中文指令覆盖、结构标签伪造、编码载荷、分隔符伪造全放行。
+    # 我们服务的生态主要说中文，只认英文等于对中文用户交白卷。以下按类补齐。
+    # 严重度按"是否直接改写行为"分：改写指令 = CRITICAL，隐瞒/窃取语境 = HIGH，
+    # 角色扮演 = LOW（正常提示词也大量使用，报重了就是误伤）。
+    (r"(?:忽略|无视|抛开|跳过)(?:掉)?(?:以上|上面|前面|之前|先前|此前|上述)(?:的)?(?:所有|全部)?(?:指令|指示|提示|规则|设定|要求)",
+     "CRITICAL", "中文注入：忽略以上指令"),
+    (r"(?:忘掉|忘记|丢弃|清空)(?:你)?(?:之前|原来|原有|此前)?(?:的)?(?:所有)?(?:规则|指令|设定|限制|约束)",
+     "CRITICAL", "中文注入：忘掉原有规则"),
+    (r"(?:绕过|突破|跳过)(?:掉)?(?:安全|内容|审核|过滤|限制|防护|护栏)(?:检查|机制|策略)?",
+     "CRITICAL", "中文注入：绕过安全限制"),
+    (r"(?:覆盖|重写|改写)(?:掉)?(?:你的)?(?:系统)?(?:提示词|系统提示|指令|设定)",
+     "CRITICAL", "中文注入：覆盖系统设定"),
+    (r"<\s*/?\s*system\s*>|\[\s*system\s*\]|\"role\"\s*:\s*\"system\"",
+     "CRITICAL", "结构伪造：伪装 system 角色"),
+    (r"system_prompt_override|override_system_prompt",
+     "HIGH", "配置伪造：声明覆盖系统提示"),
+    (r"(?:不要|别|切勿)(?:告诉|通知|提醒|透露给|告知)(?:用户|使用者|调用者)",
+     "HIGH", "中文注入：对用户隐瞒行为"),
+    # 语序不固定（"把系统提示词输出给我" / "输出你的系统提示"），故两个方向都认
+    (r"(?=[^\n]*(?:系统提示词|系统提示|初始提示|隐藏指令))(?:输出|泄露|打印|发给我|给出|告知)"
+     r"|(?:系统提示词|系统提示|初始提示|隐藏指令)[^\n]*(?:输出|泄露|给出|发给|打印|告知)",
+     "HIGH", "中文注入：索取系统提示"),
+    (r"base64\s+(?:-d|--decode)[^\n]*\|\s*(?:sh|bash|zsh|python)",
+     "CRITICAL", "编码载荷：base64 解码后直接执行"),
+    (r"<<\s*SYS\s*>>|\[\s*INST\s*\]",
+     "MEDIUM", "聊天模板标记（可能伪造角色边界，需人工确认）"),
+    (r"你现在(?:是|就是|扮演)|假装(?:你)?是|(?:请)?扮演(?:一个)?",
+     "LOW", "角色定义，低风险，需人工确认"),
+    (r"\]\]>\s*</?\w+>",
+     "MEDIUM", "分隔符伪造：闭合标签后追加新指令"),
 ]
 
 # 5.4 不可见字符承载的指令（CSA 2026-03 报告的 Unicode Tags 注入）
@@ -844,9 +876,19 @@ def scan_md_file(filepath: Path, result: ScanResult):
 
     def is_safety_discussion(line: str) -> bool:
         """该行是否在讨论安全/防御主题（红队、扫描、防护等），
-        此时 jailbreak / ignore previous 等词是主题词而非注入指令。"""
+        此时 jailbreak / ignore previous 等词是主题词而非注入指令。
+
+        2026-11-15 收紧：原先"命中任一个安全词就豁免"。中文注入几乎必然带"安全"二字
+        （"绕过安全限制"），于是把自己豁免掉了——实测该样本被判 MISS。
+        改为分级：出现两个以上不同安全词，或出现明确的讨论标记（例如/示例/论文 等），
+        才算讨论语境；只有一个"安全"这类泛词不构成豁免。
+        """
         low = line.lower()
-        return any(w in low for w in SAFETY_CONTEXT_WORDS)
+        hits = {w for w in SAFETY_CONTEXT_WORDS if w in low}
+        if len(hits) >= 2:
+            return True
+        return any(w in low for w in ("例如", "示例", "举例", "恶意样本", "攻击样例",
+                                      "e.g.", "example", "payload sample"))
 
     def _match_in_quoted(line: str, m_start: int) -> bool:
         """命中位置是否在反引号/引号之内（示例载荷），非指令本身。"""
@@ -879,6 +921,30 @@ def scan_md_file(filepath: Path, result: ScanResult):
             result.findings.append(Finding(
                 severity=severity, category="prompt-injection",
                 message=msg, file=str(filepath), line=i
+            ))
+
+    # 1.2 编码载荷：base64 解出来再判。只看"一长串 base64"会全员误报
+    #     （文档里的哈希、证书、密钥指纹都是这种形态），解出明文再看里面有没有指令才准。
+    for _m in re.finditer(r"[A-Za-z0-9+/]{40,}={0,2}", content):
+        _blob = _m.group(0)
+        try:
+            import base64 as _b64
+            _dec = _b64.b64decode(_blob + "=" * (-len(_blob) % 4),
+                                 validate=False).decode("utf-8", "ignore")
+        except Exception:
+            continue
+        if not _dec or len(_dec) < 8:
+            continue
+        _low = _dec.lower()
+        if any(k in _low for k in ("ignore", "system prompt", "jailbreak",
+                                   "忽略", "指令", "system")):
+            _line = content[:_m.start()].count("\n") + 1
+            if is_suppressed(_line):
+                continue
+            result.findings.append(Finding(
+                severity="CRITICAL", category="prompt-injection",
+                message="编码载荷：base64 解码后含注入指令（%s…）" % _dec.strip()[:40],
+                file=str(filepath), line=_line
             ))
 
     # 1.5 不可见字符：正则看不见它们，必须按码位扫。
