@@ -123,7 +123,11 @@ subprocess.run(["cat", "/home/u/.bashrc"])
 shutil.copy("a.txt", "/tmp/a.txt")
 with open("build.log", "a") as f:
     f.write("done\\n")
-with open("/etc/hosts", "a") as f:
+with open("/tmp/hosts", "a") as f:
     f.write("127.0.0.1 api.local\\n")
 ''')
+    # 注：原先这里写的是 `/etc/hosts`，被当成"良性近亲"。§3bs 把"写系统目录"
+    # 确认为 CRITICAL —— 它是真的往系统文件写，不是良性，已移到
+    # tests/test_path_escape.py 的攻击样例（test_path_write_absolute）。
+    # 这里改成临时目录，保持"只读探查 + 临时文件写入不得报"的原意。
     assert not any(s in BAD for s in _sev(d))
