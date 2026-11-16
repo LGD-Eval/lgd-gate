@@ -59,10 +59,13 @@ def test_vagrantfile_inline_is_critical(tmp_path):
 
 # ---------- 反例：正常构建文件满分 ----------
 def test_normal_dockerfile_is_clean(tmp_path):
+    # §3ca 之后“正常”多了个前提：`COPY . /app` 必须有 `.dockerignore` 挡住 `.git`/`.env`。
+    # 没有它的 Dockerfile 会把整个构建上下文塞进镜像，属真实暴露面（见 test_package_face.py）。
     r = _skill(tmp_path, {"Dockerfile":
                           "FROM python:3.13-slim\nCOPY requirements.txt .\n"
                           "RUN pip install --no-cache-dir -r requirements.txt\n"
-                          "COPY . /app\nCMD [\"python\", \"/app/main.py\"]\n"})
+                          "COPY . /app\nCMD [\"python\", \"/app/main.py\"]\n",
+                          ".dockerignore": ".git\n.env\n__pycache__\n"})
     assert not _crit(r) and r.trust_score == 100, "正常 Dockerfile 被扣分: %s" % r.trust_score
 
 
