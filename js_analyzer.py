@@ -16,41 +16,41 @@ SEV_ORDER = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3, "INFO": 4}
 
 # 确定的危险执行面：无论参数多克制，这几样都是任意代码执行
 DANGEROUS = [
-    (re.compile(r"require\s*\(\s*['\"]child_process['\"]\s*\)"), "HIGH",
+    ("JSDC001", re.compile(r"require\s*\(\s*['\"]child_process['\"]\s*\)"), "HIGH",
      "引入 child_process（任意子进程执行）"),
-    (re.compile(r"from\s+['\"]child_process['\"]"), "HIGH",
+    ("JSDC002", re.compile(r"from\s+['\"]child_process['\"]"), "HIGH",
      "引入 child_process（任意子进程执行）"),
-    (re.compile(r"\bexecSync\s*\("), "HIGH", "execSync 同步执行 shell"),
-    (re.compile(r"\bexecFileSync\s*\("), "HIGH", "execFileSync 同步执行外部程序"),
-    (re.compile(r"\bspawn\s*\([^)]*shell\s*:\s*true"), "HIGH", "spawn 开启 shell"),
-    (re.compile(r"\bexec\s*\(\s*[`'\"]"), "HIGH", "exec 执行命令字符串"),
-    (re.compile(r"\bnew\s+Function\s*\("), "HIGH", "new Function 动态构造代码"),
-    (re.compile(r"\beval\s*\("), "MEDIUM", "eval 动态求值（工具常用，需人工判断）"),
-    (re.compile(r"\bvm\.runInNewContext\s*\("), "MEDIUM", "vm 隔离执行（可逃逸）"),
+    ("JSDC003", re.compile(r"\bexecSync\s*\("), "HIGH", "execSync 同步执行 shell"),
+    ("JSDC004", re.compile(r"\bexecFileSync\s*\("), "HIGH", "execFileSync 同步执行外部程序"),
+    ("JSDC005", re.compile(r"\bspawn\s*\([^)]*shell\s*:\s*true"), "HIGH", "spawn 开启 shell"),
+    ("JSDC006", re.compile(r"\bexec\s*\(\s*[`'\"]"), "HIGH", "exec 执行命令字符串"),
+    ("JSDC007", re.compile(r"\bnew\s+Function\s*\("), "HIGH", "new Function 动态构造代码"),
+    ("JSDC008", re.compile(r"\beval\s*\("), "MEDIUM", "eval 动态求值（工具常用，需人工判断）"),
+    ("JSDC009", re.compile(r"\bvm\.runInNewContext\s*\("), "MEDIUM", "vm 隔离执行（可逃逸）"),
 ]
 
 # 凭证：与 Python 侧同一套格式，避免两个扫描器口径不一
 SECRETS = [
-    (re.compile(r"AKIA[0-9A-Z]{16}"), "CRITICAL", "硬编码 AWS Access Key"),
-    (re.compile(r"ghp_[A-Za-z0-9]{36}"), "CRITICAL", "硬编码 GitHub Token"),
-    (re.compile(r"sk-(?:proj-|ant-)?[A-Za-z0-9_-]{20,}"), "CRITICAL", "硬编码模型 API Key"),
-    (re.compile(r"xox[baprs]-[A-Za-z0-9-]{10,}"), "CRITICAL", "硬编码 Slack Token"),
+    ("JSCR001", re.compile(r"AKIA[0-9A-Z]{16}"), "CRITICAL", "硬编码 AWS Access Key"),
+    ("JSCR002", re.compile(r"ghp_[A-Za-z0-9]{36}"), "CRITICAL", "硬编码 GitHub Token"),
+    ("JSCR003", re.compile(r"sk-(?:proj-|ant-)?[A-Za-z0-9_-]{20,}"), "CRITICAL", "硬编码模型 API Key"),
+    ("JSCR004", re.compile(r"xox[baprs]-[A-Za-z0-9-]{10,}"), "CRITICAL", "硬编码 Slack Token"),
 ]
 
 # 外泄前兆：整份环境变量 / 大量文件内容上报
 EXFIL = [
-    (re.compile(r"JSON\.stringify\s*\(\s*process\.env\s*\)"), "MEDIUM",
+    ("JSXF001", re.compile(r"JSON\.stringify\s*\(\s*process\.env\s*\)"), "MEDIUM",
      "整份 process.env 导出（外泄前兆）"),
-    (re.compile(r"Object\.entries\s*\(\s*process\.env\s*\)"), "MEDIUM",
+    ("JSXF002", re.compile(r"Object\.entries\s*\(\s*process\.env\s*\)"), "MEDIUM",
      "遍历全部环境变量"),
-    (re.compile(r"https?://[^\s'\"`]+\.(com|net|org)[^\s'\"`]*"), "LOW",
+    ("JSXF003", re.compile(r"https?://[^\s'\"`]+\.(com|net|org)[^\s'\"`]*"), "LOW",
      "硬编码外部 URL"),
 ]
 
 FS_DANGER = [
-    (re.compile(r"\brmSync\s*\("), "MEDIUM", "rmSync 删除"),
-    (re.compile(r"\brimraf\b"), "MEDIUM", "rimraf 递归删除"),
-    (re.compile(r"\bunlinkSync\s*\("), "LOW", "unlinkSync 删除文件"),
+    ("JSFS001", re.compile(r"\brmSync\s*\("), "MEDIUM", "rmSync 删除"),
+    ("JSFS002", re.compile(r"\brimraf\b"), "MEDIUM", "rimraf 递归删除"),
+    ("JSFS003", re.compile(r"\bunlinkSync\s*\("), "LOW", "unlinkSync 删除文件"),
 ]
 
 
@@ -73,23 +73,25 @@ def scan_js_file(filepath):
             continue
         if "skillgate: ignore" in line:
             continue
-        for pattern, sev, msg in DANGEROUS:
+        for rid, pattern, sev, msg in DANGEROUS:
             if pattern.search(line):
-                out.append((sev, "dangerous-code", msg, i))
+                out.append((sev, "dangerous-code", msg, i, rid))
                 break
-        for pattern, sev, msg in SECRETS:
+        for rid, pattern, sev, msg in SECRETS:
             if pattern.search(line):
-                out.append((sev, "credential", msg, i))
+                out.append((sev, "credential", msg, i, rid))
                 break
-        for pattern, sev, msg in EXFIL:
+        for rid, pattern, sev, msg in EXFIL:
             if pattern.search(line):
-                # 硬编码 URL 太常见，只在同一行出现数据外发动词时才记
-                if msg == "硬编码外部 URL" and not re.search(r"\b(fetch|axios|post|send)\b", line):
+                # 硬编码 URL 太常见；只有同一行出现**外发数据**的动词才算外泄前兆。
+                # 普通 fetch/axios.get 是只读取数据，不构成外泄（此前把 fetch 也算进来，误报）。
+                if msg == "硬编码外部 URL" and not re.search(
+                        r"\b(axios\.post|\.post|send|upload|writeFileSync)\b", line):
                     continue
-                out.append((sev, "network", msg, i))
+                out.append((sev, "network", msg, i, rid))
                 break
-        for pattern, sev, msg in FS_DANGER:
+        for rid, pattern, sev, msg in FS_DANGER:
             if pattern.search(line):
-                out.append((sev, "filesystem", msg, i))
+                out.append((sev, "filesystem", msg, i, rid))
                 break
     return out

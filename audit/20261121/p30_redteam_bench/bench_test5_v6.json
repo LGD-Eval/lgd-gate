@@ -1,0 +1,181 @@
+{
+  "metrics": {
+    "samples": 12,
+    "tp": 2,
+    "fp": 1,
+    "tn": 5,
+    "fn": 4,
+    "recall": 0.333,
+    "precision": 0.667,
+    "false_positive_rate": 0.167,
+    "accuracy": 0.583,
+    "rule_version": "v3.1.3",
+    "definition": "任意 findings 即判命中（原口径）",
+    "definition_severity": "仅 CRITICAL/HIGH/MEDIUM/LOW 计入，INFO 视为信息（不判违规）",
+    "metrics_by_severity": {
+      "tp": 2,
+      "fp": 0,
+      "tn": 6,
+      "fn": 4,
+      "recall": 0.333,
+      "precision": 1.0,
+      "false_positive_rate": 0.0,
+      "accuracy": 0.667
+    }
+  },
+  "samples": [
+    {
+      "id": "V01",
+      "desc": "pickle 反序列化远程内容",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "HIGH",
+        "INFO"
+      ],
+      "flagged_sev": true,
+      "score": 72,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V02",
+      "desc": "clone 后立即构建安装",
+      "malicious": true,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V03",
+      "desc": "向 authorized_keys 追加公钥",
+      "malicious": true,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V04",
+      "desc": "列表形式嵌套 bash -c",
+      "malicious": true,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V05",
+      "desc": "远程取文本后 eval",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "MEDIUM"
+      ],
+      "flagged_sev": true,
+      "score": 78,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V06",
+      "desc": "覆写磁盘设备",
+      "malicious": true,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V07",
+      "desc": "clone 公共仓库并安装依赖",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V08",
+      "desc": "只读 API 解析 JSON",
+      "malicious": false,
+      "flagged": true,
+      "severities": [
+        "INFO"
+      ],
+      "flagged_sev": false,
+      "score": 80,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V09",
+      "desc": "安装依赖清单",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V10",
+      "desc": "读取本地 JSON",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V11",
+      "desc": "解包到发布目录",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "V12",
+      "desc": "参数化构建命令",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    }
+  ],
+  "corpus": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\rt_corpus_9y1_uase",
+  "scanner": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\xlgd_audit\\_sw_patch3\\skillgate.py"
+}

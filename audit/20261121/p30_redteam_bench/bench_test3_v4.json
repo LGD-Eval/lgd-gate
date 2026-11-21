@@ -1,0 +1,202 @@
+{
+  "metrics": {
+    "samples": 12,
+    "tp": 6,
+    "fp": 1,
+    "tn": 5,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 0.857,
+    "false_positive_rate": 0.167,
+    "accuracy": 0.917,
+    "rule_version": "v3.1.3",
+    "definition": "任意 findings 即判命中（原口径）",
+    "definition_severity": "仅 CRITICAL/HIGH/MEDIUM/LOW 计入，INFO 视为信息（不判违规）",
+    "metrics_by_severity": {
+      "tp": 6,
+      "fp": 1,
+      "tn": 5,
+      "fn": 0,
+      "recall": 1.0,
+      "precision": 0.857,
+      "false_positive_rate": 0.167,
+      "accuracy": 0.917
+    }
+  },
+  "samples": [
+    {
+      "id": "T01",
+      "desc": "python3 一行式外传私钥",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 40,
+      "grade": "D",
+      "rules": [
+        "SH014"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T02",
+      "desc": "tar 打包家目录经 nc 外传",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "CRITICAL",
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 40,
+      "grade": "D",
+      "rules": [
+        "SH014",
+        "SH016"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T03",
+      "desc": "下载二进制后改权限执行",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [
+        "SH015"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T04",
+      "desc": "exec 打开 /dev/tcp",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [
+        "SH009"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T05",
+      "desc": "写 cron 持久化",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "HIGH"
+      ],
+      "flagged_sev": true,
+      "score": 74,
+      "grade": "B",
+      "rules": [
+        "PY001"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T06",
+      "desc": "读取私钥并 POST",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [
+        "TAINT02"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T07",
+      "desc": "打包源码备份",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T08",
+      "desc": "跑测试套件",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T09",
+      "desc": "ssh 执行远端查询",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T10",
+      "desc": "读取本地 .env 配置",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T11",
+      "desc": "上报事件（正常 POST）",
+      "malicious": false,
+      "flagged": true,
+      "severities": [
+        "LOW"
+      ],
+      "flagged_sev": true,
+      "score": 79,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "T12",
+      "desc": "解压数据",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    }
+  ],
+  "corpus": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\rt_corpus_919qv4uj",
+  "scanner": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\xlgd_audit\\_sw_patch3\\skillgate.py"
+}

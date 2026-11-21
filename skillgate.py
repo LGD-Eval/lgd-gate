@@ -45,194 +45,198 @@ except ImportError:
 
 # 1. Dangerous code execution
 DANGEROUS_CODE_PATTERNS = [
-    (r"\beval\s*\(", "MEDIUM", "eval() 动态代码执行（工具常用，需人工判断）"),  # skillgate: ignore
-    (r"\bexec\s*\(", "MEDIUM", "exec() 动态代码执行（工具常用，需人工判断）"),
-    (r"\bos\.system\s*\(", "HIGH", "os.system() shell 调用"),  # skillgate: ignore
-    (r"\bsubprocess\.(run|call|Popen|check_output)\s*\([^)]*shell\s*=\s*True", "HIGH", "subprocess shell=True"),
-    (r"\bos\.popen\s*\(", "HIGH", "os.popen() shell 调用"),  # skillgate: ignore
-    (r"\b__import__\s*\(", "MEDIUM", "动态 import"),
-    (r"\bpickle\.load(s)?\s*\(", "HIGH", "pickle 反序列化"),
-    (r"\byaml\.load\s*\([^)]*\)(?![^#]*Loader\s*=\s*SafeLoader)", "MEDIUM", "yaml.load 非安全加载"),
-    (r"(?<!\.)\bcompile\s*\(", "INFO", "compile() 动态代码编译（低风险）"),
-    (r"\bgetattr\s*\([^)]*os\.", "MEDIUM", "getattr 动态调用 os 模块"),
-    (r"\bglobals\(\)", "INFO", "globals() 访问全局命名空间（低风险）"),
-    (r"\blocals\(\)", "INFO", "locals() 访问局部命名空间（低风险）"),
-    (r"\binput\s*\(\)", "INFO", "input() 接受用户输入（CLI 工具常见）"),
-    (r"\binput\s*\([^)]*\)", "INFO", "input() 接受用户输入（CLI 工具常见）"),
-    (r"\b__builtins__\b", "INFO", "访问 __builtins__（低风险）"),
-    (r"\bglobals\(\)\[", "MEDIUM", "globals() 动态修改"),
-    (r"\bsetattr\s*\(", "INFO", "setattr 动态属性设置（低风险）"),
-    (r"\bdelattr\s*\(", "INFO", "delattr 动态属性删除（低风险）"),
+    ("DC001", r"\beval\s*\(", "MEDIUM", "eval() 动态代码执行（工具常用，需人工判断）"),  # skillgate: ignore
+    ("DC002", r"\bexec\s*\(", "MEDIUM", "exec() 动态代码执行（工具常用，需人工判断）"),
+    ("DC003", r"\bos\.system\s*\(", "HIGH", "os.system() shell 调用"),  # skillgate: ignore
+    ("DC004", r"\bsubprocess\.(run|call|Popen|check_output)\s*\([^)]*shell\s*=\s*True", "HIGH", "subprocess shell=True"),
+    ("DC005", r"\bos\.popen\s*\(", "HIGH", "os.popen() shell 调用"),  # skillgate: ignore
+    ("DC006", r"\b__import__\s*\(", "MEDIUM", "动态 import"),
+    ("DC007", r"\bpickle\.load(s)?\s*\(", "HIGH", "pickle 反序列化"),
+    ("DC008", r"\byaml\.load\s*\([^)]*\)(?![^#]*Loader\s*=\s*SafeLoader)", "MEDIUM", "yaml.load 非安全加载"),
+    ("DC009", r"(?<!\.)\bcompile\s*\(", "INFO", "compile() 动态代码编译（低风险）"),
+    ("DC010", r"\bgetattr\s*\([^)]*os\.", "MEDIUM", "getattr 动态调用 os 模块"),
+    ("DC011", r"\bglobals\(\)", "INFO", "globals() 访问全局命名空间（低风险）"),
+    ("DC012", r"\blocals\(\)", "INFO", "locals() 访问局部命名空间（低风险）"),
+    ("DC013", r"\binput\s*\(\)", "INFO", "input() 接受用户输入（CLI 工具常见）"),
+    ("DC014", r"\binput\s*\([^)]*\)", "INFO", "input() 接受用户输入（CLI 工具常见）"),
+    ("DC015", r"\b__builtins__\b", "INFO", "访问 __builtins__（低风险）"),
+    ("DC016", r"\bglobals\(\)\[", "MEDIUM", "globals() 动态修改"),
+    ("DC017", r"\bsetattr\s*\(", "INFO", "setattr 动态属性设置（低风险）"),
+    ("DC018", r"\bdelattr\s*\(", "INFO", "delattr 动态属性删除（低风险）"),
     # === 新增规则 ===
-    (r"\bmarshal\.load(s)?\s*\(", "HIGH", "marshal 反序列化"),
-    (r"\bshelve\.open\s*\(", "MEDIUM", "shelve 反序列化"),
-    (r"\bjsonpickle\.decode\s*\(", "HIGH", "jsonpickle 反序列化"),
-    (r"\byaml\.unsafe_load\s*\(", "CRITICAL", "yaml.unsafe_load 任意代码执行"),
-    (r"\b__reduce__\s*\(", "MEDIUM", "__reduce__ 反序列化钩子"),
-    (r"\bbuiltins\.__import__\s*\(", "MEDIUM", "builtins.__import__ 动态导入"),
-    (r"\bimportlib\.import_module\s*\(", "LOW", "importlib 动态导入"),
-    (r"\bctypes\.CDLL\s*\(", "HIGH", "ctypes 加载动态库"),
-    (r"\bctypes\.windll\s*\(", "HIGH", "ctypes 加载 Windows DLL"),
-    (r"\bctypes\.oledll\s*\(", "HIGH", "ctypes 加载 OLE DLL"),
-    (r"\bdl\.open\s*\(", "HIGH", "dlopen 加载动态库"),
-    (r"\bctypes\.pythonapi\b", "MEDIUM", "ctypes.pythonapi 直接调用 C API"),  # skillgate: ignore
+    ("DC019", r"\bmarshal\.load(s)?\s*\(", "HIGH", "marshal 反序列化"),
+    ("DC020", r"\bshelve\.open\s*\(", "MEDIUM", "shelve 反序列化"),
+    ("DC021", r"\bjsonpickle\.decode\s*\(", "HIGH", "jsonpickle 反序列化"),
+    ("DC022", r"\byaml\.unsafe_load\s*\(", "CRITICAL", "yaml.unsafe_load 任意代码执行"),
+    ("DC023", r"\b__reduce__\s*\(", "MEDIUM", "__reduce__ 反序列化钩子"),
+    ("DC024", r"\bbuiltins\.__import__\s*\(", "MEDIUM", "builtins.__import__ 动态导入"),
+    ("DC025", r"\bimportlib\.import_module\s*\(", "LOW", "importlib 动态导入"),
+    ("DC026", r"\bctypes\.CDLL\s*\(", "HIGH", "ctypes 加载动态库"),
+    ("DC027", r"\bctypes\.windll\s*\(", "HIGH", "ctypes 加载 Windows DLL"),
+    ("DC028", r"\bctypes\.oledll\s*\(", "HIGH", "ctypes 加载 OLE DLL"),
+    ("DC029", r"\bdl\.open\s*\(", "HIGH", "dlopen 加载动态库"),
+    ("DC030", r"\bctypes\.pythonapi\b", "MEDIUM", "ctypes.pythonapi 直接调用 C API"),  # skillgate: ignore
     # === JS / Node 技能形态：evaluate.py 已覆盖，skillgate 此前漏检，
     # 导致同一技能两套扫描器结论不一致（js-skill 34 分但 skillgate 0 HIGH） ===
-    (r"\bchild_process\b", "HIGH", "Node 子进程能力（child_process）"),
-    (r"\bexecSync\s*\(", "HIGH", "Node execSync 同步执行 shell"),
-    (r"\bshell\s*:\s*true", "HIGH", "Node 子进程 shell:true"),
-    (r"\bnew\s+Function\s*\(", "HIGH", "new Function 动态构造代码"),
+    ("DC031", r"\bchild_process\b", "HIGH", "Node 子进程能力（child_process）"),
+    ("DC032", r"\bexecSync\s*\(", "HIGH", "Node execSync 同步执行 shell"),
+    ("DC033", r"\bshell\s*:\s*true", "HIGH", "Node 子进程 shell:true"),
+    ("DC034", r"\bnew\s+Function\s*\(", "HIGH", "new Function 动态构造代码"),
 ]
 
 # 2. Network calls / data exfiltration
 NETWORK_PATTERNS = [
-    (r"\bimport\s+requests\b", "INFO", "requests 网络库（常见）"),
-    (r"\bfrom\s+requests\s+import\b", "INFO", "requests 网络库（常见）"),
-    (r"\bimport\s+urllib\b", "INFO", "urllib 网络库（常见）"),
-    (r"\bimport\s+http\.client\b", "INFO", "http.client 网络库"),
-    (r"\bimport\s+socket\b", "LOW", "socket 原始网络连接"),
-    (r"\bimport\s+ftplib\b", "LOW", "FTP 库"),
-    (r"\bimport\s+smtplib\b", "LOW", "SMTP 邮件库"),
-    (r"\burlopen\s*\(", "LOW", "urlopen 网络请求"),
-    (r"\bpost\s*\([^)]*https?://", "MEDIUM", "POST 数据到外部 URL"),
-    (r"\brequests\.get\s*\([^)]*https?://", "LOW", "GET 请求外部 URL"),
-    (r"\bhttpx\b", "INFO", "httpx HTTP 客户端（常见）"),
-    (r"\baiohttp\b", "INFO", "aiohttp 异步 HTTP（常见）"),
-    (r"\bcurl\b", "LOW", "curl 命令行网络工具"),
-    (r"\bwget\b", "LOW", "wget 命令行网络工具"),
-    (r"\bnc\s+-[el]\b", "HIGH", "netcat 反向 shell 风险"),
-    (r"\bncat\b", "LOW", "ncat 网络工具"),
-    (r"\btelnetlib\b", "HIGH", "telnetlib 明文传输"),  # skillgate: ignore
-    (r"\bparamiko\b", "LOW", "paramiko SSH 库"),
-    (r"\bscp\b", "LOW", "scp 文件传输"),
+    ("NT001", r"\bimport\s+requests\b", "INFO", "requests 网络库（常见）"),
+    ("NT002", r"\bfrom\s+requests\s+import\b", "INFO", "requests 网络库（常见）"),
+    ("NT003", r"\bimport\s+urllib\b", "INFO", "urllib 网络库（常见）"),
+    ("NT004", r"\bimport\s+http\.client\b", "INFO", "http.client 网络库"),
+    ("NT005", r"\bimport\s+socket\b", "LOW", "socket 原始网络连接"),
+    ("NT006", r"\bimport\s+ftplib\b", "LOW", "FTP 库"),
+    ("NT007", r"\bimport\s+smtplib\b", "LOW", "SMTP 邮件库"),
+    ("NT008", r"\burlopen\s*\(", "LOW", "urlopen 网络请求"),
+    ("NT009", r"\bpost\s*\([^)]*https?://", "MEDIUM", "POST 数据到外部 URL"),
+    ("NT010", r"\brequests\.get\s*\([^)]*http://", "LOW", "GET 请求明文外部 URL"),
+    ("NT011", r"\bhttpx\b", "INFO", "httpx HTTP 客户端（常见）"),
+    ("NT012", r"\baiohttp\b", "INFO", "aiohttp 异步 HTTP（常见）"),
+    ("NT013", r"\bcurl\b", "LOW", "curl 命令行网络工具"),
+    ("NT014", r"\bwget\b", "LOW", "wget 命令行网络工具"),
+    ("NT015", r"\bnc\s+-[el]\b", "HIGH", "netcat 反向 shell 风险"),
+    ("NT016", r"\bncat\b", "LOW", "ncat 网络工具"),
+    ("NT017", r"\btelnetlib\b", "HIGH", "telnetlib 明文传输"),  # skillgate: ignore
+    ("NT018", r"\bparamiko\b", "LOW", "paramiko SSH 库"),
+    ("NT019", r"\bscp\b", "LOW", "scp 文件传输"),
     # 整份环境变量导出：单项 os.environ["KEY"] 是正常配置，全量打包才是外泄前兆。
     # 这里只给 MEDIUM（还差一次外发才算实锤）；evaluate.py 的 R-SEC-21 做组合判定。
-    (r"\bdict\s*\(\s*os\.environ\b", "MEDIUM", "整份环境变量导出（外泄前兆）"),
-    (r"\bos\.environ\.copy\s*\(", "MEDIUM", "整份环境变量复制（外泄前兆）"),
-    (r"\bin\s+os\.environ\.items\s*\(", "MEDIUM", "遍历全部环境变量"),
+    ("NT020", r"\bdict\s*\(\s*os\.environ\b", "MEDIUM", "整份环境变量导出（外泄前兆）"),
+    ("NT021", r"\bos\.environ\.copy\s*\(", "MEDIUM", "整份环境变量复制（外泄前兆）"),
+    ("NT022", r"\bin\s+os\.environ\.items\s*\(", "MEDIUM", "遍历全部环境变量"),
 ]
 
 # 3. Credential / secret access
 CREDENTIAL_PATTERNS = [
-    (re.compile(r"(api[_-]?key|apikey|secret|token|password|passwd|credential)\s*[:=]\s*['\"]([^'\"]{8,})['\"]", re.IGNORECASE),
+    ("CR001", re.compile(r"(api[_-]?key|apikey|secret|token|password|passwd|credential)\s*[:=]\s*['\"]([^'\"]{8,})['\"]", re.IGNORECASE),
      "CRITICAL", "硬编码凭证"),
-    (re.compile(r"os\.environ\[['\"](.*TOKEN|.*KEY|.*SECRET|.*PASSWORD)['\"]\]", re.IGNORECASE),
+    ("CR002", re.compile(r"os\.environ\[['\"](.*TOKEN|.*KEY|.*SECRET|.*PASSWORD)['\"]\]", re.IGNORECASE),
      "INFO", "从环境变量读凭证（安全做法）"),
-    (re.compile(r"os\.getenv\s*\(\s*['\"](.*TOKEN|.*KEY|.*SECRET|.*PASSWORD)", re.IGNORECASE),
+    ("CR003", re.compile(r"os\.getenv\s*\(\s*['\"](.*TOKEN|.*KEY|.*SECRET|.*PASSWORD)", re.IGNORECASE),
      "INFO", "从环境变量读凭证（安全做法）"),
-    (re.compile(r"~\.ssh/", re.IGNORECASE),
+    ("CR004", re.compile(r"~\.ssh/", re.IGNORECASE),
      "HIGH", "访问 SSH 密钥目录"),
-    (re.compile(r"\.aws/credentials", re.IGNORECASE),  # skillgate: ignore
+    ("CR005", re.compile(r"\.aws/credentials", re.IGNORECASE),
      "HIGH", "访问 AWS 凭证文件"),
-    (re.compile(r"\.git-credentials", re.IGNORECASE),  # skillgate: ignore
+    ("CR006", re.compile(r"\.git-credentials", re.IGNORECASE),
      "HIGH", "访问 Git 凭证文件"),
-    (re.compile(r"\.netrc", re.IGNORECASE),  # skillgate: ignore
+    ("CR007", re.compile(r"\.netrc", re.IGNORECASE),
      "MEDIUM", "访问 .netrc 凭证文件"),
-    (re.compile(r"\.npmrc", re.IGNORECASE),  # skillgate: ignore
+    ("CR008", re.compile(r"\.npmrc", re.IGNORECASE),
      "MEDIUM", "访问 .npmrc 凭证文件"),
-    (re.compile(r"\.pypirc", re.IGNORECASE),  # skillgate: ignore
+    ("CR009", re.compile(r"\.pypirc", re.IGNORECASE),
      "MEDIUM", "访问 .pypirc 凭证文件"),
-    (re.compile(r"id_rsa", re.IGNORECASE),  # skillgate: ignore
+    ("CR010", re.compile(r"id_rsa", re.IGNORECASE),
      "HIGH", "访问 SSH 私钥"),
-    (re.compile(r"id_ed25519", re.IGNORECASE),  # skillgate: ignore
-     "HIGH", "访问 SSH 私钥"),  # skillgate: ignore
+    ("CR011", re.compile(r"id_ed25519", re.IGNORECASE),
+     "HIGH", "访问 SSH 私钥"),
 ]
+
 
 # 4. File system danger
 FILESYSTEM_PATTERNS = [
-    (r"\bshutil\.rmtree\s*\(", "MEDIUM", "shutil.rmtree 递归删除"),
-    (r"\bos\.remove\s*\(", "INFO", "os.remove 删除文件（常见）"),
-    (r"\bos\.rmdir\s*\(", "INFO", "os.rmdir 删除目录（常见）"),
-    (r"\bos\.unlink\s*\(", "MEDIUM", "os.unlink 删除文件"),
-    (r"\bopen\s*\([^)]*['\"]/etc/", "HIGH", "写入 /etc/ 系统目录"),
-    (r"\bopen\s*\([^)]*['\"]C:\\\\Windows\\\\", "HIGH", "写入 Windows 系统目录"),
-    (r"\bopen\s*\([^)]*['\"]/System/", "HIGH", "写入 macOS 系统目录"),
-    (r"\bos\.rename\s*\([^)]*/etc/", "MEDIUM", "重命名 /etc/ 下文件"),
-    (r"\bshutil\.move\s*\([^)]*/etc/", "MEDIUM", "移动文件到 /etc/"),
-    (r"\btempfile\.mkdtemp\b", "LOW", "创建临时目录"),
-    (r"\btempfile\.mktemp\b", "MEDIUM", "mktemp 临时文件竞争风险"),
+    ("FS001", r"\bshutil\.rmtree\s*\(", "MEDIUM", "shutil.rmtree 递归删除"),
+    ("FS002", r"\bos\.remove\s*\(", "INFO", "os.remove 删除文件（常见）"),
+    ("FS003", r"\bos\.rmdir\s*\(", "INFO", "os.rmdir 删除目录（常见）"),
+    ("FS004", r"\bos\.unlink\s*\(", "MEDIUM", "os.unlink 删除文件"),
+    ("FS005", r"\bopen\s*\([^)]*['\"]/etc/", "HIGH", "写入 /etc/ 系统目录"),
+    ("FS006", r"\bopen\s*\([^)]*['\"]C:\\\\Windows\\\\", "HIGH", "写入 Windows 系统目录"),
+    ("FS007", r"\bopen\s*\([^)]*['\"]/System/", "HIGH", "写入 macOS 系统目录"),
+    ("FS008", r"\bos\.rename\s*\([^)]*/etc/", "MEDIUM", "重命名 /etc/ 下文件"),
+    ("FS009", r"\bshutil\.move\s*\([^)]*/etc/", "MEDIUM", "移动文件到 /etc/"),
+    ("FS010", r"\btempfile\.mkdtemp\b", "LOW", "创建临时目录"),
+    ("FS011", r"\btempfile\.mktemp\b", "MEDIUM", "mktemp 临时文件竞争风险"),
 ]
 
 # 5. Prompt injection / LLM-specific risks
 PROMPT_INJECTION_PATTERNS = [
-    (r"ignore\s+(all\s+)?(the\s+)?previous\s+instructions", "CRITICAL", "Prompt injection: ignore previous"),
-    (r"disregard\s+(all\s+)?(the\s+)?previous", "CRITICAL", "Prompt injection: disregard previous"),
-    (r"you\s+are\s+now\s+a?n?\s+\w+", "LOW", "角色定义，低风险，需人工确认"),
-    (r"system\s+prompt\s+leak", "HIGH", "System prompt leak attempt"),
-    (r"jailbreak", "CRITICAL", "Jailbreak pattern"),
-    (r"reveal\s+your\s+instructions", "HIGH", "Reveal system instructions attempt"),
-    (r"reveal\s+your\s+prompt", "HIGH", "Reveal system prompt attempt"),
-    (r"bypass\s+safety", "HIGH", "Bypass safety guardrails"),
-    (r"do\s+not\s+tell\s+the\s+user", "MEDIUM", "Hide actions from user"),
-    (r"do\s+not\s+mention", "LOW", "Instructed to omit information"),
-    (r"pretend\s+you\s+are", "LOW", "角色定义，低风险，需人工确认"),
-    (r"act\s+as\s+if\s+you\s+are", "LOW", "角色定义，低风险，需人工确认"),
-    (r"forget\s+your\s+rules", "CRITICAL", "Forget your rules"),
-    (r"override\s+your\s+guidelines", "CRITICAL", "Override guidelines"),
-    (r"ignore\s+your\s+training", "CRITICAL", "Ignore training"),
+    ("MD001", r"ignore\s+(all\s+)?(the\s+)?previous\s+instructions", "CRITICAL", "Prompt injection: ignore previous"),
+    ("MD002", r"disregard\s+(all\s+)?(the\s+)?previous", "CRITICAL", "Prompt injection: disregard previous"),
+    ("MD003", r"you\s+are\s+now\s+a?n?\s+\w+", "LOW", "角色定义，低风险，需人工确认"),
+    ("MD004", r"system\s+prompt\s+leak", "HIGH", "System prompt leak attempt"),
+    ("MD005", r"jailbreak", "CRITICAL", "Jailbreak pattern"),
+    ("MD006", r"reveal\s+your\s+instructions", "HIGH", "Reveal system instructions attempt"),
+    ("MD007", r"reveal\s+your\s+prompt", "HIGH", "Reveal system prompt attempt"),
+    ("MD008", r"bypass\s+safety", "HIGH", "Bypass safety guardrails"),
+    ("MD009", r"do\s+not\s+tell\s+the\s+user", "MEDIUM", "Hide actions from user"),
+    ("MD010", r"do\s+not\s+mention", "LOW", "Instructed to omit information"),
+    ("MD011", r"pretend\s+you\s+are", "LOW", "角色定义，低风险，需人工确认"),
+    ("MD012", r"act\s+as\s+if\s+you\s+are", "LOW", "角色定义，低风险，需人工确认"),
+    ("MD013", r"forget\s+your\s+rules", "CRITICAL", "Forget your rules"),
+    ("MD014", r"override\s+your\s+guidelines", "CRITICAL", "Override guidelines"),
+    ("MD015", r"ignore\s+your\s+training", "CRITICAL", "Ignore training"),
 ]
 
 # 5.5 数字诚实性规则（防止吹牛）
 HONESTY_PATTERNS = [
     # 注：删除了过宽的 \b\d{3,}\+ 规则（"1000+" "5000+" 等正常能力宣称均误报，
     # 静态无法判定真吹牛），仅保留高特异性的具体吹牛模式。
-    (r"17\s+languages", "MEDIUM", "疑似吹牛：17 languages"),
-    (r"600\+\s+rules", "MEDIUM", "疑似吹牛：600+ rules"),
+    ("HON001", r"17\s+languages", "MEDIUM", "疑似吹牛：17 languages"),
+    ("HON002", r"600\+\s+rules", "MEDIUM", "疑似吹牛：600+ rules"),
 ]
 
 # 6. Excessive agency / MCP risks
 EXCESSIVE_AGENCY_PATTERNS = [
-    (r"delete\s+all\s+files", "CRITICAL", "Excessive agency: delete all files"),  # skillgate: ignore
-    (r"send\s+all\s+data", "HIGH", "Excessive agency: exfiltrate all data"),
-    (r"send\s+all\s+user\s+data", "HIGH", "Excessive agency: exfiltrate all user data"),
-    (r"exfiltrat\w*\s+(?:all\s+)?(?:user\s+)?data", "HIGH", "Excessive agency: exfiltration of all data"),
-    (r"run\s+arbitrary\s+commands", "HIGH", "Arbitrary command execution"),
-    (r"access\s+all\s+files", "MEDIUM", "Overly broad file access"),
-    (r"read\s+every\s+file", "HIGH", "Read every file"),  # skillgate: ignore
-    (r"modify\s+all\s+configs", "HIGH", "Modify all configs"),  # skillgate: ignore
-    (r"install\s+any\s+package", "MEDIUM", "Install any package"),
-    (r"unrestricted\s+internet\s+access", "MEDIUM", "Unrestricted internet access"),  # skillgate: ignore
-    (r"bypass\s+all\s+safety\s+checks", "CRITICAL", "Bypass all safety checks"),  # skillgate: ignore
-    (r"disable\s+all\s+filters", "HIGH", "Disable all filters"),
-    (r"grant\s+yourself\s+admin", "CRITICAL", "Grant yourself admin access"),  # skillgate: ignore
-    (r"add\s+new\s+user\s+accounts", "HIGH", "Add new user accounts"),
+    ("EX001", r"delete\s+all\s+files", "CRITICAL", "Excessive agency: delete all files"),  # skillgate: ignore
+    ("EX002", r"send\s+all\s+data", "HIGH", "Excessive agency: exfiltrate all data"),
+    ("EX003", r"send\s+all\s+user\s+data", "HIGH", "Excessive agency: exfiltrate all user data"),
+    ("EX004", r"exfiltrat\w*\s+(?:all\s+)?(?:user\s+)?data", "HIGH", "Excessive agency: exfiltration of all data"),
+    ("EX005", r"run\s+arbitrary\s+commands", "HIGH", "Arbitrary command execution"),
+    ("EX006", r"access\s+all\s+files", "MEDIUM", "Overly broad file access"),
+    ("EX007", r"read\s+every\s+file", "HIGH", "Read every file"),  # skillgate: ignore
+    ("EX008", r"modify\s+all\s+configs", "HIGH", "Modify all configs"),  # skillgate: ignore
+    ("EX009", r"install\s+any\s+package", "MEDIUM", "Install any package"),
+    ("EX010", r"unrestricted\s+internet\s+access", "MEDIUM", "Unrestricted internet access"),  # skillgate: ignore
+    ("EX011", r"bypass\s+all\s+safety\s+checks", "CRITICAL", "Bypass all safety checks"),  # skillgate: ignore
+    ("EX012", r"disable\s+all\s+filters", "HIGH", "Disable all filters"),
+    ("EX013", r"grant\s+yourself\s+admin", "CRITICAL", "Grant yourself admin access"),  # skillgate: ignore
+    ("EX014", r"add\s+new\s+user\s+accounts", "HIGH", "Add new user accounts"),
 ]
 
 # 7. License compliance
+# NOT WIRED (2026-11-21 audit): the list below has no consumer loop yet.
+# LC001-LC004 are placeholders; do not describe license detection as enforced
+# until a call site exists. See audit/20261121/p31_intent/README.md.
 LICENSE_PATTERNS = [
-    (r"\bGPL\b", "MEDIUM", "GPL 许可证（传染性）"),
-    (r"\bAGPL\b", "HIGH", "AGPL 许可证（网络传染性）"),
-    (r"\bSSPL\b", "HIGH", "SSPL 许可证（服务端传染性）"),
-    (r"\bUnlicense\b", "LOW", "Unlicense（公有领域）"),
+    ("LC001", r"\bGPL\b", "MEDIUM", "GPL 许可证（传染性）"),
+    ("LC002", r"\bAGPL\b", "HIGH", "AGPL 许可证（网络传染性）"),
+    ("LC003", r"\bSSPL\b", "HIGH", "SSPL 许可证（服务端传染性）"),
+    ("LC004", r"\bUnlicense\b", "LOW", "Unlicense（公有领域）"),
 ]
 
 # 8. Code quality
 QUALITY_PATTERNS = [
-    (r"\bTODO\b", "LOW", "TODO 注释未完成"),
-    (r"\bFIXME\b", "LOW", "FIXME 注释未修复"),
-    (r"\bHACK\b", "LOW", "HACK 临时方案"),
-    (r"\bXXX\b", "LOW", "XXX 标记的问题"),
-    (r"\bprint\s*\(", "LOW", "print 调试语句"),
-    (r"\bconsole\.log\(", "LOW", "console.log 调试语句"),
-    (r"\bdebugger\b", "MEDIUM", "debugger 语句"),
+    ("QL001", r"\bTODO\b", "LOW", "TODO 注释未完成"),
+    ("QL002", r"\bFIXME\b", "LOW", "FIXME 注释未修复"),
+    ("QL003", r"\bHACK\b", "LOW", "HACK 临时方案"),
+    ("QL004", r"\bXXX\b", "LOW", "XXX 标记的问题"),
+    ("QL005", r"\bprint\s*\(", "LOW", "print 调试语句"),
+    ("QL006", r"\bconsole\.log\(", "LOW", "console.log 调试语句"),
+    ("QL007", r"\bdebugger\b", "MEDIUM", "debugger 语句"),
 ]
 
 # 9. Authentication & Authorization
 AUTH_PATTERNS = [
-    (r"\bauth\s*=\s*None\b", "MEDIUM", "认证被禁用"),
-    (r"\bverify\s*=\s*False\b", "HIGH", "SSL 验证被禁用"),
-    (r"\bALLOW_ALL\b", "HIGH", "允许所有访问"),
-    (r"\bCORS.*\*\b", "MEDIUM", "CORS 允许所有来源"),
-    (r"\bpassword\s*=\s*['\"][^'\"]+['\"]", "CRITICAL", "硬编码密码"),
-    (r"\btoken\s*=\s*['\"][a-zA-Z0-9]{20,}['\"]", "CRITICAL", "硬编码 token"),
+    ("AU001", r"\bauth\s*=\s*None\b", "MEDIUM", "认证被禁用"),
+    ("AU002", r"\bverify\s*=\s*False\b", "HIGH", "SSL 验证被禁用"),
+    ("AU003", r"\bALLOW_ALL\b", "HIGH", "允许所有访问"),
+    ("AU004", r"\bCORS.*\*\b", "MEDIUM", "CORS 允许所有来源"),
+    ("AU005", r"\bpassword\s*=\s*['\"][^'\"]+['\"]", "CRITICAL", "硬编码密码"),
+    ("AU006", r"\btoken\s*=\s*['\"][a-zA-Z0-9]{20,}['\"]", "CRITICAL", "硬编码 token"),
 ]
 
 # 10. Input Validation
 VALIDATION_PATTERNS = [
-    (r"\brequest\.args\.get\(", "LOW", "直接读取请求参数"),
-    (r"\binput\s*\(", "MEDIUM", "读取用户输入"),
-    (r"\bsys\.argv\b", "LOW", "读取命令行参数"),
-    (r"\bos\.environ\[", "MEDIUM", "读取环境变量"),
+    ("VL001", r"\brequest\.args\.get\(", "LOW", "直接读取请求参数"),
+    ("VL002", r"\binput\s*\(", "MEDIUM", "读取用户输入"),
+    ("VL003", r"\bsys\.argv\b", "LOW", "读取命令行参数"),
+    ("VL004", r"\bos\.environ\[", "MEDIUM", "读取环境变量"),
 ]
 
 # 11. Data Exfiltration Risk
@@ -240,10 +244,10 @@ VALIDATION_PATTERNS = [
 # 已在本次修复中把独有规则并入 NETWORK_PATTERNS，此表仅为兼容旧引用而保留。
 # 新增外泄规则请加到 NETWORK_PATTERNS，不要再往这里加。
 EXFIL_PATTERNS = [
-    (r"\brequests\.post\([^)]*https?://", "MEDIUM", "向外发 POST 请求"),
-    (r"\burllib\.request\.urlopen\(", "MEDIUM", "向外发请求"),
-    (r"\bsmtplib\.SMTP\(", "MEDIUM", "发送邮件"),
-    (r"\bsocket\.socket\(", "MEDIUM", "原始 socket 网络连接"),
+    ("EF001", r"\brequests\.post\([^)]*https?://", "MEDIUM", "向外发 POST 请求"),
+    ("EF002", r"\burllib\.request\.urlopen\(", "MEDIUM", "向外发请求"),
+    ("EF003", r"\bsmtplib\.SMTP\(", "MEDIUM", "发送邮件"),
+    ("EF004", r"\bsocket\.socket\(", "MEDIUM", "原始 socket 网络连接"),
 ]
 
 FRONTMATTER_REQUIRED_FIELDS = ["name", "description"]
@@ -303,7 +307,7 @@ class ScanResult:
     frontmatter: dict = field(default_factory=dict)
     trust_score: int = 0
     grade: str = ""
-    rule_version: str = "v3.1.3"  # 规则版本号（有籍）
+    rule_version: str = "v3.2.0"  # 规则版本号（2026-11-21：SH/PY/JS 规则编号收口后递增）
 
     @property
     def critical_count(self): return len([f for f in self.findings if f.severity == "CRITICAL"])
@@ -538,6 +542,22 @@ SAFETY_CONTEXT_WORDS = (
 )
 
 
+_AST_RID_MAP = {}
+
+
+def _ast_rid(msg: str) -> str:
+    """AST 规则编号：按 ast_analyzer 的危险调用表顺序稳定编号 AST001..N。"""
+    global _AST_RID_MAP
+    if not _AST_RID_MAP:
+        try:
+            from ast_analyzer import DangerousCallVisitor as _DCV
+            for _idx, (_sev, _msg) in enumerate(_DCV.DANGEROUS_CALLS.values(), 1):
+                _AST_RID_MAP.setdefault(_msg.strip(), f"AST{_idx:03d}")
+        except Exception:
+            pass
+    return _AST_RID_MAP.get((msg or "").strip().replace("[AST] ", ""), "AST000")
+
+
 def scan_python_file(filepath: Path, result: ScanResult):
     """Scan a single Python file for dangerous patterns."""
     try:
@@ -550,6 +570,23 @@ def scan_python_file(filepath: Path, result: ScanResult):
         return
 
     lines = content.splitlines()
+
+    # === 步骤 0：路径穿越（正则层，AST 覆盖不到字面量 open） ===
+    # 判据：open/read 的字面量路径中出现 2 段以上 ../，或直接指向系统敏感文件。
+    # 只对字面量生效，不做跨文件数据流（那是后续 AST/污点分析的范围）。
+    _traversal = re.compile(r"""open\s*\(\s*['"]([^'"]*\.\./[^'"]*\.\./[^'"]*)['"]""")
+    _sensitive = re.compile(r"""['"](/(etc|proc|root|var/log)/[^'"]*)['"]""")
+    for i, line in enumerate(lines, 1):
+        if "skillgate: ignore" in line:
+            continue
+        if _traversal.search(line) or _sensitive.search(line):
+            result.findings.append(Finding(
+                severity="HIGH", category="path-traversal",
+                message="路径穿越/敏感系统文件读取",
+                file=str(filepath), line=i,
+                rule_id="PY001",
+                explanation="相对路径越出技能目录，或直接读取系统敏感文件",
+            ))
 
     # === 第一步：AST 分析（更准，误报低） ===
     ast_lines = set()  # 记录 AST 已经报过的行，正则就不要重复报了
@@ -568,7 +605,8 @@ def scan_python_file(filepath: Path, result: ScanResult):
                 category="ast-analysis",
                 message=f"[AST] {af.message}",
                 file=str(filepath),
-                line=af.line
+                line=af.line,
+                rule_id=_ast_rid(af.message)
             ))
             ast_lines.add(af.line)  # 记录这一行已经报过了
     except Exception:
@@ -608,7 +646,7 @@ def scan_python_file(filepath: Path, result: ScanResult):
 
     # 1. Dangerous code patterns（code_lines 为整文件级字符串/注释剥离结果；
     #    固定参数类规则逐匹配判断 固定 vs 动态，动态保持原级别）
-    for pattern, severity, msg in DANGEROUS_CODE_PATTERNS:
+    for rid, pattern, severity, msg in DANGEROUS_CODE_PATTERNS:
         downgrade = FIXED_DOWNGRADE.get(pattern)
         for i, line in enumerate(lines, 1):
             if is_comment_line(line):
@@ -632,16 +670,16 @@ def scan_python_file(filepath: Path, result: ScanResult):
                         sev, msg_out = severity, msg
                     result.findings.append(Finding(
                         severity=sev, category="dangerous-code",
-                        message=msg_out, file=str(filepath), line=i
+                        message=msg_out, file=str(filepath), line=i, rule_id=rid
                     ))
             elif re.search(pattern, code_lines[i - 1]):
                 result.findings.append(Finding(
                     severity=severity, category="dangerous-code",
-                    message=msg, file=str(filepath), line=i
+                    message=msg, file=str(filepath), line=i, rule_id=rid
                 ))
 
     # 2. Network patterns
-    for pattern, severity, msg in NETWORK_PATTERNS:
+    for rid, pattern, severity, msg in NETWORK_PATTERNS:
         downgrade = FIXED_DOWNGRADE.get(pattern)
         for i, line in enumerate(lines, 1):
             if is_comment_line(line):
@@ -661,17 +699,17 @@ def scan_python_file(filepath: Path, result: ScanResult):
                         sev, msg_out = severity, msg
                     result.findings.append(Finding(
                         severity=sev, category="network",
-                        message=msg_out, file=str(filepath), line=i
+                        message=msg_out, file=str(filepath), line=i, rule_id=rid
                     ))
             elif re.search(pattern, code_lines[i - 1]):
                 result.findings.append(Finding(
                     severity=severity, category="network",
-                    message=msg, file=str(filepath), line=i
+                    message=msg, file=str(filepath), line=i, rule_id=rid
                 ))
 
     # 3. Credential / secret patterns（凭证必须在字符串内，不能 clean_line；
     #    用占位符过滤掉 your-xxx / example / {{}} 等示例与模板值）
-    for pattern, severity, msg in CREDENTIAL_PATTERNS:
+    for rid, pattern, severity, msg in CREDENTIAL_PATTERNS:
         for i, line in enumerate(lines, 1):
             if is_comment_line(line):
                 continue
@@ -696,11 +734,11 @@ def scan_python_file(filepath: Path, result: ScanResult):
                     continue  # 值形如 your-key / {{TOKEN}} / example → 示例或模板，非真实凭证
                 result.findings.append(Finding(
                     severity=severity, category="credential-leak",
-                    message=msg, file=str(filepath), line=i
+                    message=msg, file=str(filepath), line=i, rule_id=rid
                 ))
 
     # 4. Filesystem danger patterns
-    for pattern, severity, msg in FILESYSTEM_PATTERNS:
+    for rid, pattern, severity, msg in FILESYSTEM_PATTERNS:
         for i, line in enumerate(lines, 1):
             if is_comment_line(line):
                 continue
@@ -709,11 +747,11 @@ def scan_python_file(filepath: Path, result: ScanResult):
             if re.search(pattern, code_lines[i - 1]):
                 result.findings.append(Finding(
                     severity=severity, category="filesystem",
-                    message=msg, file=str(filepath), line=i
+                    message=msg, file=str(filepath), line=i, rule_id=rid
                 ))
 
     # 5. Excessive agency patterns
-    for pattern, severity, msg in EXCESSIVE_AGENCY_PATTERNS:
+    for rid, pattern, severity, msg in EXCESSIVE_AGENCY_PATTERNS:
         for i, line in enumerate(lines, 1):
             if is_comment_line(line):
                 continue
@@ -722,7 +760,7 @@ def scan_python_file(filepath: Path, result: ScanResult):
             if re.search(pattern, code_lines[i - 1], re.IGNORECASE):
                 result.findings.append(Finding(
                     severity=severity, category="excessive-agency",
-                    message=msg, file=str(filepath), line=i
+                    message=msg, file=str(filepath), line=i, rule_id=rid
                 ))
 
     # 6. AST analysis 已在函数开头（步骤 1，含行级去重）执行；
@@ -779,7 +817,7 @@ def scan_md_file(filepath: Path, result: ScanResult):
         return False
 
     # 1. Prompt injection patterns（讨论语境跳过：安全主题/示例载荷/讨论标记词）
-    for pattern, severity, msg in PROMPT_INJECTION_PATTERNS:
+    for rid, pattern, severity, msg in PROMPT_INJECTION_PATTERNS:
         for i, line in enumerate(lines, 1):
             if i in code_lines:
                 continue
@@ -797,12 +835,12 @@ def scan_md_file(filepath: Path, result: ScanResult):
                     continue  # 示例/讨论语境（"例如 ignore previous" 等描述）
             result.findings.append(Finding(
                 severity=severity, category="prompt-injection",
-                message=msg, file=str(filepath), line=i
+                message=msg, file=str(filepath), line=i, rule_id=rid
             ))
 
     # 2. Credential / secret patterns（.md 也检查，但过滤占位符与示例值；
     #    跳过 frontmatter 区域避免元数据字段名误报）
-    for pattern, severity, msg in CREDENTIAL_PATTERNS:
+    for rid, pattern, severity, msg in CREDENTIAL_PATTERNS:
         for i, line in enumerate(lines, 1):
             if i in code_lines or i in fm_lines:
                 continue
@@ -812,23 +850,23 @@ def scan_md_file(filepath: Path, result: ScanResult):
                     continue  # your-key / {{TOKEN}} / example 等示例与模板值
                 result.findings.append(Finding(
                     severity=severity, category="credential-leak",
-                    message=msg + " (in .md file)", file=str(filepath), line=i
+                    message=msg + " (in .md file)", file=str(filepath), line=i, rule_id=rid
                 ))
 
     # 3. 数字诚实性规则（仅剩高特异性模式，普通宣称数字不再报）
-    for pattern, severity, msg in HONESTY_PATTERNS:
+    for rid, pattern, severity, msg in HONESTY_PATTERNS:
         for i, line in enumerate(lines, 1):
             if i in code_lines:
                 continue
             if re.search(pattern, line, re.IGNORECASE):
                 result.findings.append(Finding(
                     severity=severity, category="honesty",
-                    message=msg, file=str(filepath), line=i
+                    message=msg, file=str(filepath), line=i, rule_id=rid_h
                 ))
 
     # 4. Excessive agency / exfiltration patterns（P0 修复：SKILL.md 等 md
     #    文档同样检查外泄指令；讨论语境/引号示例跳过逻辑与注入一致）
-    for pattern, severity, msg in EXCESSIVE_AGENCY_PATTERNS:
+    for rid, pattern, severity, msg in EXCESSIVE_AGENCY_PATTERNS:
         for i, line in enumerate(lines, 1):
             if i in code_lines:
                 continue
@@ -844,8 +882,34 @@ def scan_md_file(filepath: Path, result: ScanResult):
                     continue  # 示例/讨论语境（"例如 delete all files" 等描述）
             result.findings.append(Finding(
                 severity=severity, category="exfiltration",
-                message=msg, file=str(filepath), line=i
+                message=msg, file=str(filepath), line=i, rule_id=rid_x
             ))
+
+    # ===== 跨语句污点：读凭据 → 发出去（同一变量在后续语句流到网络 sink）=====
+    # 单行正则看不到 T01/T06 这类"读在一个语句、发在另一个语句"的形态。
+    _CRED_PATH = r"(\.ssh|id_rsa|\.aws|\.env\b|\.netrc|\.npmrc|credentials)"
+    _SRC_LINE = re.compile(rf"\s(\w+)\s*=\s*[^\n]*(open\s*\([^\n]*{_CRED_PATH}|Path[^\n]*{_CRED_PATH})")
+    _SINK_LINE = re.compile(r"(requests\.(post|put|patch)|urllib\.request\.urlopen|socket\.socket|smtplib|http\.client|os\.system|subprocess)")
+    try:
+        body = filepath.read_text(encoding="utf-8", errors="replace").splitlines()
+    except Exception:
+        body = []
+    tainted = {}
+    for i, line in enumerate(body, 1):
+        m = _SRC_LINE.search(line)
+        if m:
+            tainted[m.group(1)] = i
+        if tainted and _SINK_LINE.search(line):
+            used = [v for v in tainted if re.search(rf"\b{re.escape(v)}\b", line)]
+            if used:
+                result.findings.append(Finding(
+                    severity="CRITICAL", category="exfiltration-taint",
+                    message=f"凭据读取后流向网络调用（变量 {used[0]}，第 {tainted[used[0]]} 行）",
+                    file=str(filepath), line=i,
+                    rule_id="TAINT01",
+                    explanation="跨语句数据流：source 与 sink 不在同一行，按行规则必然漏",
+                ))
+                break
 
 
 def scan_dependencies(skill_path: Path, result: ScanResult):
@@ -917,21 +981,128 @@ def scan_shell_file(filepath: Path, result: ScanResult):
         return
 
     lines = content.splitlines()
+    # 管道右端"任意解释器"：不枚举单个名字，否则换成 python3/perl/node 就漏（holdout H01）
+    _INTERP = r"(python[0-9.]*|node|perl|ruby|php|bash|sh|zsh|dash|ksh)"
+    _DECODER = r"(base64|xxd|openssl|gpg)\s*(--decode|--decrypt|-d|-D)?"
+    _INTERP_PIPE_DECODE = rf"\|[^|\n]*\b{_DECODER}\b[^|\n]*\|[^|\n]*\b{_INTERP}\b"
+    _INTERP_PIPE_ANY = (rf"\b(curl|wget|cat|echo|printf)\b[^\n|]*"
+                        rf"(\|[^|\n]*)?\|\s*\b{_INTERP}\b")
+
+    # 每条规则带 rule_id：findings 必须可归因到具体规则（否则无法抑制/回归/审计）
+    # 结构：(rule_id, pattern, severity, message, explanation)
     dangerous_sh_patterns = [
-        (r"\brm\s+-rf?\s+/\s*(;|&&|\||$)", "CRITICAL", "rm -rf / 危险删除（仅根目录）"),
-        (r"\bcurl\s+.*\|\s*sh", "MEDIUM", "curl | sh 管道执行远程脚本（常见安装方式，需确认来源可信）"),
-        (r"\bwget\s+.*\|\s*bash", "MEDIUM", "wget | bash 管道执行远程脚本（常见安装方式，需确认来源可信）"),
-        (r"\bchmod\s+777", "MEDIUM", "chmod 777 权限过松"),
-        (r"\bsudo\s+", "MEDIUM", "sudo 权限提升"),
+        # —— 原有 5 条（补 rule_id）——
+        ("SH001", r"\brm\s+-rf?\s+/\s*(;|&&|\||$)", "CRITICAL",
+         "rm -rf / 危险删除（仅根目录）", "删除根目录不可恢复"),
+        ("SH002", r"\b(curl|wget)\s+.*\|\s*(bash|sh|zsh)\b", "HIGH",
+         "下载后直接管道执行远程脚本", "远程内容未经审阅即执行，等同于远端代码执行"),
+        ("SH003", r"\bchmod\s+777", "MEDIUM", "chmod 777 权限过松", "任何用户可改写该文件"),
+        ("SH004", r"\bsudo\s+", "MEDIUM", "sudo 权限提升", "脚本需要提权，扩大影响面"),
+
+        # —— 新增：编码绕过与多层管道（M01 这类）——
+        # SH005 修正版：不枚举 bash/sh，右端认"任意解释器"。
+        # 只枚举 bash|sh 时，`| base64 -d | python3` 直接漏（holdout H01 就是这样漏的）。
+        ("SH005", _INTERP_PIPE_DECODE, "CRITICAL",
+         "解码后管道执行（解码器 | 任意解释器）", "编码是为了绕过静态检查，解码即执行"),
+        # SH006 修正版：任意下载器 → 管道 → 任意解释器；中间可隔多段
+        ("SH006", _INTERP_PIPE_ANY, "CRITICAL",
+         "管道最终落到解释器执行（下载/回显 → 解释器）", "管道右端是解释器，等于把远端内容直接执行"),
+
+        # —— 新增：危险删除与家目录 ——
+        ("SH007", r"\brm\s+-rf?\s+(\$HOME|~|\$\{?HOME\}?)\s*(;|&&|\|$|$)", "CRITICAL",
+         "删除用户主目录", "不可恢复，等同毁坏环境"),
+        ("SH008", r"\brm\s+-rf?\s+/(etc|usr|var|bin|boot)\b", "CRITICAL",
+         "删除系统关键目录", "破坏宿主系统"),
+
+        # —— 新增：反弹 shell ——
+        ("SH009", r"/dev/tcp/[^\s]+", "CRITICAL",
+         "反弹 shell（/dev/tcp）", "以本机为跳板建立外连"),
+        ("SH010", r"\b(nc|ncat)\b[^\n]*\s-[a-z]*e\b", "CRITICAL",
+         "netcat 反弹 shell（-e）", "把 shell 交给远端"),
+
+        # —— 新增：凭据外泄（curl/wget 上传 + 复制型外传）——
+        ("SH011", r"\b(curl|wget)\s+[^\n]*(--data[= ]?@|-d\s*@|--upload-file)[^\n]*(\.ssh|\.aws|\.env|\.netrc|\.npmrc|id_rsa)", "CRITICAL",
+         "上传凭据/密钥文件到远端", "明确的外泄链：读敏感文件 → 发到外部"),
+        ("SH012", r"\b(curl|wget)\s+[^\n]*(\.ssh/id_|\.aws/credentials|\.env\b)", "HIGH",
+         "命令中出现敏感文件路径", "敏感文件被网络工具访问"),
+        # SH013：scp/rsync/ftp/rclone 这类"复制型外传"，此前完全没覆盖（holdout H02）
+        ("SH013", r"\b(scp|rsync|sftp|ftp|rclone)\b[^\n]*(\.ssh|\.aws|\.env\b|id_rsa|\.netrc|\.npmrc|\.credentials)", "CRITICAL",
+         "用复制工具外传凭据", "不需要 HTTP 也能把密钥搬走"),
+
+        # —— 新增：PowerShell 载体（.ps1 此前完全不在扫描范围内）——
+        ("SH017", r"\b(iwr|Invoke-WebRequest|DownloadString|DownloadFile|Net\.WebClient)\b", "HIGH",
+         "PowerShell 下载远程内容", "PowerShell 是最常见的企业内投递载体"),
+        ("SH018", r"\b(iex|Invoke-Expression)\b", "CRITICAL",
+         "PowerShell 动态执行（IEX）", "把下载到的内容当代码执行"),
+        ("SH019", r"\b(powershell|pwsh)\b[^\n]*\s-e(nc|ncodedcommand)?\b[^\n]*[A-Za-z0-9+/=]{40,}", "CRITICAL",
+         "PowerShell 编码命令执行", "base64 编码的载荷用于绕过命令行审计"),
+        ("SH020", r"\b(Set-MpPreference|Add-MpPreference)\b[^\n]*(Disable|Exclusion)", "CRITICAL",
+         "关闭或排除杀毒扫描", "为后续载荷清场"),
+
+        # —— 新增：凭据暂存、容器逃逸、免取证 ——
+        ("SH021", r"\b(cp|mv|install)\b[^\n]*(\\.ssh|\\.aws|\\.env\\b|id_rsa|credentials)[^\n]*(/tmp|/var/tmp|/dev/shm)", "HIGH",
+         "凭据被复制到共享临时目录", "tmp 通常全局可读，是搬运前的暂存点"),
+        ("SH022", r"\bsocat\b[^\n]*(EXEC:|TCP:)", "CRITICAL",
+         "socat 建立 shell 通道", "与 nc 同类的双向管道"),
+        ("SH023", r"\bdocker\s+(run|exec)\b[^\n]*--privileged[^\n]*\s-v\s*/:", "CRITICAL",
+         "特权容器挂载宿主根目录", "容器逃逸的标准形态"),
+        ("SH024", r"(\bhistory\s+-c\b|rm\s+[^\n]*(\\.bash_history|\\.zsh_history))", "MEDIUM",
+         "清除命令历史（免取证）", "攻击后抹除痕迹"),
     ]
 
-    for pattern, severity, msg in dangerous_sh_patterns:
+    for rule_id, pattern, severity, msg, explanation in dangerous_sh_patterns:
         for i, line in enumerate(lines, 1):
-            if re.search(pattern, clean_line(line)):
+            # 实验：shell 规则改在原始行上匹配（引号内载荷在 shell 里仍会被执行）
+            if re.search(pattern, line):
                 result.findings.append(Finding(
                     severity=severity, category="dangerous-shell",
-                    message=msg, file=str(filepath), line=i
+                    message=msg, file=str(filepath), line=i,
+                    rule_id=rule_id, explanation=explanation,
                 ))
+
+    # ===== 文件级语义分析（单行正则表达不了的状态）=====
+    _CRED = r"(\.ssh|id_rsa|\.aws|\.env\b|\.netrc|\.npmrc|credentials)"
+    _NETSINK = (r"(requests\.(post|put|patch)|urllib|http\.client|socket\.|smtplib"
+                r"|\bnc\b|\bncat\b|\bsocat\b"
+                r"|curl\s+[^\n]*(--data|-d\s*@|--upload-file)|wget\s+[^\n]*--post)")
+
+    # SH014：同一行里「凭据路径」与「网络发送」同现（不限工具）
+    for i, line in enumerate(lines, 1):
+        if re.search(_CRED, line) and re.search(_NETSINK, line):
+            result.findings.append(Finding(
+                severity="CRITICAL", category="exfiltration",
+                message="凭据与网络发送在同一行出现", file=str(filepath), line=i,
+                rule_id="SH014",
+                explanation="单行内完成 读密钥→发出去，等价于既定外泄",
+            ))
+
+    # SH015：下载 → 赋权 → 执行 三段链
+    downloaded = []
+    for i, line in enumerate(lines, 1):
+        m = re.search(r"(curl|wget)[^\n]*\s(-o|--output|-O)\s*([^\s;&|]+)", line)
+        if m:
+            downloaded.append((m.group(3).strip("\"'"), i))
+    for path, dline in downloaded:
+        base = re.escape(path)
+        if re.search(rf"chmod\s+[+a-z0-9]*x[+a-z0-9]*\s+{base}", content) and \
+           re.search(rf"(&&|;|\n)\s*{base}\b", content):
+            result.findings.append(Finding(
+                severity="CRITICAL", category="dropper",
+                message="下载二进制→赋权→执行（投放链）", file=str(filepath), line=dline,
+                rule_id="SH015",
+                explanation="三段链合起来才是完整攻击，单看任一段都无害",
+            ))
+            break
+
+    # SH016：打包/读取 → 经 nc/socat 外传
+    if re.search(rf"(tar|zip|cat|base64|gzip)\b[^\n]*{_CRED}[^\n]*\|", content) and \
+       re.search(r"\|\s*(nc|ncat|socat)\s", content):
+        result.findings.append(Finding(
+            severity="CRITICAL", category="exfiltration",
+            message="打包后经 nc/socat 外传", file=str(filepath),
+            rule_id="SH016",
+            explanation="物证搬运不依赖 HTTP，靠管道到裸 socket",
+        ))
 
 
 def parse_frontmatter(filepath: Path, result: ScanResult):
@@ -944,7 +1115,8 @@ def parse_frontmatter(filepath: Path, result: ScanResult):
     if not content.startswith("---"):
         result.findings.append(Finding(
             severity="MEDIUM", category="frontmatter",
-            message="SKILL.md 缺少 YAML frontmatter", file=str(filepath)
+            message="SKILL.md 缺少 YAML frontmatter", file=str(filepath),
+            rule_id="FM001",
         ))
         return
 
@@ -980,12 +1152,12 @@ def parse_frontmatter(filepath: Path, result: ScanResult):
     
     # 数字诚实性检查（新增！）
     lines = content.splitlines()
-    for pattern, severity, msg in HONESTY_PATTERNS:
+    for rid, pattern, severity, msg in HONESTY_PATTERNS:
         for i, line in enumerate(lines, 1):
             if re.search(pattern, line, re.IGNORECASE):
                 result.findings.append(Finding(
                     severity=severity, category="honesty",
-                    message=msg, file=str(filepath), line=i
+                    message=msg, file=str(filepath), line=i, rule_id=rid_h
                 ))
 
 
@@ -1196,6 +1368,14 @@ def scan_skill(skill_dir: str) -> ScanResult:
         scan_shell_file(sh_file, result)
         result.files_scanned += 1
 
+    # Scan Windows 载体：此前 .ps1/.psm1/.bat/.cmd 完全没被扫过（实测恶意 ps1 得 82 分 A 级）
+    for win_file in (list(skill_path.rglob("*.ps1")) + list(skill_path.rglob("*.psm1"))
+                     + list(skill_path.rglob("*.bat")) + list(skill_path.rglob("*.cmd"))):
+        if should_exclude(win_file):
+            continue
+        scan_shell_file(win_file, result)
+        result.files_scanned += 1
+
     # Scan all JS/TS files
     if scan_js_file:
         for js_file in list(skill_path.rglob("*.js")) + list(skill_path.rglob("*.ts")):
@@ -1203,10 +1383,22 @@ def scan_skill(skill_dir: str) -> ScanResult:
                 continue
             try:
                 js_findings = scan_js_file(js_file)
-                for sev, cat, msg, line in js_findings:
+                for sev, cat, msg, line, js_rid in js_findings:
                     result.findings.append(Finding(
                         severity=sev, category=cat,
-                        message=msg, file=str(js_file), line=line
+                        message=msg, file=str(js_file), line=line, rule_id=js_rid
+                    ))
+                # JS 跨行污点：读凭据文件 → 网络发送（T06 这类）
+                _js_body = js_file.read_text(encoding="utf-8", errors="replace")
+                if re.search(r"(readFileSync|readFile|createReadStream)[^\n]*(\.ssh|id_rsa|\.aws|\.env|credentials)", _js_body) and \
+                   re.search(r"(axios\.(post|put)|fetch\s*\(|http\.request|https\.request|net\.connect)[^\n]*", _js_body):
+                    ln = next((n for n, l in enumerate(_js_body.splitlines(), 1)
+                               if re.search(r"(axios\.(post|put)|fetch|http\.request|net\.connect)", l)), 1)
+                    result.findings.append(Finding(
+                        severity="CRITICAL", category="exfiltration-taint",
+                        message="JS 读取凭据后调用网络接口（跨行）", file=str(js_file), line=ln,
+                        rule_id="TAINT02",
+                        explanation="读取与发送跨行，按行匹配看不到关联",
                     ))
             except Exception:
                 pass
@@ -1265,7 +1457,7 @@ def scan_skill(skill_dir: str) -> ScanResult:
         if any(ln >= first_env for ln in net_by_file.get(fp, [])):
             result.findings.append(Finding(
                 severity="HIGH", category="exfil",
-                message="环境变量整份外发（导出 + 网络外发同文件，组合判定）",
+                message="环境变量整份外发（导出 + 网络外发同文件，组合判定）", rule_id="COMBO01",
                 file=fp, line=1
             ))
 
