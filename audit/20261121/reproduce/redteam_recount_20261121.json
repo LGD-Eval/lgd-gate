@@ -1,0 +1,299 @@
+{
+ "as_of": "2026-11-21T21:23:32+08:00",
+ "method": "只读 9 份 bench json 的逐样本 flagged 字段重算，不调用扫描器；sha256 用于防篡改",
+ "bench_dir": "D:\\Workbuddy\\发布前审查_20261121\\_bench",
+ "splits": [
+  {
+   "split": "holdout",
+   "file": "bench_holdout_gate_20261121.json",
+   "sha256": "a81d2f8de261074b063961a748cd2b022db90b56edccb00fc2b2eac290987f40",
+   "samples": 10,
+   "recount": {
+    "samples": 10,
+    "tp": 5,
+    "fp": 0,
+    "tn": 5,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 1.0
+   },
+   "severity_only": {
+    "tp": 5,
+    "fp": 0,
+    "tn": 5,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 1.0
+   },
+   "drift": {},
+   "severity_drift": {},
+   "rule_version": "v3.2.0"
+  },
+  {
+   "split": "test3",
+   "file": "bench_test3_gate_20261121.json",
+   "sha256": "b43289c9340037f2da9b06101e7c437245ab89a51e89c04a4b0142704ae4940c",
+   "samples": 12,
+   "recount": {
+    "samples": 12,
+    "tp": 6,
+    "fp": 2,
+    "tn": 4,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 0.75,
+    "false_positive_rate": 0.333,
+    "accuracy": 0.833
+   },
+   "severity_only": {
+    "tp": 6,
+    "fp": 1,
+    "tn": 5,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 0.857,
+    "false_positive_rate": 0.167,
+    "accuracy": 0.917
+   },
+   "drift": {},
+   "severity_drift": {},
+   "rule_version": "v3.2.0"
+  },
+  {
+   "split": "test4",
+   "file": "bench_test4_gate_20261121.json",
+   "sha256": "c2adb0014f0acf37efba2d4144d201564957ce0a94522999ae5cdba2f04af7d4",
+   "samples": 12,
+   "recount": {
+    "samples": 12,
+    "tp": 6,
+    "fp": 2,
+    "tn": 4,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 0.75,
+    "false_positive_rate": 0.333,
+    "accuracy": 0.833
+   },
+   "severity_only": {
+    "tp": 5,
+    "fp": 0,
+    "tn": 6,
+    "fn": 1,
+    "recall": 0.833,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 0.917
+   },
+   "drift": {},
+   "severity_drift": {},
+   "rule_version": "v3.2.0"
+  },
+  {
+   "split": "test5",
+   "file": "bench_test5_gate_20261121.json",
+   "sha256": "1ac733bdce35e1dca322b9fa8539f5a477a6730b0be9c0461255e2d0796218cb",
+   "samples": 12,
+   "recount": {
+    "samples": 12,
+    "tp": 4,
+    "fp": 1,
+    "tn": 5,
+    "fn": 2,
+    "recall": 0.667,
+    "precision": 0.8,
+    "false_positive_rate": 0.167,
+    "accuracy": 0.75
+   },
+   "severity_only": {
+    "tp": 2,
+    "fp": 0,
+    "tn": 6,
+    "fn": 4,
+    "recall": 0.333,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 0.667
+   },
+   "drift": {},
+   "severity_drift": {},
+   "rule_version": "v3.2.0"
+  },
+  {
+   "split": "test6",
+   "file": "bench_test6_gate_20261121.json",
+   "sha256": "772dd39f8d5f9c5de7e1ffdf76066a6675cdb0e8733fc70196a05544e2adaa7f",
+   "samples": 12,
+   "recount": {
+    "samples": 12,
+    "tp": 5,
+    "fp": 1,
+    "tn": 5,
+    "fn": 1,
+    "recall": 0.833,
+    "precision": 0.833,
+    "false_positive_rate": 0.167,
+    "accuracy": 0.833
+   },
+   "severity_only": {
+    "tp": 3,
+    "fp": 0,
+    "tn": 6,
+    "fn": 3,
+    "recall": 0.5,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 0.75
+   },
+   "drift": {},
+   "severity_drift": {},
+   "rule_version": "v3.2.0"
+  },
+  {
+   "split": "test7",
+   "file": "bench_test7_gate_20261121.json",
+   "sha256": "fc396f197358996a885491df817b194db00b497ecea20fbedf076932e77131f9",
+   "samples": 12,
+   "recount": {
+    "samples": 12,
+    "tp": 6,
+    "fp": 0,
+    "tn": 6,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 1.0
+   },
+   "severity_only": {
+    "tp": 5,
+    "fp": 0,
+    "tn": 6,
+    "fn": 1,
+    "recall": 0.833,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 0.917
+   },
+   "drift": {},
+   "severity_drift": {},
+   "rule_version": "v3.2.0"
+  },
+  {
+   "split": "test8",
+   "file": "bench_test8_gate_20261121.json",
+   "sha256": "5bcd75db246f28ebf8942d9bc911e22b2bc7f6d82e32efe844b3b0ab5beb5050",
+   "samples": 12,
+   "recount": {
+    "samples": 12,
+    "tp": 6,
+    "fp": 0,
+    "tn": 6,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 1.0
+   },
+   "severity_only": {
+    "tp": 3,
+    "fp": 0,
+    "tn": 6,
+    "fn": 3,
+    "recall": 0.5,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 0.75
+   },
+   "drift": {},
+   "severity_drift": {},
+   "rule_version": "v3.2.0"
+  },
+  {
+   "split": "test9",
+   "file": "bench_test9_gate_20261121.json",
+   "sha256": "3c296af71bb5d1644c72b3f1da0267532fa16d67f93db5d345da8d511a98b995",
+   "samples": 12,
+   "recount": {
+    "samples": 12,
+    "tp": 4,
+    "fp": 1,
+    "tn": 5,
+    "fn": 2,
+    "recall": 0.667,
+    "precision": 0.8,
+    "false_positive_rate": 0.167,
+    "accuracy": 0.75
+   },
+   "severity_only": {
+    "tp": 4,
+    "fp": 1,
+    "tn": 5,
+    "fn": 2,
+    "recall": 0.667,
+    "precision": 0.8,
+    "false_positive_rate": 0.167,
+    "accuracy": 0.75
+   },
+   "drift": {},
+   "severity_drift": {},
+   "rule_version": "v3.2.0"
+  },
+  {
+   "split": "tuning",
+   "file": "bench_tuning_gate_20261121.json",
+   "sha256": "fa6453f471d421fa87da90b24cbdf837f2affbec340f707386d8961d51323ca3",
+   "samples": 20,
+   "recount": {
+    "samples": 20,
+    "tp": 10,
+    "fp": 1,
+    "tn": 9,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 0.909,
+    "false_positive_rate": 0.1,
+    "accuracy": 0.95
+   },
+   "severity_only": {
+    "tp": 10,
+    "fp": 0,
+    "tn": 10,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 1.0
+   },
+   "drift": {},
+   "severity_drift": {},
+   "rule_version": "v3.2.0"
+  }
+ ],
+ "aggregate": {
+  "samples": 114,
+  "tp": 52,
+  "fp": 8,
+  "tn": 49,
+  "fn": 5,
+  "recall": 0.912,
+  "precision": 0.867,
+  "false_positive_rate": 0.14,
+  "accuracy": 0.886
+ },
+ "aggregate_severity_only": {
+  "tp": 43,
+  "fp": 2,
+  "tn": 55,
+  "fn": 14,
+  "recall": 0.754,
+  "precision": 0.956,
+  "false_positive_rate": 0.035,
+  "accuracy": 0.86
+ },
+ "drift_splits": []
+}
