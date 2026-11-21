@@ -8,6 +8,21 @@
 - Python ≥ 3.10、Node ≥ 18（两者都需要，因为要跨语言比对）
 - Windows / Linux / macOS 均可；Windows 上请用 `pwsh` 或 `cmd` 跑命令（不要用 Git Bash 里未转义的路径）
 
+## 0.5 零依赖 CLI（推荐先跑这条，30 秒）
+
+`ash
+git clone -b docs/reproduce-20261121 --depth 1 https://github.com/LGD-Eval/lgd-gate.git
+cd lgd-gate/audit/20261121/reproduce/lgd-skillgate-cli
+python -m venv .venv
+# Windows: .venv\Scriptsctivate    Linux/macOS: source .venv/bin/activate
+pip install .
+lgd-skillgate scan examples/malicious --format json   # 期望 grade D / trust 40 / MD001 + CR010 / exit 1
+lgd-skillgate scan examples/benign --format json      # 期望 grade A / trust 82 / 0 findings / exit 0
+`
+
+纯标准库、无网络、无遥测；版本 lgd-skillgate 0.1.0，规则 3.2.0（155 + 19 = 174 条）。
+未发布 PyPI——本入口只走源码安装，避免任何"已上架"暗示。
+
 ## 1. 一致性向量（L1）
 
 ```bash
