@@ -1,5 +1,5 @@
 name: 'LGD Skill Gate'
-description: 'Score an AI agent skill on one 0-100 trust scale and fail CI below the threshold. Emits SARIF, a tree hash pin, and a suggested execution tier.'
+description: 'Score an AI agent skill on one 0-100 trust scale and fail CI below the threshold. Emits SARIF, a tree hash pin, and a risk tier. A score never grants execution permission; authorization_status is always NOT_GRANTED.'
 author: 'SynomosAI / LGD-Eval'
 
 branding:
@@ -41,6 +41,9 @@ inputs:
     default: 'false'
 
 outputs:
+  authorization_status:
+    description: 'Always NOT_GRANTED. Scoring does not issue execution permission; authorization must be granted separately by a maintainer or an unrelated third party.'
+    value: ${{ steps.eval.outputs.authorization_status }}
   score:
     description: 'Trust Score (0-100)'
     value: ${{ steps.eval.outputs.score }}
@@ -48,8 +51,11 @@ outputs:
     description: 'Grade (A+/A/B/C/D)'
     value: ${{ steps.eval.outputs.grade }}
   tier:
-    description: 'Suggested execution tier (L0-L5)'
+    description: 'DEPRECATED alias for risk_tier. Advisory risk tier T0-T5 - never an execution permission. Was an L0-L5 permission ladder; see MIGRATION.md.'
     value: ${{ steps.eval.outputs.tier }}
+  risk_tier:
+    description: 'Advisory risk tier (T0-T5). T0 means low risk, NOT approved. Authorization is separate and always requires NOT_GRANTED to be resolved by a person.'
+    value: ${{ steps.eval.outputs.risk_tier }}
   sarif:
     description: 'Path of the generated SARIF file (empty when skipped)'
     value: ${{ steps.eval.outputs.sarif }}
@@ -76,25 +82,32 @@ runs:
         SCORE=$(grep -o 'Trust Score: [0-9]*' "$RUNNER_TEMP/lgd-eval.log" | head -1 | grep -o '[0-9]*')
         SCORE=${SCORE:-0}
 
-        if   [ "$SCORE" -ge 90 ]; then GRADE="A+"
-        elif [ "$SCORE" -ge 80 ]; then GRADE="A"
-        elif [ "$SCORE" -ge 70 ]; then GRADE="B"
-        elif [ "$SCORE" -ge 60 ]; then GRADE="C"
-        else                           GRADE="D"
-        fi
+        # 等级不在这里重算，从评测器自己的输出里取。
+        # 曾经这里有一份独立映射（<40 记 F），而 evaluate.py 只发 A+/A/B/C/D——
+        # 同一个 12 分，工具说 D、Action 说 F，对外两个等级都出现过。
+        # 判定只能有一个来源，否则「徽章/等级与实际一致」这条永远说不清。
+        GRADE=$(awk '/Trust Score: [0-9]+[0-9]*\/100/ {print $NF; exit}' "$RUNNER_TEMP/lgd-eval.log")
+        GRADE=${GRADE:-?}
 
-        if   [ "$SCORE" -ge 96 ]; then TIER="L0"; SUGGEST="免审批直接执行"
-        elif [ "$SCORE" -ge 81 ]; then TIER="L1"; SUGGEST="一次性确认后执行（60 rpm）"
-        elif [ "$SCORE" -ge 51 ]; then TIER="L2"; SUGGEST="人工复核后执行（30 rpm）"
-        elif [ "$SCORE" -ge 31 ]; then TIER="L3"; SUGGEST="每次强制确认，建议先过沙箱"
-        elif [ "$SCORE" -ge 11 ]; then TIER="L4"; SUGGEST="隔离只读，禁止写入与外联"
-        else                           TIER="L5"; SUGGEST="拒绝执行"
+        # 评分与授权分离：TIER 是风险档位，不是执行许可；授权恒为 NOT_GRANTED。
+        if   [ "$SCORE" -ge 96 ]; then TIER="T0"; SUGGEST="风险极低（仅供参考）"
+        elif [ "$SCORE" -ge 81 ]; then TIER="T1"; SUGGEST="风险低（仅供参考）"
+        elif [ "$SCORE" -ge 51 ]; then TIER="T2"; SUGGEST="风险中等（仅供参考）"
+        elif [ "$SCORE" -ge 31 ]; then TIER="T3"; SUGGEST="风险较高（建议先过沙箱）"
+        elif [ "$SCORE" -ge 11 ]; then TIER="T4"; SUGGEST="风险高（建议隔离只读）"
+        else                           TIER="T5"; SUGGEST="风险极高"
         fi
 
         echo "score=$SCORE"     >> "$GITHUB_OUTPUT"
         echo "grade=$GRADE"     >> "$GITHUB_OUTPUT"
         echo "tier=$TIER"       >> "$GITHUB_OUTPUT"
+        echo "risk_tier=$TIER"  >> "$GITHUB_OUTPUT"
+        echo "authorization_status=NOT_GRANTED" >> "$GITHUB_OUTPUT"
         echo "sarif=${{ inputs.sarif }}" >> "$GITHUB_OUTPUT"
+
+        # Breaking-change visibility (brownout analogue): the alias keeps its name
+        # but its meaning changed, so say it in the job log rather than silently.
+        echo "::warning::lgd-skill-gate: the 'tier' output is deprecated. It now emits advisory risk tier T0-T5 (was an L0-L5 permission ladder). T0 means low risk, NOT approved. Use 'risk_tier'; see MIGRATION.md."
 
         {
           echo "## LGD Trust Score: **$SCORE/100** ($GRADE)"
@@ -103,7 +116,8 @@ runs:
           echo "|---|---|"
           echo "| 分数 | $SCORE / 100 |"
           echo "| 等级 | $GRADE |"
-          echo "| 建议执行档位 | **$TIER** — $SUGGEST |"
+          echo "| 风险档位（参考，不构成授权） | **$TIER** — $SUGGEST |"
+          echo "| 授权状态 | **NOT_GRANTED** — 评测不签发执行权限 |"
           echo "| 门槛 | ${{ inputs.threshold }} |"
           echo ""
           echo "评分口径与五维权重见 https://github.com/LGD-Eval/evaluation-evidence/blob/main/LEADERBOARD.md"

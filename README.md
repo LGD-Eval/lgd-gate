@@ -30,18 +30,20 @@ LGD Trust Score: 65/100 🥉 C
     threshold: 90
 ```
 
-**一个分数，一个档位。** 分数直接决定这个技能该以什么权限运行：
+**一个分数，一个风险档位——不是一个权限。** 分数用来排优先级，授权必须另外授予：
 
-| 分数 | 档位 | 建议 |
+| 分数 | 风险档位（参考） | authorization_status |
 |---|---|---|
-| ≥ 96 | L0 | 免审批直接执行 |
-| 81–95 | L1 | 一次性确认（60 rpm） |
-| 51–80 | L2 | 人工复核（30 rpm） |
-| 31–50 | L3 | 每次强制确认，建议先过沙箱 |
-| 11–30 | L4 | 隔离只读 |
-| ≤ 10 | L5 | 拒绝执行 |
+| ≥ 96 | T0 风险极低 | NOT_GRANTED |
+| 81–95 | T1 风险低 | NOT_GRANTED |
+| 51–80 | T2 风险中等 | NOT_GRANTED |
+| 31–50 | T3 风险较高 | NOT_GRANTED |
+| 11–30 | T4 风险高 | NOT_GRANTED |
+| ≤ 10 | T5 风险极高 | NOT_GRANTED |
 
-这是我们和只做评分的工具最大的不同：**评测的终点是一个权限决定，不是一个数字。**
+评测的终点是一个**风险结论**，不是权限决定。`authorization_status` 恒为 `NOT_GRANTED`，Action 以同名 output 暴露；要变成 `GRANTED`，只能由维护者或无关联第三方单独书面授予，评测引擎没有这条路径。这也是我们和只做评分的工具的区别：我们把"结论"和"许可"分开写清楚，而不是让一个数字替人签字。
+
+**三件事不要混：分数、档位、门禁。** `action.yml` 的默认门槛是 **90**，它是 CI 拦截值：低于 90 分 CI 失败。档位是**描述**，门禁是**拦截**，授权是**签发**（恒为 `NOT_GRANTED`）。所以 `T1` 的技能在默认门禁下仍会被拦——这不矛盾：档位回答"有多危险"，门禁回答"这次让不让过"。要放行 81–89 分的对象须显式调低门槛并自担后果；门槛低于 49（安全否决封顶线）必须禁止。校准数据显示默认 90 会拦掉 6 份干净技能里的 5 份，原因见 `docs/CALIBRATION.md` §5。
 
 ## 🧪 实测：四个真实样本
 
@@ -68,7 +70,8 @@ LGD Trust Score: 65/100 🥉 C
 ======================================================================
   ⛔ 安全否决：原始分 74 → 封顶 49（critical：命中文凭外泄 / 远程代码执行类问题）
   LGD Trust Score: 49/100  ⚠️ D
-  🚦 建议执行权限: L3 沙箱运行（每次调用强制确认）
+  🚦 风险档位（仅供参考，不构成授权）: T3 风险较高
+  🔐 授权状态: NOT_GRANTED（评测只产出结论，不签发执行权限）
   评测耗时: 0.06s
 ======================================================================
 
@@ -103,7 +106,7 @@ LGD Trust Score: 65/100 🥉 C
 
 2026-10-30，Mitiga 披露了针对 AI 指令文件的实战攻击（[原文](https://www.mitiga.io/blog/malware-in-ai-instruction-files-skillgate)）：把 `ANTHROPIC_BASE_URL` 覆盖成攻击者代理，会话流量全走 MITM；把权限绕过当成"便利默认"发出去；在数十个服务里散落 1,230+ 硬编码 API key 与 JWT。
 
-这类攻击的特点是**SKILL.md 里不写露骨文字，全部藏在安装脚本里**。我们按这个形态复刻了 `_demo/mitiga-style/`，三个文件：越权文本、`setup.sh`（基址劫持＋两个真实密钥格式）、`collect.py`（读 `~/.aws/credentials` 后 POST 外发）。
+这类攻击的特点是**SKILL.md 里不写露骨文字，全部藏在安装脚本里**。我们按这个形态复刻了 `_demo/mitiga-style/`，三个文件：越权文本、`setup.sh`（基址劫持＋两个真实密钥格式）、`collect.py`（读 `~/.aws/credentials` 后 POST 外发）。<!-- skillgate: ignore — 文档在描述检测样例，不是行为 -->
 
 同一份样本，改前改后：
 
@@ -132,14 +135,16 @@ LGD Trust Score: 65/100 🥉 C
 
 1. **原来只扫 `.py/.js/.ts/.mjs/.cjs`** —— shell 系脚本完全不扫，而 Mitiga 的样本恰好藏在 shell 的 `export` 里。现在扩到 `.sh/.bash/.zsh/.ps1/.bat/.cmd` 共 11 种。
 2. **原来只扫 `scripts/` 目录** —— 把载荷放在技能根目录就整个绕过。现在递归扫全树（排除 `tests/fixtures` 这类检测夹具，它们是评测输入而非被测技能本体）。
-3. **凭证读取只认字面量路径** —— `open("~/.aws/credentials")` 能抓，但真实写法 `open(os.path.expanduser("~/.aws/credentials"))` 抓不到。现在常量从调用里挖出来。
+3. **凭证读取只认字面量路径** —— `open("~/.aws/credentials")` 能抓，但真实写法 `open(os.path.expanduser("~/.aws/credentials"))` 抓不到。现在常量从调用里挖出来。<!-- skillgate: ignore — 文档在描述检测规则，不是行为 -->
 
 复跑（不需要装 git）：
 
 ```bash
 curl -L https://codeload.github.com/LGD-Eval/lgd-gate/tar.gz/refs/heads/main | tar xz
-python3 lgd-gate-main/evaluate.py lgd-gate-main/_demo/mitiga-style
+cd lgd-gate-main
+python3 evaluate.py _demo/mitiga-style
 ```
+（2026-11-15 复跑修正：原写法把解压目录名 `lgd-gate-main/` 写进了命令里，等于要求你先站在上一层、再用一个只在压缩包解压后才存在的目录名执行。实测 `python3 lgd-gate-main/evaluate.py ...` 在仓库内直接跑会 `exit 2`（找不到文件）。改成先 `cd` 进解压目录。）
 
 2026-11-06 在**干净环境、只下压缩包、未装 git** 的条件下实测：**22/100 D，9 条命中逐字一致**。这不是我们机器上的数字，是任何人拿到这个仓库都能跑出来的数字。
 
@@ -151,11 +156,16 @@ python3 lgd-gate-main/evaluate.py lgd-gate-main/_demo/mitiga-style
 
 | 工具 | 回答什么 | 是否产出对外分数 |
 |---|---|---|
-| `evaluate.py` | 这个技能能不能信任 → **一个分数 + 一档执行权限** | ✅ 唯一对外口径 |
-| `skillgate.py` | 代码级危险模式（开发者自查） | ❌ 不评总分 |
-| `lgd_audit.py` | 18 维完整性审计（开发者自查） | ❌ 不评总分 |
+| `evaluate.py` | 这个技能能不能信任 → **一个分数 + 一个风险档位（不签发权限）** | ✅ 唯一对外口径 |
+| `skillgate.py` | 代码级危险模式（开发者自查） | ❌ 只给等级，不评总分 |
+| `lgd_audit.py` | 18 维完整性审计（开发者自查） | ❌ **不是** Trust Score：它有自己的完整性分（本项目实测一个最小可用技能得 1/100），退出码按该分与门槛比较 |
 
-**为什么它们对同一份代码可能给出不同数字？** 因为扫描器扫自己时会出现自证误报——`skillgate.py` 曾把 `evaluate.py` 里的检测正则 `secret_re` 判成"硬编码凭证"、把规则词表里的 `~/.aws/credentials` 判成"读取凭证"，一度给自己打 0 分并"阻断发布"，而 `evaluate.py` 给同一目录 100 分。这不是能力问题，是**规则表被当成了行为**。
+> 2026-11-15 更正：本表原来写 `lgd_audit.py`"不评总分"，与代码不符——它确实算一个完整性分，并把它用在 `sys.exit`。那个分与 `evaluate.py` 的 Trust Score **不同刻度、不可互比**：同一个最小技能，评测器给 61/C，审计器给 1/100。把两个数字放在一起看，读者只会得出"这工具太严"或"这工具坏了"两种错误结论。
+
+
+**这份 `evaluate.py` 不是独立实现，是正典的逐字节副本。** 正典在 `LGD-Eval/skills/lgd-eval/scripts/evaluate.py`；本仓这份此前悄悄分叉过（79,256 B，少了 JS 组合规则），对跨文件凭证外泄的技能给 73/B——而 Marketplace 上的 Action 跑的就是它。现在 `tests/test_evaluator_provenance.py` 用固定 sha256 钉住副本，任何改动都必须先改正典再整文件复制过来，否则测试直接失败。
+
+**为什么它们对同一份代码可能给出不同数字？** 因为扫描器扫自己时会出现自证误报——`skillgate.py` 曾把 `evaluate.py` 里的检测正则 `secret_re` 判成"硬编码凭证"、把规则词表里的 `~/.aws/credentials` 判成"读取凭证"，一度给自己打 0 分并"阻断发布"，而 `evaluate.py` 给同一目录 100 分。这不是能力问题，是**规则表被当成了行为**。<!-- skillgate: ignore — 文档在复盘自证误报，不是行为 -->
 
 我们按 Bandit `# nosec` / SonarQube `NOSONAR` 的既有约定处理：`# skillgate: ignore` 必须与命中行同行，只对已确认的陪跑代码生效（如沙箱里造诱捕蜜罐的那行）。修完 `skillgate.py` 自扫从 **0/100 F（阻断）→ 95/100 A+（无阻断）**，同时四个恶意样本的分数一条没变——误报消掉了，检测力没掉。
 
@@ -215,7 +225,24 @@ python3 lgd-gate-main/evaluate.py lgd-gate-main/_demo/mitiga-style
 - C: 60-69
 
 > 📖 完整的 L0-L13 企业级标准 → [evaluation-protocol.md](./docs/evaluation-protocol.md)
-> 📖 Trust Score 双引擎口径声明：skillgate 扫描器（v3.1.2）与 evaluate.py 五维评测为两套评分口径，引用须标注引擎 + rule_version + 扫描对象 + 日期，详见 [SCORE-COMPARISON.md](https://github.com/LGD-Eval/evaluation-evidence/blob/main/evidence/71repo-scan-v3.1.0/SCORE-COMPARISON.md)。
+> 📖 Trust Score 双引擎口径声明：skillgate 扫描器（v3.1.3）与 evaluate.py 五维评测为两套评分口径，引用须标注引擎 + rule_version + 扫描对象 + 日期，详见 [SCORE-COMPARISON.md](https://github.com/LGD-Eval/evaluation-evidence/blob/main/evidence/71repo-scan-v3.1.0/SCORE-COMPARISON.md)。
+
+### 已知限制（照实写，不修饰）
+
+Known limits — stated plainly
+
+| 限制 | 使用者该知道的事 |
+|---|---|
+| 默认门槛不是安全线 | `action.yml` 出厂 `threshold: 90`，这是**模板合规线**（章节、frontmatter、生态互链写全），不是安全线。10 份零安全发现的干净样本里有 5 份分数在 75–80，在 90 下会让 CI 失败——它们是被"写得薄"拦下的。建议 60（比否决封顶 49 留 11 分余量，该语料上 0% 误杀 0% 漏放），但**只提不改**（A-17）；要模板合规线就显式传 `threshold: 90` |
+| 依赖扫描的覆盖面 | 只读清单与锁文件（`requirements.txt`、`requirements-*.txt`、`pyproject.toml`、`package.json`、`package-lock.json`、`poetry.lock`）。每次最多查询 **10 个固定版本依赖**，其余会明确报"未查"；版本范围（`>=2.31`、`^1.2.3`）不猜具体版本，只报"无法判定"；**离线时降级为"无法核查"——那是更弱的结论，不是通过** |
+| 开发依赖的定位 | 开发依赖若命中漏洞仍会报，但降为 LOW 并标注"不进运行时"。它确实可能影响贡献者机器，但不是产品运行时风险 |
+| typosquatting / 依赖混淆 | **只做名称相似度提示，不做 registry 校验**。形近替换（`l0dash`）、编辑距离 1（`requsts`）、子集型（`unused-imports` ⊂ `eslint-plugin-unused-imports`）各报一条 **LOW**，措辞写明"名称相似度判定，不是 registry 事实"。比对表是人工挑选的 30 个热门包（PyPI）+ 21 个（npm），不在表里的名字不会被判。**依赖混淆另有离线一层**：仓库根放 `private-packages.json`（模板 `docs/private-packages.example.json`）时，私有包若以公开名、无 scope 声明会报 LOW；**清单必须由你提供**，同名包现在是否真的被别人占着，本引擎看不到 |
+| 目录排除既是必要也是通道 | `demo`、`fixtures`、`samples` 等目录默认豁免语义规则（否则自带攻击样本的技能会被自己拖垮）。这条豁免同时是一条规避通道：同名目录分不出正当与恶意。隐形字符扫描**不**豁免夹具，只收窄伤害、不消除歧义 |
+| 否决状态两个字段 | 门禁请判 `safety_veto.triggered` 与分数，**不要只判 `applied`**：`applied` 表示"封顶是否真的压低了分数"，低分技能命中关键规则时它可以是 false |
+| 隐形字符的扫描范围 | 只覆盖 `.md`/`.markdown`/`.txt`/`.json`/`.yaml`/`.yml` 里的三个码位区间（Tags 块、零宽、不可见格式字符）。二进制、图片里的文字、PDF 不在覆盖内 |
+| 自测不等于第三方核验 | 仓库自带的回归测试证明"规则在样本上按预期工作"，不构成外部评审结论 |
+
+**English** — the table above in one paragraph: the shipped `threshold: 90` is a **template-compliance** line, not a safety line — five of ten clean samples with zero findings score 75–80 and would fail CI at 90 for being thin, so 60 is recommended (11 points of margin above the veto cap of 49, 0% FPR / 0% FNR on the corpus) and **proposed rather than applied**, with `threshold: 90` still available explicitly; dependency scanning reads manifests and lockfiles only, queries at most 10 pinned dependencies per run (the rest is reported as unqueried), never invents a version for a range, and **degrades to "could not check" when offline, which is weaker than a pass**; dev dependencies that are vulnerable are reported at LOW and marked as non-runtime; typosquatting is reported **only as a name-similarity hint, never as a registry fact** — confusable substitution, edit distance 1 and subset shapes each raise one LOW, judged against a hand-picked table of 30 popular PyPI names and 21 npm names, and names outside that table are never judged; **dependency confusion has one offline layer**: with a `private-packages.json` at the repository root (template at `docs/private-packages.example.json`), a private name declared bare and unscoped raises a LOW — the inventory is supplied by you, and whether a same-named package is currently occupied on the public registry is something this engine cannot see; scope-ownership checks and version-downgrade attacks remain unhandled; default directory exclusions are necessary but also an evasion channel, since a legitimate and a malicious `demo/` cannot be distinguished by name, and only the invisible-character pass survives that exemption; gate on `safety_veto.triggered` plus the score rather than `applied` alone; invisible-character coverage is limited to six text extensions and three code-point ranges — binaries, text inside images and PDFs are not covered; and the repository's own regression tests are not a third-party review.
 
 ### 风险分类（EU AI Act）
 

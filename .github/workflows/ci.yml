@@ -15,8 +15,24 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-      - name: Run tests
-        run: echo "No tests yet - coming soon!"
+          python -m pip install pytest
+
+      - name: Unit tests
+        run: python -m pytest tests -p no:cacheprovider -q
+
+      - name: Syntax check
+        run: python -m compileall -q .
+
+      # 发布门禁自扫：排除 _demo —— 那里是**故意投毒**的检测夹具，扫它必然
+      # CRITICAL。排除项会打印在报告里（结果含 excluded 字段），不是隐身衣。
+      - name: Self-scan (release gate, fixtures excluded)
+        run: python skillgate.py scan . --exclude _demo
+
+      # 全树对照：允许失败，但必须留下输出，用来证明"排除掉的确实只有夹具"。
+      - name: Self-scan (full tree, fixtures included — informational)
+        continue-on-error: true
+        run: python skillgate.py scan . || true

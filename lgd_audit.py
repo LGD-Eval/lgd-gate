@@ -11,6 +11,12 @@ import re
 import subprocess
 from pathlib import Path
 
+# 固化 UTF-8 输出，避免 Windows GBK 控制台打印 emoji/中文时 UnicodeEncodeError 崩溃
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 
 class ComprehensiveReview:
     """全方位审查器"""
@@ -757,7 +763,11 @@ class ComprehensiveReview:
         print("  📊 审查总结")
         print("=" * 60)
         print()
-        print(f"  Trust Score: {self.score}/100")
+        # 这里原来也印 "Trust Score: N/100"。同一个标签、两套刻度——
+        # 同一个最小技能，评测器给 61/C，审计器给 1/100。数字并排放着，
+        # 读者只能得出"太严"或"坏了"两种错误结论。改成分开命名。
+        print(f"  完整性审计分: {self.score}/100（18 维完整性口径，**不是** Trust Score，不可与评测器分数互比）")
+        print(f"  引擎: lgd_audit.py（项目完整性审计口径；对外 Trust Score 只由 evaluate.py 给出）")
         print(f"  发现问题数: {len(self.findings)}")
         print()
         
@@ -772,6 +782,29 @@ class ComprehensiveReview:
         return self.score
 
 
+def _ci_threshold():
+    """CI 门槛只有一个来源：evaluate.DEFAULT_THRESHOLD（且与 action.yml 一致）。
+
+    这里原来把门槛写成一个字面量常量。和 action.yml 里的默认值是两份互不相干的东西，
+    改一处另一处不动，就会出现"本地退出码放行、CI 拦截"这种没人能解释的分裂。
+    """
+    try:
+        from evaluate import DEFAULT_THRESHOLD
+        return int(DEFAULT_THRESHOLD)
+    except Exception:
+        import re as _re
+        from pathlib import Path as _P
+        yml = _P(__file__).parent / "action.yml"
+        try:
+            txt = yml.read_text(encoding="utf-8")
+            m = _re.search(r"threshold:.*?default:\s*'([0-9]+)'", txt, _re.S)
+            if m:
+                return int(m.group(1))
+        except Exception:
+            pass
+        return 90
+
+
 def main():
     args = sys.argv[1:]
     is_internal = '--internal' in args
@@ -779,7 +812,11 @@ def main():
     
     reviewer = ComprehensiveReview(project_dir, is_internal_skill=is_internal)
     score = reviewer.run_all()
-    sys.exit(0 if score >= 90 else 1)
+    threshold = _ci_threshold()
+    if score < threshold:
+        print("CI 门槛 %d，实得 %d —— 不放行（门槛来源：evaluate.DEFAULT_THRESHOLD）"
+              % (threshold, score))
+    sys.exit(0 if score >= threshold else 1)
 
 
 if __name__ == "__main__":
