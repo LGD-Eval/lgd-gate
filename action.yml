@@ -1,5 +1,5 @@
 name: 'LGD Skill Gate'
-description: 'Score an AI agent skill and fail CI when it is below the trust threshold. Same scoring engine as the lgd-eval CLI.'
+description: 'Score an AI agent skill on one 0-100 trust scale and fail CI below the threshold. Emits SARIF, a tree hash pin, and a suggested execution tier.'
 author: 'SynomosAI / LGD-Eval'
 
 branding:
@@ -19,11 +19,40 @@ inputs:
     description: 'Optional path to write a machine-readable fix plan JSON'
     required: false
     default: ''
+  sarif:
+    description: 'Path to write SARIF 2.1.0. Leave empty to skip.'
+    required: false
+    default: 'lgd.sarif'
+  evidence-json:
+    description: 'Optional path to write the evidence chain (includes tree_sha256 pin).'
+    required: false
+    default: 'lgd-evidence.json'
+  sandbox:
+    description: 'Run L3 sandbox detonation. Needs docker or Linux unshare; degrades safely when absent.'
+    required: false
+    default: 'false'
+  llm-review:
+    description: 'Enable L2 LLM review. Needs LGD_LLM_BASE + LGD_LLM_KEY in env.'
+    required: false
+    default: 'false'
+  upload-sarif:
+    description: 'Upload SARIF to GitHub Code Scanning. Requires security-events: write permission.'
+    required: false
+    default: 'false'
 
 outputs:
   score:
-    description: 'Trust Score of the evaluated skill'
+    description: 'Trust Score (0-100)'
     value: ${{ steps.eval.outputs.score }}
+  grade:
+    description: 'Grade (A+/A/B/C/D)'
+    value: ${{ steps.eval.outputs.grade }}
+  tier:
+    description: 'Suggested execution tier (L0-L5)'
+    value: ${{ steps.eval.outputs.tier }}
+  sarif:
+    description: 'Path of the generated SARIF file (empty when skipped)'
+    value: ${{ steps.eval.outputs.sarif }}
 
 runs:
   using: 'composite'
@@ -33,10 +62,58 @@ runs:
       run: |
         set -o pipefail
         ARGS=("${{ inputs.path }}" --fail-under "${{ inputs.threshold }}" --ascii)
-        if [ -n "${{ inputs.fix-plan }}" ]; then
-          ARGS+=(--fix-json "${{ inputs.fix-plan }}")
+        [ -n "${{ inputs.fix-plan }}" ] && ARGS+=(--fix-json "${{ inputs.fix-plan }}")
+        [ -n "${{ inputs.sarif }}" ] && ARGS+=(--sarif "${{ inputs.sarif }}")
+        [ -n "${{ inputs.evidence-json }}" ] && ARGS+=(--evidence-json "${{ inputs.evidence-json }}")
+        [ "${{ inputs.sandbox }}" = "true" ] && ARGS+=(--sandbox)
+        [ "${{ inputs.llm-review }}" = "true" ] && ARGS+=(--llm-review)
+
+        set +e
+        python3 "${{ github.action_path }}/evaluate.py" "${ARGS[@]}" | tee "$RUNNER_TEMP/lgd-eval.log"
+        RC=${PIPESTATUS[0]}
+        set -e
+
+        SCORE=$(grep -o 'Trust Score: [0-9]*' "$RUNNER_TEMP/lgd-eval.log" | head -1 | grep -o '[0-9]*')
+        SCORE=${SCORE:-0}
+
+        if   [ "$SCORE" -ge 90 ]; then GRADE="A+"
+        elif [ "$SCORE" -ge 80 ]; then GRADE="A"
+        elif [ "$SCORE" -ge 70 ]; then GRADE="B"
+        elif [ "$SCORE" -ge 60 ]; then GRADE="C"
+        else                           GRADE="D"
         fi
-        python3 "${{ github.action_path }}/evaluate.py" "${ARGS[@]}" | tee /tmp/lgd-eval.log
-        SCORE=$(grep -o 'Trust Score: [0-9]*' /tmp/lgd-eval.log | head -1 | grep -o '[0-9]*')
-        echo "score=$SCORE" >> "$GITHUB_OUTPUT"
-        echo "### LGD Trust Score: **$SCORE/100**" >> "$GITHUB_STEP_SUMMARY"
+
+        if   [ "$SCORE" -ge 96 ]; then TIER="L0"; SUGGEST="免审批直接执行"
+        elif [ "$SCORE" -ge 81 ]; then TIER="L1"; SUGGEST="一次性确认后执行（60 rpm）"
+        elif [ "$SCORE" -ge 51 ]; then TIER="L2"; SUGGEST="人工复核后执行（30 rpm）"
+        elif [ "$SCORE" -ge 31 ]; then TIER="L3"; SUGGEST="每次强制确认，建议先过沙箱"
+        elif [ "$SCORE" -ge 11 ]; then TIER="L4"; SUGGEST="隔离只读，禁止写入与外联"
+        else                           TIER="L5"; SUGGEST="拒绝执行"
+        fi
+
+        echo "score=$SCORE"     >> "$GITHUB_OUTPUT"
+        echo "grade=$GRADE"     >> "$GITHUB_OUTPUT"
+        echo "tier=$TIER"       >> "$GITHUB_OUTPUT"
+        echo "sarif=${{ inputs.sarif }}" >> "$GITHUB_OUTPUT"
+
+        {
+          echo "## LGD Trust Score: **$SCORE/100** ($GRADE)"
+          echo ""
+          echo "| 项 | 值 |"
+          echo "|---|---|"
+          echo "| 分数 | $SCORE / 100 |"
+          echo "| 等级 | $GRADE |"
+          echo "| 建议执行档位 | **$TIER** — $SUGGEST |"
+          echo "| 门槛 | ${{ inputs.threshold }} |"
+          echo ""
+          echo "评分口径与五维权重见 https://github.com/LGD-Eval/evaluation-evidence/blob/main/LEADERBOARD.md"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        exit $RC
+
+    - id: upload
+      if: inputs.upload-sarif == 'true' && inputs.sarif != ''
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.sarif }}
+        category: lgd-skill-gate
