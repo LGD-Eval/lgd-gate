@@ -1,0 +1,259 @@
+diff --git a/js_analyzer.py b/js_analyzer.py
+index c9c2f0a..a7fe4f9 100644
+--- a/js_analyzer.py
++++ b/js_analyzer.py
+@@ -83,8 +83,10 @@ def scan_js_file(filepath):
+                 break
+         for pattern, sev, msg in EXFIL:
+             if pattern.search(line):
+-                # 硬编码 URL 太常见，只在同一行出现数据外发动词时才记
+-                if msg == "硬编码外部 URL" and not re.search(r"\b(fetch|axios|post|send)\b", line):
++                # 硬编码 URL 太常见；只有同一行出现**外发数据**的动词才算外泄前兆。
++                # 普通 fetch/axios.get 是只读取数据，不构成外泄（此前把 fetch 也算进来，误报）。
++                if msg == "硬编码外部 URL" and not re.search(
++                        r"\b(axios\.post|\.post|send|upload|writeFileSync)\b", line):
+                     continue
+                 out.append((sev, "network", msg, i))
+                 break
+diff --git a/skillgate.py b/skillgate.py
+index 7247f0a..04270e9 100644
+--- a/skillgate.py
++++ b/skillgate.py
+@@ -95,7 +95,7 @@ NETWORK_PATTERNS = [
+     (r"\bimport\s+smtplib\b", "LOW", "SMTP 邮件库"),
+     (r"\burlopen\s*\(", "LOW", "urlopen 网络请求"),
+     (r"\bpost\s*\([^)]*https?://", "MEDIUM", "POST 数据到外部 URL"),
+-    (r"\brequests\.get\s*\([^)]*https?://", "LOW", "GET 请求外部 URL"),
++    (r"\brequests\.get\s*\([^)]*http://", "LOW", "GET 请求明文外部 URL"),
+     (r"\bhttpx\b", "INFO", "httpx HTTP 客户端（常见）"),
+     (r"\baiohttp\b", "INFO", "aiohttp 异步 HTTP（常见）"),
+     (r"\bcurl\b", "LOW", "curl 命令行网络工具"),
+@@ -551,6 +551,23 @@ def scan_python_file(filepath: Path, result: ScanResult):
+ 
+     lines = content.splitlines()
+ 
++    # === 步骤 0：路径穿越（正则层，AST 覆盖不到字面量 open） ===
++    # 判据：open/read 的字面量路径中出现 2 段以上 ../，或直接指向系统敏感文件。
++    # 只对字面量生效，不做跨文件数据流（那是后续 AST/污点分析的范围）。
++    _traversal = re.compile(r"""open\s*\(\s*['"]([^'"]*\.\./[^'"]*\.\./[^'"]*)['"]""")
++    _sensitive = re.compile(r"""['"](/(etc|proc|root|var/log)/[^'"]*)['"]""")
++    for i, line in enumerate(lines, 1):
++        if "skillgate: ignore" in line:
++            continue
++        if _traversal.search(line) or _sensitive.search(line):
++            result.findings.append(Finding(
++                severity="HIGH", category="path-traversal",
++                message="路径穿越/敏感系统文件读取",
++                file=str(filepath), line=i,
++                rule_id="PY001",
++                explanation="相对路径越出技能目录，或直接读取系统敏感文件",
++            ))
++
+     # === 第一步：AST 分析（更准，误报低） ===
+     ast_lines = set()  # 记录 AST 已经报过的行，正则就不要重复报了
+     try:
+@@ -847,6 +864,32 @@ def scan_md_file(filepath: Path, result: ScanResult):
+                 message=msg, file=str(filepath), line=i
+             ))
+ 
++    # ===== 跨语句污点：读凭据 → 发出去（同一变量在后续语句流到网络 sink）=====
++    # 单行正则看不到 T01/T06 这类"读在一个语句、发在另一个语句"的形态。
++    _CRED_PATH = r"(\.ssh|id_rsa|\.aws|\.env\b|\.netrc|\.npmrc|credentials)"
++    _SRC_LINE = re.compile(rf"\s(\w+)\s*=\s*[^\n]*(open\s*\([^\n]*{_CRED_PATH}|Path[^\n]*{_CRED_PATH})")
++    _SINK_LINE = re.compile(r"(requests\.(post|put|patch)|urllib\.request\.urlopen|socket\.socket|smtplib|http\.client|os\.system|subprocess)")
++    try:
++        body = filepath.read_text(encoding="utf-8", errors="replace").splitlines()
++    except Exception:
++        body = []
++    tainted = {}
++    for i, line in enumerate(body, 1):
++        m = _SRC_LINE.search(line)
++        if m:
++            tainted[m.group(1)] = i
++        if tainted and _SINK_LINE.search(line):
++            used = [v for v in tainted if re.search(rf"\b{re.escape(v)}\b", line)]
++            if used:
++                result.findings.append(Finding(
++                    severity="CRITICAL", category="exfiltration-taint",
++                    message=f"凭据读取后流向网络调用（变量 {used[0]}，第 {tainted[used[0]]} 行）",
++                    file=str(filepath), line=i,
++                    rule_id="TAINT01",
++                    explanation="跨语句数据流：source 与 sink 不在同一行，按行规则必然漏",
++                ))
++                break
++
+ 
+ def scan_dependencies(skill_path: Path, result: ScanResult):
+     """Scan dependencies for known vulnerabilities via OSV.dev."""
+@@ -917,22 +960,129 @@ def scan_shell_file(filepath: Path, result: ScanResult):
+         return
+ 
+     lines = content.splitlines()
++    # 管道右端"任意解释器"：不枚举单个名字，否则换成 python3/perl/node 就漏（holdout H01）
++    _INTERP = r"(python[0-9.]*|node|perl|ruby|php|bash|sh|zsh|dash|ksh)"
++    _DECODER = r"(base64|xxd|openssl|gpg)\s*(--decode|--decrypt|-d|-D)?"
++    _INTERP_PIPE_DECODE = rf"\|[^|\n]*\b{_DECODER}\b[^|\n]*\|[^|\n]*\b{_INTERP}\b"
++    _INTERP_PIPE_ANY = (rf"\b(curl|wget|cat|echo|printf)\b[^\n|]*"
++                        rf"(\|[^|\n]*)?\|\s*\b{_INTERP}\b")
++
++    # 每条规则带 rule_id：findings 必须可归因到具体规则（否则无法抑制/回归/审计）
++    # 结构：(rule_id, pattern, severity, message, explanation)
+     dangerous_sh_patterns = [
+-        (r"\brm\s+-rf?\s+/\s*(;|&&|\||$)", "CRITICAL", "rm -rf / 危险删除（仅根目录）"),
+-        (r"\bcurl\s+.*\|\s*sh", "MEDIUM", "curl | sh 管道执行远程脚本（常见安装方式，需确认来源可信）"),
+-        (r"\bwget\s+.*\|\s*bash", "MEDIUM", "wget | bash 管道执行远程脚本（常见安装方式，需确认来源可信）"),
+-        (r"\bchmod\s+777", "MEDIUM", "chmod 777 权限过松"),
+-        (r"\bsudo\s+", "MEDIUM", "sudo 权限提升"),
++        # —— 原有 5 条（补 rule_id）——
++        ("SH001", r"\brm\s+-rf?\s+/\s*(;|&&|\||$)", "CRITICAL",
++         "rm -rf / 危险删除（仅根目录）", "删除根目录不可恢复"),
++        ("SH002", r"\b(curl|wget)\s+.*\|\s*(bash|sh|zsh)\b", "HIGH",
++         "下载后直接管道执行远程脚本", "远程内容未经审阅即执行，等同于远端代码执行"),
++        ("SH003", r"\bchmod\s+777", "MEDIUM", "chmod 777 权限过松", "任何用户可改写该文件"),
++        ("SH004", r"\bsudo\s+", "MEDIUM", "sudo 权限提升", "脚本需要提权，扩大影响面"),
++
++        # —— 新增：编码绕过与多层管道（M01 这类）——
++        # SH005 修正版：不枚举 bash/sh，右端认"任意解释器"。
++        # 只枚举 bash|sh 时，`| base64 -d | python3` 直接漏（holdout H01 就是这样漏的）。
++        ("SH005", _INTERP_PIPE_DECODE, "CRITICAL",
++         "解码后管道执行（解码器 | 任意解释器）", "编码是为了绕过静态检查，解码即执行"),
++        # SH006 修正版：任意下载器 → 管道 → 任意解释器；中间可隔多段
++        ("SH006", _INTERP_PIPE_ANY, "CRITICAL",
++         "管道最终落到解释器执行（下载/回显 → 解释器）", "管道右端是解释器，等于把远端内容直接执行"),
++
++        # —— 新增：危险删除与家目录 ——
++        ("SH007", r"\brm\s+-rf?\s+(\$HOME|~|\$\{?HOME\}?)\s*(;|&&|\|$|$)", "CRITICAL",
++         "删除用户主目录", "不可恢复，等同毁坏环境"),
++        ("SH008", r"\brm\s+-rf?\s+/(etc|usr|var|bin|boot)\b", "CRITICAL",
++         "删除系统关键目录", "破坏宿主系统"),
++
++        # —— 新增：反弹 shell ——
++        ("SH009", r"/dev/tcp/[^\s]+", "CRITICAL",
++         "反弹 shell（/dev/tcp）", "以本机为跳板建立外连"),
++        ("SH010", r"\bnc\s+-[a-z]*e\b|\bncat\s+-[a-z]*e\b", "CRITICAL",
++         "netcat 反弹 shell（-e）", "把 shell 交给远端"),
++
++        # —— 新增：凭据外泄（curl/wget 上传 + 复制型外传）——
++        ("SH011", r"\b(curl|wget)\s+[^\n]*(--data[= ]?@|-d\s*@|--upload-file)[^\n]*(\.ssh|\.aws|\.env|\.netrc|\.npmrc|id_rsa)", "CRITICAL",
++         "上传凭据/密钥文件到远端", "明确的外泄链：读敏感文件 → 发到外部"),
++        ("SH012", r"\b(curl|wget)\s+[^\n]*(\.ssh/id_|\.aws/credentials|\.env\b)", "HIGH",
++         "命令中出现敏感文件路径", "敏感文件被网络工具访问"),
++        # SH013：scp/rsync/ftp/rclone 这类"复制型外传"，此前完全没覆盖（holdout H02）
++        ("SH013", r"\b(scp|rsync|sftp|ftp|rclone)\b[^\n]*(\.ssh|\.aws|\.env\b|id_rsa|\.netrc|\.npmrc|\.credentials)", "CRITICAL",
++         "用复制工具外传凭据", "不需要 HTTP 也能把密钥搬走"),
++
++        # —— 新增：PowerShell 载体（.ps1 此前完全不在扫描范围内）——
++        ("SH017", r"\b(iwr|Invoke-WebRequest|DownloadString|DownloadFile|Net\.WebClient)\b", "HIGH",
++         "PowerShell 下载远程内容", "PowerShell 是最常见的企业内投递载体"),
++        ("SH018", r"\b(iex|Invoke-Expression)\b", "CRITICAL",
++         "PowerShell 动态执行（IEX）", "把下载到的内容当代码执行"),
++        ("SH019", r"\b(powershell|pwsh)\b[^\n]*\s-e(nc|ncodedcommand)?\b[^\n]*[A-Za-z0-9+/=]{40,}", "CRITICAL",
++         "PowerShell 编码命令执行", "base64 编码的载荷用于绕过命令行审计"),
++        ("SH020", r"\b(Set-MpPreference|Add-MpPreference)\b[^\n]*(Disable|Exclusion)", "CRITICAL",
++         "关闭或排除杀毒扫描", "为后续载荷清场"),
++
++        # —— 新增：凭据暂存、容器逃逸、免取证 ——
++        ("SH021", r"\b(cp|mv|install)\b[^\n]*(\\.ssh|\\.aws|\\.env\\b|id_rsa|credentials)[^\n]*(/tmp|/var/tmp|/dev/shm)", "HIGH",
++         "凭据被复制到共享临时目录", "tmp 通常全局可读，是搬运前的暂存点"),
++        ("SH022", r"\bsocat\b[^\n]*(EXEC:|TCP:)", "CRITICAL",
++         "socat 建立 shell 通道", "与 nc 同类的双向管道"),
++        ("SH023", r"\bdocker\s+(run|exec)\b[^\n]*--privileged[^\n]*\s-v\s*/:", "CRITICAL",
++         "特权容器挂载宿主根目录", "容器逃逸的标准形态"),
++        ("SH024", r"(\bhistory\s+-c\b|rm\s+[^\n]*(\\.bash_history|\\.zsh_history))", "MEDIUM",
++         "清除命令历史（免取证）", "攻击后抹除痕迹"),
+     ]
+ 
+-    for pattern, severity, msg in dangerous_sh_patterns:
++    for rule_id, pattern, severity, msg, explanation in dangerous_sh_patterns:
+         for i, line in enumerate(lines, 1):
+-            if re.search(pattern, clean_line(line)):
++            # 实验：shell 规则改在原始行上匹配（引号内载荷在 shell 里仍会被执行）
++            if re.search(pattern, line):
+                 result.findings.append(Finding(
+                     severity=severity, category="dangerous-shell",
+-                    message=msg, file=str(filepath), line=i
++                    message=msg, file=str(filepath), line=i,
++                    rule_id=rule_id, explanation=explanation,
+                 ))
+ 
++    # ===== 文件级语义分析（单行正则表达不了的状态）=====
++    _CRED = r"(\.ssh|id_rsa|\.aws|\.env\b|\.netrc|\.npmrc|credentials)"
++    _NETSINK = (r"(requests\.(post|put|patch)|urllib|http\.client|socket\.|smtplib"
++                r"|\bnc\b|\bncat\b|\bsocat\b"
++                r"|curl\s+[^\n]*(--data|-d\s*@|--upload-file)|wget\s+[^\n]*--post)")
++
++    # SH014：同一行里「凭据路径」与「网络发送」同现（不限工具）
++    for i, line in enumerate(lines, 1):
++        if re.search(_CRED, line) and re.search(_NETSINK, line):
++            result.findings.append(Finding(
++                severity="CRITICAL", category="exfiltration",
++                message="凭据与网络发送在同一行出现", file=str(filepath), line=i,
++                rule_id="SH014",
++                explanation="单行内完成 读密钥→发出去，等价于既定外泄",
++            ))
++
++    # SH015：下载 → 赋权 → 执行 三段链
++    downloaded = []
++    for i, line in enumerate(lines, 1):
++        m = re.search(r"(curl|wget)[^\n]*\s(-o|--output|-O)\s*([^\s;&|]+)", line)
++        if m:
++            downloaded.append((m.group(3).strip("\"'"), i))
++    for path, dline in downloaded:
++        base = re.escape(path)
++        if re.search(rf"chmod\s+[+a-z0-9]*x[+a-z0-9]*\s+{base}", content) and \
++           re.search(rf"(&&|;|\n)\s*{base}\b", content):
++            result.findings.append(Finding(
++                severity="CRITICAL", category="dropper",
++                message="下载二进制→赋权→执行（投放链）", file=str(filepath), line=dline,
++                rule_id="SH015",
++                explanation="三段链合起来才是完整攻击，单看任一段都无害",
++            ))
++            break
++
++    # SH016：打包/读取 → 经 nc/socat 外传
++    if re.search(rf"(tar|zip|cat|base64|gzip)\b[^\n]*{_CRED}[^\n]*\|", content) and \
++       re.search(r"\|\s*(nc|ncat|socat)\s", content):
++        result.findings.append(Finding(
++            severity="CRITICAL", category="exfiltration",
++            message="打包后经 nc/socat 外传", file=str(filepath),
++            rule_id="SH016",
++            explanation="物证搬运不依赖 HTTP，靠管道到裸 socket",
++        ))
++
+ 
+ def parse_frontmatter(filepath: Path, result: ScanResult):
+     """Parse YAML frontmatter from SKILL.md."""
+@@ -1196,6 +1346,14 @@ def scan_skill(skill_dir: str) -> ScanResult:
+         scan_shell_file(sh_file, result)
+         result.files_scanned += 1
+ 
++    # Scan Windows 载体：此前 .ps1/.psm1/.bat/.cmd 完全没被扫过（实测恶意 ps1 得 82 分 A 级）
++    for win_file in (list(skill_path.rglob("*.ps1")) + list(skill_path.rglob("*.psm1"))
++                     + list(skill_path.rglob("*.bat")) + list(skill_path.rglob("*.cmd"))):
++        if should_exclude(win_file):
++            continue
++        scan_shell_file(win_file, result)
++        result.files_scanned += 1
++
+     # Scan all JS/TS files
+     if scan_js_file:
+         for js_file in list(skill_path.rglob("*.js")) + list(skill_path.rglob("*.ts")):
+@@ -1208,6 +1366,18 @@ def scan_skill(skill_dir: str) -> ScanResult:
+                         severity=sev, category=cat,
+                         message=msg, file=str(js_file), line=line
+                     ))
++                # JS 跨行污点：读凭据文件 → 网络发送（T06 这类）
++                _js_body = js_file.read_text(encoding="utf-8", errors="replace")
++                if re.search(r"(readFileSync|readFile|createReadStream)[^\n]*(\.ssh|id_rsa|\.aws|\.env|credentials)", _js_body) and \
++                   re.search(r"(axios\.(post|put)|fetch\s*\(|http\.request|https\.request|net\.connect)[^\n]*", _js_body):
++                    ln = next((n for n, l in enumerate(_js_body.splitlines(), 1)
++                               if re.search(r"(axios\.(post|put)|fetch|http\.request|net\.connect)", l)), 1)
++                    result.findings.append(Finding(
++                        severity="CRITICAL", category="exfiltration-taint",
++                        message="JS 读取凭据后调用网络接口（跨行）", file=str(js_file), line=ln,
++                        rule_id="TAINT02",
++                        explanation="读取与发送跨行，按行匹配看不到关联",
++                    ))
+             except Exception:
+                 pass
+             result.files_scanned += 1

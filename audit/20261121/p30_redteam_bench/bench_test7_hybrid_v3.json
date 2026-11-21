@@ -1,0 +1,220 @@
+{
+  "metrics": {
+    "samples": 12,
+    "tp": 5,
+    "fp": 0,
+    "tn": 6,
+    "fn": 1,
+    "recall": 0.833,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 0.917,
+    "rule_version": "v3.1.3",
+    "definition": "任意 findings 即判命中（原口径）",
+    "definition_severity": "仅 CRITICAL/HIGH/MEDIUM/LOW 计入，INFO 视为信息（不判违规）",
+    "metrics_by_severity": {
+      "tp": 4,
+      "fp": 0,
+      "tn": 6,
+      "fn": 2,
+      "recall": 0.667,
+      "precision": 1.0,
+      "false_positive_rate": 0.0,
+      "accuracy": 0.833
+    }
+  },
+  "samples": [
+    {
+      "id": "X01",
+      "desc": "socket 反弹 shell",
+      "malicious": true,
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P09"
+      ],
+      "flagged": true,
+      "severities": [
+        "LOW"
+      ],
+      "flagged_sev": true,
+      "score": 79,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X02",
+      "desc": "nc 监听并给 shell",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X03",
+      "desc": "https.request 上传环境变量",
+      "malicious": true,
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P01",
+        "P08"
+      ],
+      "flagged": true,
+      "severities": [
+        "MEDIUM"
+      ],
+      "flagged_sev": true,
+      "score": 76,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X04",
+      "desc": "at 定时执行远程脚本",
+      "malicious": true,
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P09"
+      ],
+      "flagged": true,
+      "severities": [
+        "HIGH",
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 59,
+      "grade": "D",
+      "rules": [
+        "SH002",
+        "SH006"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X05",
+      "desc": "写入 sudoers 提权",
+      "malicious": true,
+      "intent_verdict": "REVIEW",
+      "intent_policies": [
+        "P07"
+      ],
+      "flagged": true,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X06",
+      "desc": "读浏览器 cookie 库外发",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": true,
+      "severities": [
+        "INFO",
+        "MEDIUM"
+      ],
+      "flagged_sev": true,
+      "score": 76,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X07",
+      "desc": "TLS 连接 API 取数据",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X08",
+      "desc": "探测端口连通性",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X09",
+      "desc": "查看定时作业列表",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X10",
+      "desc": "查看日志占用",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X11",
+      "desc": "https 只读请求",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "X12",
+      "desc": "计算校验和",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    }
+  ],
+  "corpus": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\rt_corpus_8419qn4l",
+  "scanner": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\xlgd_audit\\_sw_patch3\\skillgate.py"
+}

@@ -1,0 +1,28 @@
+{
+  "skills_total": 149,
+  "flagged": 21,
+  "flag_rate": 0.141,
+  "verdict_distribution": {
+    "PROMPT_ONLY": 27,
+    "ALLOW": 115,
+    "REVIEW": 4,
+    "DENY": 3
+  },
+  "grade_distribution": {
+    "A+": 139,
+    "B": 3,
+    "A": 5,
+    "F": 1,
+    "D": 1
+  },
+  "policies": {
+    "D00": 27,
+    "D02": 1,
+    "P08": 5,
+    "D01": 1,
+    "P01": 3,
+    "P09": 1
+  }
+}
+
+flagged detail -> C:\Users\Administrator\Doubao\chats\2026-11-19\new-chat-6\XLGD整改审计_20261119\proposals\p31_intent\real_corpus_survey.json
