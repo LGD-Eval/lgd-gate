@@ -327,6 +327,17 @@ LGD-Gate is part of a larger ecosystem of Agent Skill tools. We are the **indepe
 | **lgd-gate** | 五维质量评测 |
 | **lgd-audit** | 全方位审查（18 个维度） |
 
+### 📦 发行包与本仓的关系（2026-11-21 起明写）
+
+本仓同时是发行资产托管点，但**发行包不是从本仓源码打的**：
+
+| 对象 | 来源 | 说明 |
+|---|---|---|
+| `releases/download/v1.0.x/lgd-eval-1.0.x.tgz` | `LGD-Eval/LGD-Eval` 的 `main` | 打包自 `skills/lgd-eval/` + `vendor/scripts/`，`npm pack` 产物；`1.0.1` 起与源码逐字节一致（7/7 探针同判） |
+| 本仓的 `skillgate.py`(72 KB) / `evaluate.py` | 本仓 | 供 GitHub Action 与 hook 调用的**精简部署副本**，与 `LGD-Eval` 里 254 KB 的规则全集**不是同一条脉络**，两者 sha 不可互比 |
+
+要改报告口径与规则，改 `LGD-Eval`；要改 Action 内联调用的行为，改本仓。两边是否合并为一条脉络尚未定案，故此处明确并列、不互相覆盖。复跑命令与三方对照见 `LGD-Eval/docs/CROSSRUN-2026-11-21.md`。
+
 ---
 
 ## 🚀 Quick Start
