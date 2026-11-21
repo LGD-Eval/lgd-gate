@@ -200,6 +200,9 @@ EXCESSIVE_AGENCY_PATTERNS = [
 ]
 
 # 7. License compliance
+# NOT WIRED (2026-11-21 audit): the list below has no consumer loop yet.
+# LC001-LC004 are placeholders; do not describe license detection as enforced
+# until a call site exists. See audit/20261121/p31_intent/README.md.
 LICENSE_PATTERNS = [
     ("LC001", r"\bGPL\b", "MEDIUM", "GPL 许可证（传染性）"),
     ("LC002", r"\bAGPL\b", "HIGH", "AGPL 许可证（网络传染性）"),
@@ -304,7 +307,7 @@ class ScanResult:
     frontmatter: dict = field(default_factory=dict)
     trust_score: int = 0
     grade: str = ""
-    rule_version: str = "v3.1.3"  # 规则版本号（有籍）
+    rule_version: str = "v3.2.0"  # 规则版本号（2026-11-21：SH/PY/JS 规则编号收口后递增）
 
     @property
     def critical_count(self): return len([f for f in self.findings if f.severity == "CRITICAL"])
