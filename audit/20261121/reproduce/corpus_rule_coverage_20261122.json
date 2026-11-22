@@ -1,5 +1,5 @@
 {
- "as_of": "2026-11-22T17:54:02+08:00",
+ "as_of": "2026-11-22T18:00:06+08:00",
  "what": "语料与规则的绑定账目：每个样本被判定为触发了哪些规则 ID（取自扫描器输出的 rules 字段）",
  "corpus": {
   "files": 9,
@@ -8,10 +8,10 @@
   "benign": 57
  },
  "coverage": {
-  "registry_rules": 174,
+  "registry_rules": 186,
   "distinct_rules_triggered": 33,
-  "coverage_pct": 19.0,
-  "cold_rules": 151
+  "coverage_pct": 17.7,
+  "cold_rules": 153
  },
  "top_rules": [
   [
@@ -76,6 +76,7 @@
   ]
  ],
  "cold_rule_list": [
+  "AST000",
   "AU001",
   "AU002",
   "AU003",
@@ -143,6 +144,7 @@
   "EX012",
   "EX013",
   "EX014",
+  "FM001",
   "FS002",
   "FS003",
   "FS004",
@@ -228,18 +230,7 @@
   "VL003",
   "VL004"
  ],
- "unknown_in_hits": [
-  "AST013",
-  "SH014",
-  "SH016",
-  "SH015",
-  "PY001",
-  "TAINT02",
-  "AST007",
-  "AST006",
-  "AST001",
-  "AST004"
- ],
+ "unknown_in_hits": [],
  "per_split": [
   {
    "split": "holdout",
