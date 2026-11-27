@@ -31,6 +31,7 @@ CAPS = {
                      r"\|\s*(bash|sh|zsh|dash|ksh|python[0-9.]*|node|perl|ruby|php)\b|"
                      r"\b(bash|sh|zsh)\s+-i\b)"),
     "binary_exec": r"(^|[;&|]\s*)(\./|/|~/)[^\s;&|]+",
+    "script_exec": r"(\b(bash|sh|zsh|dash|ksh|python[0-9.]*|node|perl|ruby|php)\s+[^\s;&|]+)",
     "persistence": (r"(authorized_keys|\bcrontab\b|/etc/cron|systemd|LaunchAgents|LaunchDaemons|"
                     r"schtasks|~/.bashrc|~/.profile)"),
     "destruction": (r"(\bdd\s+if=|\bmkfs|\bshred\b|truncate\s+-s\s*0|"
@@ -49,6 +50,7 @@ CAPS = {
 POLICY = [
     ("P01", ("credential_access", "network_egress"), "DENY", "读凭据 + 网络外发：完整外泄链"),
     ("P02", ("download", "dynamic_exec"), "DENY", "下载 + 动态执行：远端代码执行"),
+    ("P02b", ("download", "script_exec"), "DENY", "下载后交给 shell/python 执行：远端代码执行（sh/py 解释器）"),
     ("P03", ("obfuscation", "dynamic_exec"), "DENY", "解码 + 动态执行：静态检查绕过"),
     ("P04", ("destruction",), "DENY", "破坏性操作：不可恢复"),
     ("P05", ("persistence", "network_egress"), "DENY", "持久化 + 外连：后门常驻"),
@@ -108,8 +110,12 @@ def scan_files(files, root: Path):
 
 def decide(code_caps, doc_caps, has_code):
     if not has_code:
-        # 纯提示词技能：没有可执行代码，风险面只剩"提示注入"（由规则层 md 扫描负责）
-        # 与"解析失败/不可读"必须区分，否则 27 个正常提示词技能会被误判为不可放行
+        # 无代码时不再一律 PROMPT_ONLY：文档若描述了完整攻击链（凭据外发/下载执行/破坏），
+        # 按契约“文档描述最高 REVIEW”判 REVIEW；只有纯描述、无链路时才是 PROMPT_ONLY。
+        for pid, need, verdict, reason in DOC_POLICY:
+            if all(c in doc_caps for c in need):
+                return "REVIEW", [{"id": pid, "verdict": "REVIEW", "reason": reason,
+                                   "scope": "doc", "required": list(need)}]
         return "PROMPT_ONLY", [{"id": "D00", "verdict": "PROMPT_ONLY",
                                 "reason": "无代码文件，风险面仅提示注入",
                                 "scope": "none"}]

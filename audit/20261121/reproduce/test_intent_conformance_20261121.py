@@ -6,8 +6,9 @@ import json, os, shutil, subprocess, sys, tempfile, datetime, argparse, io
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 D = os.environ.get('REVIEW_DIR', HERE)
+HERE = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_ENGINE = os.environ.get('INTENT_ENGINE',
-    r'C:\Users\Administrator\Doubao\chats\2026-11-19\new-chat-6\XLGD整改审计_20261119\proposals\p31_intent\intent_engine.py')
+    os.path.normpath(os.path.join(HERE, '..', 'p31_intent', 'intent_engine.py')))
 
 # (id, 说明, 期望, 文件映射)
 CASES = [

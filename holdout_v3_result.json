@@ -1,0 +1,172 @@
+{
+  "rows": [
+    {
+      "id": "V01",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "zh_zh_ignore"
+    },
+    {
+      "id": "V02",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "zh_zh_new_authority"
+    },
+    {
+      "id": "V03",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "zh_zh_send"
+    },
+    {
+      "id": "V04",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "zh_zh_secret"
+    },
+    {
+      "id": "V05",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "misc_relay_to_url"
+    },
+    {
+      "id": "V06",
+      "hit": true,
+      "kept": true,
+      "baseline": 3,
+      "after": 3,
+      "rule": "zh_zh_send"
+    },
+    {
+      "id": "V07",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "intent2_quiet_mode"
+    },
+    {
+      "id": "V08",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "zh_zh_pii"
+    },
+    {
+      "id": "V09",
+      "hit": true,
+      "kept": true,
+      "baseline": 3,
+      "after": 3,
+      "rule": "obfus_zero_width"
+    },
+    {
+      "id": "V10",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "zh_zh_destroy"
+    },
+    {
+      "id": "V11",
+      "hit": false,
+      "kept": false,
+      "baseline": 0,
+      "after": 0,
+      "rule": null
+    },
+    {
+      "id": "V12",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "misc_conditional_internal"
+    },
+    {
+      "id": "V13",
+      "hit": true,
+      "kept": true,
+      "baseline": 2,
+      "after": 2,
+      "rule": "intent2_refuse_nothing"
+    },
+    {
+      "id": "V14",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "misc_remember_across"
+    },
+    {
+      "id": "V15",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "poison_malicious_dep"
+    },
+    {
+      "id": "V16",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "poison_malicious_dep"
+    },
+    {
+      "id": "V17",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "intent2_escalate_priv"
+    },
+    {
+      "id": "V18",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "misc_post_url_direct"
+    },
+    {
+      "id": "V19",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "misc_hidden_superuser"
+    },
+    {
+      "id": "V20",
+      "hit": true,
+      "kept": true,
+      "baseline": 1,
+      "after": 1,
+      "rule": "intent_csv_formula"
+    }
+  ],
+  "missed": [
+    "V11"
+  ],
+  "recall": 0.95,
+  "noise": [
+    1,
+    0
+  ]
+}

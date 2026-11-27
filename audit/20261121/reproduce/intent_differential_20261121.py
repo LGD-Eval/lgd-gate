@@ -8,7 +8,7 @@ import argparse, io, json, os, sys, datetime, importlib.util
 HERE = os.path.dirname(os.path.abspath(__file__))
 D = os.environ.get('REVIEW_DIR', HERE)
 TESTPY = os.path.join(D, 'test_intent_conformance_20261121.py')
-PRODUCT = os.environ.get('INTENT_ENGINE', '')
+PRODUCT = os.environ.get('INTENT_ENGINE', os.path.normpath(os.path.join(HERE, '..', 'p31_intent', 'intent_engine.py')))
 REFERENCE = os.path.join(D, 'intent_contract_reference_20261121.py')
 
 if not PRODUCT or not os.path.isfile(PRODUCT):
