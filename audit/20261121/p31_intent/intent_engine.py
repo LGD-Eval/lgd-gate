@@ -20,9 +20,18 @@ DOC_EXT = {".md", ".txt", ".rst"}
 
 CAPS = {
     "credential_access": r"((\.ssh|id_rsa|\.aws|\.env\b|\.netrc|\.npmrc|\.credentials|\.bash_history))",
+    "token_material": (r"(GH_TOKEN|GITHUB_TOKEN|AWS_SECRET_ACCESS_KEY|AWS_ACCESS_KEY_ID|"
+                       r"API[_-]?KEY|_TOKEN\b|Cookies|Login Data|keyring|Keychain|credentials\.json)"),
+    "env_exfil": r"(/proc/self/environ|/proc/\d+/environ|printenv|\benv\b\s*\|)",
+    "remote_fetch": r"((curl|wget)[^\n]*https?://)",
+    "pkg_install": r"(\b(pip|npm|pnpm|yarn)\b\s+(install|i|add)|\bapt(-get)?\s+install|\bbrew\s+install)",
+    "upload": r"(curl[^\n]*\s(-T|--upload-file)\s|\bscp\b|\brsync\b|aws\s+s3\s+cp|ftp://)",
+    "encoded_payload": r"((-enc\b|-EncodedCommand|FromBase64String))",
+    "subproc_call": r"(subprocess\.(run|Popen|call|check_output|check_call))",
     "network_egress": (r"((requests|httpx)\.(post|put|patch)\s*\(|axios\.(post|put)\s*\(|"
                        r"urlopen\s*\(|http\.client|smtplib|socket\.(create_connection|socket)\s*\(|"
-                       r"\bscp\b|\brsync\b|\bnc\b[^\n]*\s-[a-z]*e\b|ncat[^\n]*\s-e\b|\bsocat\b)"),
+                       r"curl[^\n]*(--data|-d\s|--form|-F\s|--upload-file)|\bnc\b|ncat|\bsocat\b|"
+                       r"execSync[^\n]*(curl|wget))"),
     "download": (r"(\bcurl\b[^\n]*\s(-o|--output|-O)\s|wget\s|\biwr\b|Invoke-WebRequest|"
                  r"DownloadString|DownloadFile|Net\.WebClient|urlretrieve)"),
     "dynamic_exec": (r"(\bos\.system\s*\(|\beval\s*\(|\bexec\s*\(|\bshell\s*=\s*True|"
@@ -52,6 +61,14 @@ POLICY = [
     ("P02", ("download", "dynamic_exec"), "DENY", "下载 + 动态执行：远端代码执行"),
     ("P02b", ("download", "script_exec"), "DENY", "下载后交给 shell/python 执行：远端代码执行（sh/py 解释器）"),
     ("P03", ("obfuscation", "dynamic_exec"), "DENY", "解码 + 动态执行：静态检查绕过"),
+    ("P03b", ("obfuscation", "script_exec"), "DENY", "解码落地成脚本再执行：静态检查绕过"),
+    ("P14", ("token_material", "network_egress"), "DENY", "令牌/浏览器凭据 + 网络外发"),
+    ("P15", ("env_exfil", "network_egress"), "DENY", "整份环境变量外发"),
+    ("P16", ("remote_fetch", "dynamic_exec"), "DENY", "远程取回即执行（含 ssh/osascript 包裹）"),
+    ("P17", ("upload",), "REVIEW", "上行传输本地文件（curl -T/scp/rsync/s3 cp/ftp）"),
+    ("P18", ("encoded_payload",), "REVIEW", "编码载荷（-enc / EncodedCommand / FromBase64String）"),
+    ("P19", ("pkg_install",), "REVIEW", "包管理器安装：供应链面需人工确认"),
+    ("P20", ("subproc_call",), "REVIEW", "显式子进程调用，需确认执行的命令"),
     ("P04", ("destruction",), "DENY", "破坏性操作：不可恢复"),
     ("P05", ("persistence", "network_egress"), "DENY", "持久化 + 外连：后门常驻"),
     ("P09", ("dynamic_exec", "network_egress"), "DENY", "动态执行 + 网络：参数里的 RCE"),

