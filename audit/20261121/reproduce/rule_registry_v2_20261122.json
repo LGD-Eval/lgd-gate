@@ -1,0 +1,1160 @@
+{
+ "as_of": "2026-11-22T17:55:04+08:00",
+ "method": "AST 遍历包内全部 .py 的字符串字面量，取形如 ^[A-Z]{2,6}\\d{3}$ 的规则 ID；再与自建语料实跑观测的 ID 求并集；动态族单独登记",
+ "count": 186,
+ "literal_count": 180,
+ "observed_count": 33,
+ "observed_not_literal": [
+  "AST001",
+  "AST004",
+  "AST006",
+  "AST007",
+  "AST013",
+  "TAINT02"
+ ],
+ "by_prefix": {
+  "AST": 6,
+  "AU": 6,
+  "CR": 11,
+  "DC": 34,
+  "EF": 4,
+  "EX": 14,
+  "FM": 1,
+  "FS": 11,
+  "HON": 2,
+  "JSCR": 4,
+  "JSDC": 9,
+  "JSFS": 3,
+  "JSXF": 3,
+  "LC": 4,
+  "MD": 15,
+  "NT": 22,
+  "PY": 1,
+  "QL": 7,
+  "SH": 24,
+  "TAINT": 1,
+  "VL": 4
+ },
+ "dynamic_families": [],
+ "rules": [
+  {
+   "id": "AST000",
+   "file": "skillgate.py",
+   "line": 558,
+   "source": "literal"
+  },
+  {
+   "id": "AST001",
+   "file": "(observed-only)",
+   "line": 0,
+   "source": "observed-only"
+  },
+  {
+   "id": "AST004",
+   "file": "(observed-only)",
+   "line": 0,
+   "source": "observed-only"
+  },
+  {
+   "id": "AST006",
+   "file": "(observed-only)",
+   "line": 0,
+   "source": "observed-only"
+  },
+  {
+   "id": "AST007",
+   "file": "(observed-only)",
+   "line": 0,
+   "source": "observed-only"
+  },
+  {
+   "id": "AST013",
+   "file": "(observed-only)",
+   "line": 0,
+   "source": "observed-only"
+  },
+  {
+   "id": "AU001",
+   "file": "skillgate.py",
+   "line": 226,
+   "source": "literal"
+  },
+  {
+   "id": "AU002",
+   "file": "skillgate.py",
+   "line": 227,
+   "source": "literal"
+  },
+  {
+   "id": "AU003",
+   "file": "skillgate.py",
+   "line": 228,
+   "source": "literal"
+  },
+  {
+   "id": "AU004",
+   "file": "skillgate.py",
+   "line": 229,
+   "source": "literal"
+  },
+  {
+   "id": "AU005",
+   "file": "skillgate.py",
+   "line": 230,
+   "source": "literal"
+  },
+  {
+   "id": "AU006",
+   "file": "skillgate.py",
+   "line": 231,
+   "source": "literal"
+  },
+  {
+   "id": "CR001",
+   "file": "skillgate.py",
+   "line": 117,
+   "source": "literal"
+  },
+  {
+   "id": "CR002",
+   "file": "skillgate.py",
+   "line": 119,
+   "source": "literal"
+  },
+  {
+   "id": "CR003",
+   "file": "skillgate.py",
+   "line": 121,
+   "source": "literal"
+  },
+  {
+   "id": "CR004",
+   "file": "skillgate.py",
+   "line": 123,
+   "source": "literal"
+  },
+  {
+   "id": "CR005",
+   "file": "skillgate.py",
+   "line": 125,
+   "source": "literal+observed"
+  },
+  {
+   "id": "CR006",
+   "file": "skillgate.py",
+   "line": 127,
+   "source": "literal"
+  },
+  {
+   "id": "CR007",
+   "file": "skillgate.py",
+   "line": 129,
+   "source": "literal"
+  },
+  {
+   "id": "CR008",
+   "file": "skillgate.py",
+   "line": 131,
+   "source": "literal"
+  },
+  {
+   "id": "CR009",
+   "file": "skillgate.py",
+   "line": 133,
+   "source": "literal"
+  },
+  {
+   "id": "CR010",
+   "file": "skillgate.py",
+   "line": 135,
+   "source": "literal+observed"
+  },
+  {
+   "id": "CR011",
+   "file": "skillgate.py",
+   "line": 137,
+   "source": "literal"
+  },
+  {
+   "id": "DC001",
+   "file": "skillgate.py",
+   "line": 48,
+   "source": "literal"
+  },
+  {
+   "id": "DC002",
+   "file": "skillgate.py",
+   "line": 49,
+   "source": "literal"
+  },
+  {
+   "id": "DC003",
+   "file": "skillgate.py",
+   "line": 50,
+   "source": "literal"
+  },
+  {
+   "id": "DC004",
+   "file": "skillgate.py",
+   "line": 51,
+   "source": "literal"
+  },
+  {
+   "id": "DC005",
+   "file": "skillgate.py",
+   "line": 52,
+   "source": "literal"
+  },
+  {
+   "id": "DC006",
+   "file": "skillgate.py",
+   "line": 53,
+   "source": "literal"
+  },
+  {
+   "id": "DC007",
+   "file": "skillgate.py",
+   "line": 54,
+   "source": "literal"
+  },
+  {
+   "id": "DC008",
+   "file": "skillgate.py",
+   "line": 55,
+   "source": "literal"
+  },
+  {
+   "id": "DC009",
+   "file": "skillgate.py",
+   "line": 56,
+   "source": "literal"
+  },
+  {
+   "id": "DC010",
+   "file": "skillgate.py",
+   "line": 57,
+   "source": "literal"
+  },
+  {
+   "id": "DC011",
+   "file": "skillgate.py",
+   "line": 58,
+   "source": "literal"
+  },
+  {
+   "id": "DC012",
+   "file": "skillgate.py",
+   "line": 59,
+   "source": "literal"
+  },
+  {
+   "id": "DC013",
+   "file": "skillgate.py",
+   "line": 60,
+   "source": "literal"
+  },
+  {
+   "id": "DC014",
+   "file": "skillgate.py",
+   "line": 61,
+   "source": "literal"
+  },
+  {
+   "id": "DC015",
+   "file": "skillgate.py",
+   "line": 62,
+   "source": "literal"
+  },
+  {
+   "id": "DC016",
+   "file": "skillgate.py",
+   "line": 63,
+   "source": "literal"
+  },
+  {
+   "id": "DC017",
+   "file": "skillgate.py",
+   "line": 64,
+   "source": "literal"
+  },
+  {
+   "id": "DC018",
+   "file": "skillgate.py",
+   "line": 65,
+   "source": "literal"
+  },
+  {
+   "id": "DC019",
+   "file": "skillgate.py",
+   "line": 67,
+   "source": "literal"
+  },
+  {
+   "id": "DC020",
+   "file": "skillgate.py",
+   "line": 68,
+   "source": "literal"
+  },
+  {
+   "id": "DC021",
+   "file": "skillgate.py",
+   "line": 69,
+   "source": "literal"
+  },
+  {
+   "id": "DC022",
+   "file": "skillgate.py",
+   "line": 70,
+   "source": "literal"
+  },
+  {
+   "id": "DC023",
+   "file": "skillgate.py",
+   "line": 71,
+   "source": "literal"
+  },
+  {
+   "id": "DC024",
+   "file": "skillgate.py",
+   "line": 72,
+   "source": "literal"
+  },
+  {
+   "id": "DC025",
+   "file": "skillgate.py",
+   "line": 73,
+   "source": "literal"
+  },
+  {
+   "id": "DC026",
+   "file": "skillgate.py",
+   "line": 74,
+   "source": "literal"
+  },
+  {
+   "id": "DC027",
+   "file": "skillgate.py",
+   "line": 75,
+   "source": "literal"
+  },
+  {
+   "id": "DC028",
+   "file": "skillgate.py",
+   "line": 76,
+   "source": "literal"
+  },
+  {
+   "id": "DC029",
+   "file": "skillgate.py",
+   "line": 77,
+   "source": "literal"
+  },
+  {
+   "id": "DC030",
+   "file": "skillgate.py",
+   "line": 78,
+   "source": "literal"
+  },
+  {
+   "id": "DC031",
+   "file": "skillgate.py",
+   "line": 81,
+   "source": "literal"
+  },
+  {
+   "id": "DC032",
+   "file": "skillgate.py",
+   "line": 82,
+   "source": "literal"
+  },
+  {
+   "id": "DC033",
+   "file": "skillgate.py",
+   "line": 83,
+   "source": "literal"
+  },
+  {
+   "id": "DC034",
+   "file": "skillgate.py",
+   "line": 84,
+   "source": "literal"
+  },
+  {
+   "id": "EF001",
+   "file": "skillgate.py",
+   "line": 247,
+   "source": "literal"
+  },
+  {
+   "id": "EF002",
+   "file": "skillgate.py",
+   "line": 248,
+   "source": "literal"
+  },
+  {
+   "id": "EF003",
+   "file": "skillgate.py",
+   "line": 249,
+   "source": "literal"
+  },
+  {
+   "id": "EF004",
+   "file": "skillgate.py",
+   "line": 250,
+   "source": "literal"
+  },
+  {
+   "id": "EX001",
+   "file": "skillgate.py",
+   "line": 186,
+   "source": "literal"
+  },
+  {
+   "id": "EX002",
+   "file": "skillgate.py",
+   "line": 187,
+   "source": "literal"
+  },
+  {
+   "id": "EX003",
+   "file": "skillgate.py",
+   "line": 188,
+   "source": "literal"
+  },
+  {
+   "id": "EX004",
+   "file": "skillgate.py",
+   "line": 189,
+   "source": "literal"
+  },
+  {
+   "id": "EX005",
+   "file": "skillgate.py",
+   "line": 190,
+   "source": "literal"
+  },
+  {
+   "id": "EX006",
+   "file": "skillgate.py",
+   "line": 191,
+   "source": "literal"
+  },
+  {
+   "id": "EX007",
+   "file": "skillgate.py",
+   "line": 192,
+   "source": "literal"
+  },
+  {
+   "id": "EX008",
+   "file": "skillgate.py",
+   "line": 193,
+   "source": "literal"
+  },
+  {
+   "id": "EX009",
+   "file": "skillgate.py",
+   "line": 194,
+   "source": "literal"
+  },
+  {
+   "id": "EX010",
+   "file": "skillgate.py",
+   "line": 195,
+   "source": "literal"
+  },
+  {
+   "id": "EX011",
+   "file": "skillgate.py",
+   "line": 196,
+   "source": "literal"
+  },
+  {
+   "id": "EX012",
+   "file": "skillgate.py",
+   "line": 197,
+   "source": "literal"
+  },
+  {
+   "id": "EX013",
+   "file": "skillgate.py",
+   "line": 198,
+   "source": "literal"
+  },
+  {
+   "id": "EX014",
+   "file": "skillgate.py",
+   "line": 199,
+   "source": "literal"
+  },
+  {
+   "id": "FM001",
+   "file": "skillgate.py",
+   "line": 1119,
+   "source": "literal"
+  },
+  {
+   "id": "FS001",
+   "file": "skillgate.py",
+   "line": 144,
+   "source": "literal+observed"
+  },
+  {
+   "id": "FS002",
+   "file": "skillgate.py",
+   "line": 145,
+   "source": "literal"
+  },
+  {
+   "id": "FS003",
+   "file": "skillgate.py",
+   "line": 146,
+   "source": "literal"
+  },
+  {
+   "id": "FS004",
+   "file": "skillgate.py",
+   "line": 147,
+   "source": "literal"
+  },
+  {
+   "id": "FS005",
+   "file": "skillgate.py",
+   "line": 148,
+   "source": "literal"
+  },
+  {
+   "id": "FS006",
+   "file": "skillgate.py",
+   "line": 149,
+   "source": "literal"
+  },
+  {
+   "id": "FS007",
+   "file": "skillgate.py",
+   "line": 150,
+   "source": "literal"
+  },
+  {
+   "id": "FS008",
+   "file": "skillgate.py",
+   "line": 151,
+   "source": "literal"
+  },
+  {
+   "id": "FS009",
+   "file": "skillgate.py",
+   "line": 152,
+   "source": "literal"
+  },
+  {
+   "id": "FS010",
+   "file": "skillgate.py",
+   "line": 153,
+   "source": "literal"
+  },
+  {
+   "id": "FS011",
+   "file": "skillgate.py",
+   "line": 154,
+   "source": "literal"
+  },
+  {
+   "id": "HON001",
+   "file": "skillgate.py",
+   "line": 180,
+   "source": "literal"
+  },
+  {
+   "id": "HON002",
+   "file": "skillgate.py",
+   "line": 181,
+   "source": "literal"
+  },
+  {
+   "id": "JSCR001",
+   "file": "js_analyzer.py",
+   "line": 34,
+   "source": "literal"
+  },
+  {
+   "id": "JSCR002",
+   "file": "js_analyzer.py",
+   "line": 35,
+   "source": "literal"
+  },
+  {
+   "id": "JSCR003",
+   "file": "js_analyzer.py",
+   "line": 36,
+   "source": "literal"
+  },
+  {
+   "id": "JSCR004",
+   "file": "js_analyzer.py",
+   "line": 37,
+   "source": "literal"
+  },
+  {
+   "id": "JSDC001",
+   "file": "js_analyzer.py",
+   "line": 19,
+   "source": "literal+observed"
+  },
+  {
+   "id": "JSDC002",
+   "file": "js_analyzer.py",
+   "line": 21,
+   "source": "literal"
+  },
+  {
+   "id": "JSDC003",
+   "file": "js_analyzer.py",
+   "line": 23,
+   "source": "literal+observed"
+  },
+  {
+   "id": "JSDC004",
+   "file": "js_analyzer.py",
+   "line": 24,
+   "source": "literal"
+  },
+  {
+   "id": "JSDC005",
+   "file": "js_analyzer.py",
+   "line": 25,
+   "source": "literal"
+  },
+  {
+   "id": "JSDC006",
+   "file": "js_analyzer.py",
+   "line": 26,
+   "source": "literal"
+  },
+  {
+   "id": "JSDC007",
+   "file": "js_analyzer.py",
+   "line": 27,
+   "source": "literal"
+  },
+  {
+   "id": "JSDC008",
+   "file": "js_analyzer.py",
+   "line": 28,
+   "source": "literal+observed"
+  },
+  {
+   "id": "JSDC009",
+   "file": "js_analyzer.py",
+   "line": 29,
+   "source": "literal"
+  },
+  {
+   "id": "JSFS001",
+   "file": "js_analyzer.py",
+   "line": 51,
+   "source": "literal"
+  },
+  {
+   "id": "JSFS002",
+   "file": "js_analyzer.py",
+   "line": 52,
+   "source": "literal"
+  },
+  {
+   "id": "JSFS003",
+   "file": "js_analyzer.py",
+   "line": 53,
+   "source": "literal"
+  },
+  {
+   "id": "JSXF001",
+   "file": "js_analyzer.py",
+   "line": 42,
+   "source": "literal+observed"
+  },
+  {
+   "id": "JSXF002",
+   "file": "js_analyzer.py",
+   "line": 44,
+   "source": "literal"
+  },
+  {
+   "id": "JSXF003",
+   "file": "js_analyzer.py",
+   "line": 46,
+   "source": "literal+observed"
+  },
+  {
+   "id": "LC001",
+   "file": "skillgate.py",
+   "line": 207,
+   "source": "literal"
+  },
+  {
+   "id": "LC002",
+   "file": "skillgate.py",
+   "line": 208,
+   "source": "literal"
+  },
+  {
+   "id": "LC003",
+   "file": "skillgate.py",
+   "line": 209,
+   "source": "literal"
+  },
+  {
+   "id": "LC004",
+   "file": "skillgate.py",
+   "line": 210,
+   "source": "literal"
+  },
+  {
+   "id": "MD001",
+   "file": "skillgate.py",
+   "line": 159,
+   "source": "literal+observed"
+  },
+  {
+   "id": "MD002",
+   "file": "skillgate.py",
+   "line": 160,
+   "source": "literal"
+  },
+  {
+   "id": "MD003",
+   "file": "skillgate.py",
+   "line": 161,
+   "source": "literal"
+  },
+  {
+   "id": "MD004",
+   "file": "skillgate.py",
+   "line": 162,
+   "source": "literal"
+  },
+  {
+   "id": "MD005",
+   "file": "skillgate.py",
+   "line": 163,
+   "source": "literal"
+  },
+  {
+   "id": "MD006",
+   "file": "skillgate.py",
+   "line": 164,
+   "source": "literal"
+  },
+  {
+   "id": "MD007",
+   "file": "skillgate.py",
+   "line": 165,
+   "source": "literal"
+  },
+  {
+   "id": "MD008",
+   "file": "skillgate.py",
+   "line": 166,
+   "source": "literal"
+  },
+  {
+   "id": "MD009",
+   "file": "skillgate.py",
+   "line": 167,
+   "source": "literal"
+  },
+  {
+   "id": "MD010",
+   "file": "skillgate.py",
+   "line": 168,
+   "source": "literal"
+  },
+  {
+   "id": "MD011",
+   "file": "skillgate.py",
+   "line": 169,
+   "source": "literal"
+  },
+  {
+   "id": "MD012",
+   "file": "skillgate.py",
+   "line": 170,
+   "source": "literal"
+  },
+  {
+   "id": "MD013",
+   "file": "skillgate.py",
+   "line": 171,
+   "source": "literal"
+  },
+  {
+   "id": "MD014",
+   "file": "skillgate.py",
+   "line": 172,
+   "source": "literal"
+  },
+  {
+   "id": "MD015",
+   "file": "skillgate.py",
+   "line": 173,
+   "source": "literal"
+  },
+  {
+   "id": "NT001",
+   "file": "skillgate.py",
+   "line": 89,
+   "source": "literal+observed"
+  },
+  {
+   "id": "NT002",
+   "file": "skillgate.py",
+   "line": 90,
+   "source": "literal"
+  },
+  {
+   "id": "NT003",
+   "file": "skillgate.py",
+   "line": 91,
+   "source": "literal"
+  },
+  {
+   "id": "NT004",
+   "file": "skillgate.py",
+   "line": 92,
+   "source": "literal"
+  },
+  {
+   "id": "NT005",
+   "file": "skillgate.py",
+   "line": 93,
+   "source": "literal+observed"
+  },
+  {
+   "id": "NT006",
+   "file": "skillgate.py",
+   "line": 94,
+   "source": "literal"
+  },
+  {
+   "id": "NT007",
+   "file": "skillgate.py",
+   "line": 95,
+   "source": "literal"
+  },
+  {
+   "id": "NT008",
+   "file": "skillgate.py",
+   "line": 96,
+   "source": "literal"
+  },
+  {
+   "id": "NT009",
+   "file": "skillgate.py",
+   "line": 97,
+   "source": "literal+observed"
+  },
+  {
+   "id": "NT010",
+   "file": "skillgate.py",
+   "line": 98,
+   "source": "literal"
+  },
+  {
+   "id": "NT011",
+   "file": "skillgate.py",
+   "line": 99,
+   "source": "literal"
+  },
+  {
+   "id": "NT012",
+   "file": "skillgate.py",
+   "line": 100,
+   "source": "literal"
+  },
+  {
+   "id": "NT013",
+   "file": "skillgate.py",
+   "line": 101,
+   "source": "literal"
+  },
+  {
+   "id": "NT014",
+   "file": "skillgate.py",
+   "line": 102,
+   "source": "literal"
+  },
+  {
+   "id": "NT015",
+   "file": "skillgate.py",
+   "line": 103,
+   "source": "literal"
+  },
+  {
+   "id": "NT016",
+   "file": "skillgate.py",
+   "line": 104,
+   "source": "literal"
+  },
+  {
+   "id": "NT017",
+   "file": "skillgate.py",
+   "line": 105,
+   "source": "literal"
+  },
+  {
+   "id": "NT018",
+   "file": "skillgate.py",
+   "line": 106,
+   "source": "literal+observed"
+  },
+  {
+   "id": "NT019",
+   "file": "skillgate.py",
+   "line": 107,
+   "source": "literal"
+  },
+  {
+   "id": "NT020",
+   "file": "skillgate.py",
+   "line": 110,
+   "source": "literal"
+  },
+  {
+   "id": "NT021",
+   "file": "skillgate.py",
+   "line": 111,
+   "source": "literal"
+  },
+  {
+   "id": "NT022",
+   "file": "skillgate.py",
+   "line": 112,
+   "source": "literal"
+  },
+  {
+   "id": "PY001",
+   "file": "skillgate.py",
+   "line": 587,
+   "source": "literal+observed"
+  },
+  {
+   "id": "QL001",
+   "file": "skillgate.py",
+   "line": 215,
+   "source": "literal"
+  },
+  {
+   "id": "QL002",
+   "file": "skillgate.py",
+   "line": 216,
+   "source": "literal"
+  },
+  {
+   "id": "QL003",
+   "file": "skillgate.py",
+   "line": 217,
+   "source": "literal"
+  },
+  {
+   "id": "QL004",
+   "file": "skillgate.py",
+   "line": 218,
+   "source": "literal"
+  },
+  {
+   "id": "QL005",
+   "file": "skillgate.py",
+   "line": 219,
+   "source": "literal"
+  },
+  {
+   "id": "QL006",
+   "file": "skillgate.py",
+   "line": 220,
+   "source": "literal"
+  },
+  {
+   "id": "QL007",
+   "file": "skillgate.py",
+   "line": 221,
+   "source": "literal"
+  },
+  {
+   "id": "SH001",
+   "file": "skillgate.py",
+   "line": 995,
+   "source": "literal"
+  },
+  {
+   "id": "SH002",
+   "file": "skillgate.py",
+   "line": 997,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH003",
+   "file": "skillgate.py",
+   "line": 999,
+   "source": "literal"
+  },
+  {
+   "id": "SH004",
+   "file": "skillgate.py",
+   "line": 1000,
+   "source": "literal"
+  },
+  {
+   "id": "SH005",
+   "file": "skillgate.py",
+   "line": 1005,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH006",
+   "file": "skillgate.py",
+   "line": 1008,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH007",
+   "file": "skillgate.py",
+   "line": 1012,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH008",
+   "file": "skillgate.py",
+   "line": 1014,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH009",
+   "file": "skillgate.py",
+   "line": 1018,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH010",
+   "file": "skillgate.py",
+   "line": 1020,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH011",
+   "file": "skillgate.py",
+   "line": 1024,
+   "source": "literal"
+  },
+  {
+   "id": "SH012",
+   "file": "skillgate.py",
+   "line": 1026,
+   "source": "literal"
+  },
+  {
+   "id": "SH013",
+   "file": "skillgate.py",
+   "line": 1029,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH014",
+   "file": "skillgate.py",
+   "line": 1075,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH015",
+   "file": "skillgate.py",
+   "line": 1092,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH016",
+   "file": "skillgate.py",
+   "line": 1103,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH017",
+   "file": "skillgate.py",
+   "line": 1033,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH018",
+   "file": "skillgate.py",
+   "line": 1035,
+   "source": "literal"
+  },
+  {
+   "id": "SH019",
+   "file": "skillgate.py",
+   "line": 1037,
+   "source": "literal"
+  },
+  {
+   "id": "SH020",
+   "file": "skillgate.py",
+   "line": 1039,
+   "source": "literal"
+  },
+  {
+   "id": "SH021",
+   "file": "skillgate.py",
+   "line": 1043,
+   "source": "literal+observed"
+  },
+  {
+   "id": "SH022",
+   "file": "skillgate.py",
+   "line": 1045,
+   "source": "literal"
+  },
+  {
+   "id": "SH023",
+   "file": "skillgate.py",
+   "line": 1047,
+   "source": "literal"
+  },
+  {
+   "id": "SH024",
+   "file": "skillgate.py",
+   "line": 1049,
+   "source": "literal"
+  },
+  {
+   "id": "TAINT02",
+   "file": "(observed-only)",
+   "line": 0,
+   "source": "observed-only"
+  },
+  {
+   "id": "VL001",
+   "file": "skillgate.py",
+   "line": 236,
+   "source": "literal"
+  },
+  {
+   "id": "VL002",
+   "file": "skillgate.py",
+   "line": 237,
+   "source": "literal"
+  },
+  {
+   "id": "VL003",
+   "file": "skillgate.py",
+   "line": 238,
+   "source": "literal"
+  },
+  {
+   "id": "VL004",
+   "file": "skillgate.py",
+   "line": 239,
+   "source": "literal"
+  }
+ ],
+ "previous_claim": "174 条（155 skillgate + 19 js）",
+ "previous_claim_assessment": "低估：AST 字面量 + 语料观测并集为 186；原 174 只覆盖了部分字面量，且动态族（如 AST 三位编号）未纳入",
+ "boundary": "这是“代码里存在多少条可触发规则 ID”的账目，不代表全部规则都被语料压过；覆盖情况见 corpus_rule_coverage_20261122.json。"
+}

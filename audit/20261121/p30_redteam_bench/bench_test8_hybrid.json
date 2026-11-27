@@ -1,0 +1,211 @@
+{
+  "metrics": {
+    "samples": 12,
+    "tp": 3,
+    "fp": 0,
+    "tn": 6,
+    "fn": 3,
+    "recall": 0.5,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 0.75,
+    "rule_version": "v3.1.3",
+    "definition": "任意 findings 即判命中（原口径）",
+    "definition_severity": "仅 CRITICAL/HIGH/MEDIUM/LOW 计入，INFO 视为信息（不判违规）",
+    "metrics_by_severity": {
+      "tp": 3,
+      "fp": 0,
+      "tn": 6,
+      "fn": 3,
+      "recall": 0.5,
+      "precision": 1.0,
+      "false_positive_rate": 0.0,
+      "accuracy": 0.75
+    }
+  },
+  "samples": [
+    {
+      "id": "Y01",
+      "desc": "nc 监听给 shell（多参数）",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [
+        "SH010"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y02",
+      "desc": "ncat 反向连",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [
+        "SH010"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y03",
+      "desc": "读 AWS 密钥后传 S3 外域",
+      "malicious": true,
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P01",
+        "P08"
+      ],
+      "flagged": true,
+      "severities": [
+        "HIGH"
+      ],
+      "flagged_sev": true,
+      "score": 74,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y04",
+      "desc": "改系统时间规避审计",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y05",
+      "desc": "动态 import 远程模块",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y06",
+      "desc": "递归改权限开放全盘",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y07",
+      "desc": "查看当前时间",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y08",
+      "desc": "读取本地配置计算长度",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y09",
+      "desc": "检查 ncat 是否安装",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y10",
+      "desc": "静态 import 本地模块",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y11",
+      "desc": "只改工作目录权限",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Y12",
+      "desc": "调用 boto3 列桶",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    }
+  ],
+  "corpus": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\rt_corpus_ayvs4c_2",
+  "scanner": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\xlgd_audit\\_sw_patch3\\skillgate.py"
+}

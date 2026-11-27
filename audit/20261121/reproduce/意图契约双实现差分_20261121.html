@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><title>意图契约双实现差分 2026-11-21</title>
+<style>body{background:#0f1115;color:#e6e8ee;font-family:-apple-system,"Segoe UI","Microsoft YaHei";margin:32px}
+h1{font-size:22px;margin:0 0 6px}p.mut{color:#8b93a7;font-size:13px}
+table{border-collapse:collapse;width:100%;margin-top:14px;font-size:13px}
+th,td{border-bottom:1px solid #232733;padding:8px 10px;text-align:left}
+th{color:#96a0b8;font-weight:600;font-size:12px}
+.mono{font-family:ui-monospace,Consolas,monospace}.mut{color:#8b93a7}
+.ok{color:#5bd6a2}.bad{color:#ff6b6b}
+.kpi{display:flex;gap:14px;margin-top:14px}.k{background:#171a21;border:1px solid #232733;border-radius:10px;padding:12px 16px}
+.k b{font-size:20px}.k span{display:block;color:#8b93a7;font-size:12px;margin-top:3px}
+.note{margin-top:16px;color:#8b93a7;font-size:12px;line-height:1.7}</style>
+<h1>意图四态契约 · 双实现差分（12 条公开用例）</h1>
+<p class="mut">同一套用例、两套引擎；参考实现只用于证明契约可满足，不改产品代码、不改仓库。</p>
+<div class="kpi"><div class="k"><b>0/12</b><span>产品引擎 intent_engine.py</span></div>
+<div class="k"><b>12/12</b><span>参考实现（本目录）</span></div>
+<div class="k"><b>12</b><span>两实现判定不一致条数</span></div></div>
+<table><thead><tr><th>用例</th><th>场景</th><th>期望</th><th>产品</th><th>参考</th><th>一致性</th></tr></thead><tbody><tr><td class='mono'>C01</td><td class='mut'>纯提示词技能（只有 SKILL.md，无可执行代码）</td><td class='mono'>PROMPT_ONLY</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>PROMPT_ONLY</td><td>不一致</td></tr><tr><td class='mono'>C02</td><td class='mut'>干净 Python 工具（读参数、写 stdout）</td><td class='mono'>ALLOW</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>ALLOW</td><td>不一致</td></tr><tr><td class='mono'>C03</td><td class='mut'>读凭据 + 网络外发（完整外泄链）</td><td class='mono'>DENY</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>DENY</td><td>不一致</td></tr><tr><td class='mono'>C04</td><td class='mut'>下载 + 动态执行（远端代码执行）</td><td class='mono'>DENY</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>DENY</td><td>不一致</td></tr><tr><td class='mono'>C05</td><td class='mut'>破坏性命令（不可恢复）</td><td class='mono'>DENY</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>DENY</td><td>不一致</td></tr><tr><td class='mono'>C06</td><td class='mut'>仅持久化面（写 authorized_keys）→ 需人工确认</td><td class='mono'>REVIEW</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>REVIEW</td><td>不一致</td></tr><tr><td class='mono'>C07</td><td class='mut'>仅提权（sudo）→ 需人工确认</td><td class='mono'>REVIEW</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>REVIEW</td><td>不一致</td></tr><tr><td class='mono'>C08</td><td class='mut'>文档描述凭据外发（无代码）→ 文档最高 REVIEW</td><td class='mono'>REVIEW</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>REVIEW</td><td>不一致</td></tr><tr><td class='mono'>C09</td><td class='mut'>注释里的攻击字符串不是行为 → ALLOW</td><td class='mono'>ALLOW</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>ALLOW</td><td>不一致</td></tr><tr><td class='mono'>C10</td><td class='mut'>规则定义里的原始字符串（检测器悖论）→ ALLOW</td><td class='mono'>ALLOW</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>ALLOW</td><td>不一致</td></tr><tr><td class='mono'>C11</td><td class='mut'>只有文档、且文档无危险描述 → PROMPT_ONLY</td><td class='mono'>PROMPT_ONLY</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>PROMPT_ONLY</td><td>不一致</td></tr><tr><td class='mono'>C12</td><td class='mut'>Python f-string 格式说明符（历史误报）→ ALLOW</td><td class='mono'>ALLOW</td><td class='mono bad'>PARSE_ERROR</td><td class='mono ok'>ALLOW</td><td>不一致</td></tr></tbody></table>
+<p class="note">结论：契约不是空想的——12/12 可由一个 ~300 行纯标准库参考实现满足；产品引擎差 2 条（C04 漏“解释器+脚本”、C08 文档早退）。
+外部对照：微软 AGENT-HOOKS-0.1 已公开 47 场景一致性套件、5 语言 SDK、2 个通过认证的宿主；IETF ACIP 草案要求公共测试套件方可声明符合。
+故本维度我们落后，不主张领先；本页只证明“我们的契约可被第三方实现复现”。</p>

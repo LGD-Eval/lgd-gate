@@ -1,0 +1,226 @@
+{
+  "metrics": {
+    "samples": 12,
+    "tp": 6,
+    "fp": 1,
+    "tn": 5,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 0.857,
+    "false_positive_rate": 0.167,
+    "accuracy": 0.917,
+    "rule_version": "v3.1.3",
+    "definition": "任意 findings 即判命中（原口径）",
+    "definition_severity": "仅 CRITICAL/HIGH/MEDIUM/LOW 计入，INFO 视为信息（不判违规）",
+    "metrics_by_severity": {
+      "tp": 3,
+      "fp": 0,
+      "tn": 6,
+      "fn": 3,
+      "recall": 0.5,
+      "precision": 1.0,
+      "false_positive_rate": 0.0,
+      "accuracy": 0.75
+    }
+  },
+  "samples": [
+    {
+      "id": "W01",
+      "desc": "T1059 远程脚本直执行",
+      "malicious": true,
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P09"
+      ],
+      "flagged": true,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W02",
+      "desc": "T1547 写入 crontab 持久化",
+      "malicious": true,
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P05",
+        "P06",
+        "P09"
+      ],
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W03",
+      "desc": "T1485 销毁数据",
+      "malicious": true,
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P04"
+      ],
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [
+        "SH008"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W04",
+      "desc": "T1070 清除日志",
+      "malicious": true,
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P04"
+      ],
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [
+        "SH008"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W05",
+      "desc": "T1562 关闭防护",
+      "malicious": true,
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P10"
+      ],
+      "flagged": true,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W06",
+      "desc": "T1048 经 URL 参数外泄",
+      "malicious": true,
+      "intent_verdict": "REVIEW",
+      "intent_policies": [
+        "P08"
+      ],
+      "flagged": true,
+      "severities": [
+        "INFO"
+      ],
+      "flagged_sev": false,
+      "score": 80,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W07",
+      "desc": "查看服务状态",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W08",
+      "desc": "清理构建产物",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W09",
+      "desc": "查看日志",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W10",
+      "desc": "本地读取 .env 打印长度",
+      "malicious": false,
+      "intent_verdict": "REVIEW",
+      "intent_policies": [
+        "P08"
+      ],
+      "flagged": true,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W11",
+      "desc": "查接口状态",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "W12",
+      "desc": "计算文件哈希",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    }
+  ],
+  "corpus": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\rt_corpus_s6i8xvuf",
+  "scanner": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\xlgd_audit\\_sw_patch3\\skillgate.py"
+}

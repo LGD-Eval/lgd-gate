@@ -1,0 +1,1704 @@
+{
+  "summary": {
+    "skills_total": 149,
+    "flagged": 21,
+    "flag_rate": 0.141,
+    "verdict_distribution": {
+      "PROMPT_ONLY": 27,
+      "ALLOW": 115,
+      "REVIEW": 4,
+      "DENY": 3
+    },
+    "grade_distribution": {
+      "A+": 139,
+      "B": 3,
+      "A": 5,
+      "F": 1,
+      "D": 1
+    },
+    "policies": {
+      "D00": 27,
+      "D02": 1,
+      "P08": 5,
+      "D01": 1,
+      "P01": 3,
+      "P09": 1
+    }
+  },
+  "rows": [
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\a3-law-operational",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\agent-boarding-pass",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\agent-evolution",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\agent-kill-switch",
+      "score": 98,
+      "grade": "A+",
+      "rule_hits": [
+        "AST004"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\agent-loop-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\agent-memory-keeper",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\agent-output-registry",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\agent-redteam-kit",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\agent-trace-audit",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-brain-learning-memory",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "REVIEW",
+      "intent_policies": [
+        "D02"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-brain-learning-memory-pro",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-content-discloser",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-cost-cutter",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-decision-log",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-governance-audit-chain",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-incident-log",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-policy-radar",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-reply-heuristics",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-usage-policy",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\ai-vendor-checklist",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\aml-sentinel",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\anti-cheat-identity",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\api-resilience",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\aut-grade-checker",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\batch-renamer",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\bias-auditor",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\cer-equivalence-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\changelog-draft-gen",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\citation-coverage-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\clin-eval-route-picker",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\contest-submission-portal",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\context-engineering",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\contract-clause-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\contract-interact-checklist",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\csv-slice",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\data-export-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\data-grade-checker",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\data-minimizer",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\data-rights-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\debug-pro",
+      "score": 96,
+      "grade": "A+",
+      "rule_hits": [
+        "CR002",
+        "NT022"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\dir-organizer",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\disk-scan",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\doc-desens-scanner",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\dpapi-local-vault",
+      "score": 78,
+      "grade": "B",
+      "rule_hits": [
+        "DC011",
+        "DC011",
+        "DC016",
+        "DC016",
+        "DC011",
+        "DC011",
+        "DC011",
+        "DC011",
+        "DC016",
+        "DC016",
+        "DC016",
+        "DC016"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\dup-finder",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [
+        "FS002"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\env-var-audit",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "REVIEW",
+      "intent_policies": [
+        "P08"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\eu-ai-act-companion",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\eval-bench-builder",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\evid-four-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\evidence-chain-builder",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\evidence-chain-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\fact-check-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\fin-ai-classifier",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\fin-reg-calc",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\fund-fee-calc",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\gate-policy-generator",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\github-api-push-workaround",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\gov-disclosure-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\hash-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\health-claim-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\hgrac-route-checker",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\import-export-router",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\invoice-risk-scan",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\json-tidy",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\judging-rubric-grader",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\kyc-checklist-gen",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\label-compliance-checker",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-audit",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-badge-issuer",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-badge-verify",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-bootstrap",
+      "score": 78,
+      "grade": "B",
+      "rule_hits": [
+        "FM001"
+      ],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-certify",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-crypto-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-evo",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-fin-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-gate",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-gate-methodology",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-gov-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-law-ethic",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-skill-review",
+      "score": 85,
+      "grade": "A",
+      "rule_hits": [
+        "AST013",
+        "FS001",
+        "FS010",
+        "AST003"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\lgd-three-laws-auditor",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\loan-rate-disclosure",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\mcp-security-scan",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\md-classification-route",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\md-link-audit",
+      "score": 98,
+      "grade": "A+",
+      "rule_hits": [
+        "NT008",
+        "NT008"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\model-card-generator",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\model-router",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\multi-agent-conductor",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\non-clinical-checker",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\originality-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\output-schema-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\pmcf-evaluation-report-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\pmcf-plan-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\pms-vigilance-intake",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\problem-set-generator",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\prompt-compressor",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\prompt-injection-drill",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\prompt-injection-shield",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\prompt-leak-scanner",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\prompt-version-control",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\publish-quality-gate",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "REVIEW",
+      "intent_policies": [
+        "P08"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\rag-grounding-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\recall-decision-checker",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\regex-sandbox",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\session-continuity-protocol",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\skill-admission-gate",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "REVIEW",
+      "intent_policies": [
+        "D01"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\skill-quality-gate",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\summarize-pro",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [
+        "FS010"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\test-lab-match-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\text-replace",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\text-stats",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\token-disclosure-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\tool-call-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\travel-rule-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\uas-ops-checker",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\udi-db-submission-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\udi-format-validator",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\wallet-address-check",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "agent-skills",
+      "skill": "skills\\wechat-viral-topic",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\ai-a3-laws",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\ai-governance-checklist",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\ai-model-passport",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\biocompatibility-iso10993",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\clinical-evaluation",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\cybersecurity-medical",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\delivery-guard",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\design-controls-toolkit",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\device-regulatory-map",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\fhir-ortho-toolkit",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\iec62304-software",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\iso14971-risk-file",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\manufacturing-gmp",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\medical-ai-toolkit",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\ml-validation-toolkit",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\multilingual-ifu",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\omop-ortho-toolkit",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\pms-vigilance",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\samd-ra-toolkit",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\sterilization-validation",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "medical-ai-toolkit",
+      "skill": "teamai\\skills\\udi-assignment",
+      "score": 100,
+      "grade": "A+",
+      "rule_hits": [],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "lgd-gate",
+      "skill": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\xlgd_audit\\lgd-gate",
+      "score": 0,
+      "grade": "F",
+      "rule_hits": [
+        "NT003",
+        "NT008",
+        "NT020",
+        "FS002",
+        "FS010",
+        "FS010",
+        "FS010",
+        "FS010",
+        "NT022",
+        "NT005",
+        "NT003",
+        "NT008",
+        "CR005",
+        "NT003",
+        "NT008",
+        "NT020",
+        "NT003",
+        "NT008",
+        "CR010",
+        "NT001",
+        "NT009",
+        "NT001",
+        "NT009",
+        "NT001",
+        "NT009",
+        "NT020",
+        "AST000",
+        "NT001",
+        "NT009",
+        "CR002",
+        "JSDC001",
+        "JSDC006",
+        "JSDC007",
+        "JSCR001",
+        "CR005",
+        "CR005",
+        "CR005",
+        "MD001",
+        "MD009",
+        "CR010",
+        "CR005",
+        "CR010",
+        "COMBO01",
+        "COMBO01"
+      ],
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P01",
+        "P09",
+        "P08"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "lgd-gate",
+      "skill": "_demo\\clean-env",
+      "score": 96,
+      "grade": "A+",
+      "rule_hits": [
+        "NT001",
+        "NT009",
+        "CR002"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "lgd-gate",
+      "skill": "_demo\\defect-sample",
+      "score": 87,
+      "grade": "A",
+      "rule_hits": [
+        "AST000"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "lgd-gate",
+      "skill": "_demo\\injection-skill",
+      "score": 40,
+      "grade": "D",
+      "rule_hits": [
+        "MD001",
+        "MD009",
+        "CR010"
+      ],
+      "intent_verdict": "PROMPT_ONLY",
+      "intent_policies": [
+        "D00"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "lgd-gate",
+      "skill": "_demo\\leak-env",
+      "score": 84,
+      "grade": "A",
+      "rule_hits": [
+        "NT001",
+        "NT009",
+        "NT020",
+        "COMBO01"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "lgd-gate",
+      "skill": "_demo\\mitiga-style",
+      "score": 75,
+      "grade": "B",
+      "rule_hits": [
+        "CR005",
+        "CR010",
+        "NT003",
+        "NT008",
+        "CR005"
+      ],
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P01",
+        "P08"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "lgd-gate",
+      "skill": "_demo\\poisoned-skill",
+      "score": 84,
+      "grade": "A",
+      "rule_hits": [
+        "CR010",
+        "NT001",
+        "NT009",
+        "NT001",
+        "NT009"
+      ],
+      "intent_verdict": "DENY",
+      "intent_policies": [
+        "P01",
+        "P08"
+      ],
+      "caps": null
+    },
+    {
+      "repo": "lgd-gate",
+      "skill": "_demo\\runtime-clean",
+      "score": 99,
+      "grade": "A+",
+      "rule_hits": [
+        "NT003",
+        "NT008"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    },
+    {
+      "repo": "lgd-gate",
+      "skill": "_demo\\runtime-leak",
+      "score": 87,
+      "grade": "A",
+      "rule_hits": [
+        "NT003",
+        "NT008",
+        "NT020",
+        "COMBO01"
+      ],
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "caps": null
+    }
+  ]
+}

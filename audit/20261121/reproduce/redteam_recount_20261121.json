@@ -1,0 +1,28 @@
+{
+ "as_of": "2026-11-27T21:04:35+08:00",
+ "method": "只读 9 份 bench json 的逐样本 flagged 字段重算，不调用扫描器；sha256 用于防篡改",
+ "bench_dir": "D:\\lgd-work\\roadmap-run\\dist\\repo_probe\\lgd-gate-main\\audit\\20261121\\p30_redteam_bench",
+ "splits": [],
+ "aggregate": {
+  "samples": 0,
+  "tp": 0,
+  "fp": 0,
+  "tn": 0,
+  "fn": 0,
+  "recall": null,
+  "precision": null,
+  "false_positive_rate": null,
+  "accuracy": null
+ },
+ "aggregate_severity_only": {
+  "tp": 0,
+  "fp": 0,
+  "tn": 0,
+  "fn": 0,
+  "recall": null,
+  "precision": null,
+  "false_positive_rate": null,
+  "accuracy": null
+ },
+ "drift_splits": []
+}

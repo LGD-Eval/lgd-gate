@@ -1,0 +1,163 @@
+{
+  "as_of": "2026-11-27T21:05:30+08:00",
+  "engine": "C:\\Users\\Administrator\\Doubao\\chats\\2026-11-19\\new-chat-6\\XLGD整改审计_20261119\\proposals\\p31_intent\\intent_engine.py",
+  "cases": 12,
+  "passed": 0,
+  "contract": {
+    "verdict_enum": [
+      "ALLOW",
+      "PROMPT_ONLY",
+      "REVIEW",
+      "DENY",
+      "UNKNOWN"
+    ],
+    "fail_closed": "UNKNOWN 表示不可放行；PROMPT_ONLY 是无代码时的显式结论，不等同 ALLOW",
+    "not_authorization": "判定 ≠ 授权"
+  },
+  "rows": [
+    {
+      "id": "C01",
+      "desc": "纯提示词技能（只有 SKILL.md，无可执行代码）",
+      "expect": "PROMPT_ONLY",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C02",
+      "desc": "干净 Python 工具（读参数、写 stdout）",
+      "expect": "ALLOW",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C03",
+      "desc": "读凭据 + 网络外发（完整外泄链）",
+      "expect": "DENY",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C04",
+      "desc": "下载 + 动态执行（远端代码执行）",
+      "expect": "DENY",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C05",
+      "desc": "破坏性命令（不可恢复）",
+      "expect": "DENY",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C06",
+      "desc": "仅持久化面（写 authorized_keys）→ 需人工确认",
+      "expect": "REVIEW",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C07",
+      "desc": "仅提权（sudo）→ 需人工确认",
+      "expect": "REVIEW",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C08",
+      "desc": "文档描述凭据外发（无代码）→ 文档最高 REVIEW",
+      "expect": "REVIEW",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C09",
+      "desc": "注释里的攻击字符串不是行为 → ALLOW",
+      "expect": "ALLOW",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C10",
+      "desc": "规则定义里的原始字符串（检测器悖论）→ ALLOW",
+      "expect": "ALLOW",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C11",
+      "desc": "只有文档、且文档无危险描述 → PROMPT_ONLY",
+      "expect": "PROMPT_ONLY",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    },
+    {
+      "id": "C12",
+      "desc": "Python f-string 格式说明符（历史误报）→ ALLOW",
+      "expect": "ALLOW",
+      "got": "PARSE_ERROR",
+      "passed": false,
+      "exit": 2,
+      "policy_hits": [],
+      "cap_code": null,
+      "cap_doc": null,
+      "evidence": []
+    }
+  ]
+}

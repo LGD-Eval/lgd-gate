@@ -1,0 +1,22 @@
+{
+  "py_direct_exec.py": "vuln",
+  "py_env_to_system.py": "vuln",
+  "py_argv_subprocess.py": "vuln",
+  "py_dynamic_write.py": "vuln",
+  "py_indirect_forwarder.py": "vuln",
+  "py_base64_exec.py": "vuln",
+  "py_unquote_popen.py": "vuln",
+  "py_tainted_rmtree.py": "vuln",
+  "py_const_subprocess.py": "safe",
+  "py_log_only.py": "safe",
+  "py_const_exec.py": "safe",
+  "py_fstring_log.py": "safe",
+  "helper_fwd.py": "neutral",
+  "js_eval_req.js": "vuln",
+  "js_child_exec.js": "vuln",
+  "js_dynamic_require.js": "vuln",
+  "js_benign_exec.js": "safe",
+  "sh_remote_pipe.sh": "vuln",
+  "sh_rm_var.sh": "vuln",
+  "sh_benign.sh": "safe"
+}

@@ -1,0 +1,134 @@
+{
+ "as_of": "2026-11-27T21:04:40+08:00",
+ "cases": 12,
+ "product": {
+  "engine": "C:\\Users\\Administrator\\Doubao\\chats\\2026-11-19\\new-chat-6\\XLGD整改审计_20261119\\proposals\\p31_intent\\intent_engine.py",
+  "passed": 0
+ },
+ "reference": {
+  "engine": "D:\\lgd-work\\roadmap-run\\dist\\repo_probe\\lgd-gate-main\\audit\\20261121\\reproduce\\intent_contract_reference_20261121.py",
+  "passed": 12
+ },
+ "rows": [
+  {
+   "id": "C01",
+   "desc": "纯提示词技能（只有 SKILL.md，无可执行代码）",
+   "expect": "PROMPT_ONLY",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "PROMPT_ONLY",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C02",
+   "desc": "干净 Python 工具（读参数、写 stdout）",
+   "expect": "ALLOW",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "ALLOW",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C03",
+   "desc": "读凭据 + 网络外发（完整外泄链）",
+   "expect": "DENY",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "DENY",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C04",
+   "desc": "下载 + 动态执行（远端代码执行）",
+   "expect": "DENY",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "DENY",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C05",
+   "desc": "破坏性命令（不可恢复）",
+   "expect": "DENY",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "DENY",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C06",
+   "desc": "仅持久化面（写 authorized_keys）→ 需人工确认",
+   "expect": "REVIEW",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "REVIEW",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C07",
+   "desc": "仅提权（sudo）→ 需人工确认",
+   "expect": "REVIEW",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "REVIEW",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C08",
+   "desc": "文档描述凭据外发（无代码）→ 文档最高 REVIEW",
+   "expect": "REVIEW",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "REVIEW",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C09",
+   "desc": "注释里的攻击字符串不是行为 → ALLOW",
+   "expect": "ALLOW",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "ALLOW",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C10",
+   "desc": "规则定义里的原始字符串（检测器悖论）→ ALLOW",
+   "expect": "ALLOW",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "ALLOW",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C11",
+   "desc": "只有文档、且文档无危险描述 → PROMPT_ONLY",
+   "expect": "PROMPT_ONLY",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "PROMPT_ONLY",
+   "reference_pass": true,
+   "same": false
+  },
+  {
+   "id": "C12",
+   "desc": "Python f-string 格式说明符（历史误报）→ ALLOW",
+   "expect": "ALLOW",
+   "product": "PARSE_ERROR",
+   "product_pass": false,
+   "reference": "ALLOW",
+   "reference_pass": true,
+   "same": false
+  }
+ ]
+}

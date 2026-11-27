@@ -1,0 +1,1775 @@
+{
+ "as_of": "2026-11-21T21:07:56+08:00",
+ "source_repo": "LGD-Eval/lgd-gate",
+ "source_branch": "main",
+ "source_head": "833b5bb2f1fc3beb95a980fdfa6b80aa779cacae",
+ "rule_version": "v3.2.0",
+ "count": 174,
+ "duplicates": [],
+ "severity_counts": {
+  "MEDIUM": 47,
+  "HIGH": 51,
+  "INFO": 18,
+  "CRITICAL": 31,
+  "LOW": 27
+ },
+ "prefix_counts": {
+  "DC": 34,
+  "NT": 22,
+  "CR": 11,
+  "FS": 11,
+  "MD": 15,
+  "HO": 2,
+  "EX": 14,
+  "LC": 4,
+  "QL": 7,
+  "AU": 6,
+  "VL": 4,
+  "EF": 4,
+  "SH": 21,
+  "JS": 19
+ },
+ "method": "AST 解析三元组/四元组（ID, 正则, 严重度, 消息），跨行亦可",
+ "rules": [
+  {
+   "id": "DC001",
+   "file": "skillgate.py",
+   "line": 48,
+   "severity": "MEDIUM",
+   "regex": "\\beval\\s*\\(",
+   "message": "eval() 动态代码执行（工具常用，需人工判断）",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC001\", r\"\\beval\\s*\\(\", \"MEDIUM\", \"eval() 动态代码执行（工具常用，需人工判断）\"),  # skillgate: ignore"
+  },
+  {
+   "id": "DC002",
+   "file": "skillgate.py",
+   "line": 49,
+   "severity": "MEDIUM",
+   "regex": "\\bexec\\s*\\(",
+   "message": "exec() 动态代码执行（工具常用，需人工判断）",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC002\", r\"\\bexec\\s*\\(\", \"MEDIUM\", \"exec() 动态代码执行（工具常用，需人工判断）\"),"
+  },
+  {
+   "id": "DC003",
+   "file": "skillgate.py",
+   "line": 50,
+   "severity": "HIGH",
+   "regex": "\\bos\\.system\\s*\\(",
+   "message": "os.system() shell 调用",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC003\", r\"\\bos\\.system\\s*\\(\", \"HIGH\", \"os.system() shell 调用\"),  # skillgate: ignore"
+  },
+  {
+   "id": "DC004",
+   "file": "skillgate.py",
+   "line": 51,
+   "severity": "HIGH",
+   "regex": "\\bsubprocess\\.(run|call|Popen|check_output)\\s*\\([^)]*shell\\s*=\\s*True",
+   "message": "subprocess shell=True",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC004\", r\"\\bsubprocess\\.(run|call|Popen|check_output)\\s*\\([^)]*shell\\s*=\\s*True\", \"HIGH\", \"subprocess shell=True\"),"
+  },
+  {
+   "id": "DC005",
+   "file": "skillgate.py",
+   "line": 52,
+   "severity": "HIGH",
+   "regex": "\\bos\\.popen\\s*\\(",
+   "message": "os.popen() shell 调用",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC005\", r\"\\bos\\.popen\\s*\\(\", \"HIGH\", \"os.popen() shell 调用\"),  # skillgate: ignore"
+  },
+  {
+   "id": "DC006",
+   "file": "skillgate.py",
+   "line": 53,
+   "severity": "MEDIUM",
+   "regex": "\\b__import__\\s*\\(",
+   "message": "动态 import",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC006\", r\"\\b__import__\\s*\\(\", \"MEDIUM\", \"动态 import\"),"
+  },
+  {
+   "id": "DC007",
+   "file": "skillgate.py",
+   "line": 54,
+   "severity": "HIGH",
+   "regex": "\\bpickle\\.load(s)?\\s*\\(",
+   "message": "pickle 反序列化",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC007\", r\"\\bpickle\\.load(s)?\\s*\\(\", \"HIGH\", \"pickle 反序列化\"),"
+  },
+  {
+   "id": "DC008",
+   "file": "skillgate.py",
+   "line": 55,
+   "severity": "MEDIUM",
+   "regex": "\\byaml\\.load\\s*\\([^)]*\\)(?![^#]*Loader\\s*=\\s*SafeLoader)",
+   "message": "yaml.load 非安全加载",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC008\", r\"\\byaml\\.load\\s*\\([^)]*\\)(?![^#]*Loader\\s*=\\s*SafeLoader)\", \"MEDIUM\", \"yaml.load 非安全加载\"),"
+  },
+  {
+   "id": "DC009",
+   "file": "skillgate.py",
+   "line": 56,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "(?<!\\.)\\bcompile\\s*\\(",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC009\", r\"(?<!\\.)\\bcompile\\s*\\(\", \"INFO\", \"compile() 动态代码编译（低风险）\"),"
+  },
+  {
+   "id": "DC010",
+   "file": "skillgate.py",
+   "line": 57,
+   "severity": "MEDIUM",
+   "regex": "\\bgetattr\\s*\\([^)]*os\\.",
+   "message": "getattr 动态调用 os 模块",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC010\", r\"\\bgetattr\\s*\\([^)]*os\\.\", \"MEDIUM\", \"getattr 动态调用 os 模块\"),"
+  },
+  {
+   "id": "DC011",
+   "file": "skillgate.py",
+   "line": 58,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\bglobals\\(\\)",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC011\", r\"\\bglobals\\(\\)\", \"INFO\", \"globals() 访问全局命名空间（低风险）\"),"
+  },
+  {
+   "id": "DC012",
+   "file": "skillgate.py",
+   "line": 59,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\blocals\\(\\)",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC012\", r\"\\blocals\\(\\)\", \"INFO\", \"locals() 访问局部命名空间（低风险）\"),"
+  },
+  {
+   "id": "DC013",
+   "file": "skillgate.py",
+   "line": 60,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\binput\\s*\\(\\)",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC013\", r\"\\binput\\s*\\(\\)\", \"INFO\", \"input() 接受用户输入（CLI 工具常见）\"),"
+  },
+  {
+   "id": "DC014",
+   "file": "skillgate.py",
+   "line": 61,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\binput\\s*\\([^)]*\\)",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC014\", r\"\\binput\\s*\\([^)]*\\)\", \"INFO\", \"input() 接受用户输入（CLI 工具常见）\"),"
+  },
+  {
+   "id": "DC015",
+   "file": "skillgate.py",
+   "line": 62,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\b__builtins__\\b",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC015\", r\"\\b__builtins__\\b\", \"INFO\", \"访问 __builtins__（低风险）\"),"
+  },
+  {
+   "id": "DC016",
+   "file": "skillgate.py",
+   "line": 63,
+   "severity": "MEDIUM",
+   "regex": "\\bglobals\\(\\)\\[",
+   "message": "globals() 动态修改",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC016\", r\"\\bglobals\\(\\)\\[\", \"MEDIUM\", \"globals() 动态修改\"),"
+  },
+  {
+   "id": "DC017",
+   "file": "skillgate.py",
+   "line": 64,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\bsetattr\\s*\\(",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC017\", r\"\\bsetattr\\s*\\(\", \"INFO\", \"setattr 动态属性设置（低风险）\"),"
+  },
+  {
+   "id": "DC018",
+   "file": "skillgate.py",
+   "line": 65,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\bdelattr\\s*\\(",
+   "section": "1. Dangerous code execution",
+   "line_text": "(\"DC018\", r\"\\bdelattr\\s*\\(\", \"INFO\", \"delattr 动态属性删除（低风险）\"),"
+  },
+  {
+   "id": "DC019",
+   "file": "skillgate.py",
+   "line": 67,
+   "severity": "HIGH",
+   "regex": "\\bmarshal\\.load(s)?\\s*\\(",
+   "message": "marshal 反序列化",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC019\", r\"\\bmarshal\\.load(s)?\\s*\\(\", \"HIGH\", \"marshal 反序列化\"),"
+  },
+  {
+   "id": "DC020",
+   "file": "skillgate.py",
+   "line": 68,
+   "severity": "MEDIUM",
+   "regex": "\\bshelve\\.open\\s*\\(",
+   "message": "shelve 反序列化",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC020\", r\"\\bshelve\\.open\\s*\\(\", \"MEDIUM\", \"shelve 反序列化\"),"
+  },
+  {
+   "id": "DC021",
+   "file": "skillgate.py",
+   "line": 69,
+   "severity": "HIGH",
+   "regex": "\\bjsonpickle\\.decode\\s*\\(",
+   "message": "jsonpickle 反序列化",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC021\", r\"\\bjsonpickle\\.decode\\s*\\(\", \"HIGH\", \"jsonpickle 反序列化\"),"
+  },
+  {
+   "id": "DC022",
+   "file": "skillgate.py",
+   "line": 70,
+   "severity": "CRITICAL",
+   "regex": "\\byaml\\.unsafe_load\\s*\\(",
+   "message": "yaml.unsafe_load 任意代码执行",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC022\", r\"\\byaml\\.unsafe_load\\s*\\(\", \"CRITICAL\", \"yaml.unsafe_load 任意代码执行\"),"
+  },
+  {
+   "id": "DC023",
+   "file": "skillgate.py",
+   "line": 71,
+   "severity": "MEDIUM",
+   "regex": "\\b__reduce__\\s*\\(",
+   "message": "__reduce__ 反序列化钩子",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC023\", r\"\\b__reduce__\\s*\\(\", \"MEDIUM\", \"__reduce__ 反序列化钩子\"),"
+  },
+  {
+   "id": "DC024",
+   "file": "skillgate.py",
+   "line": 72,
+   "severity": "MEDIUM",
+   "regex": "\\bbuiltins\\.__import__\\s*\\(",
+   "message": "builtins.__import__ 动态导入",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC024\", r\"\\bbuiltins\\.__import__\\s*\\(\", \"MEDIUM\", \"builtins.__import__ 动态导入\"),"
+  },
+  {
+   "id": "DC025",
+   "file": "skillgate.py",
+   "line": 73,
+   "severity": "LOW",
+   "regex": "\\bimportlib\\.import_module\\s*\\(",
+   "message": "importlib 动态导入",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC025\", r\"\\bimportlib\\.import_module\\s*\\(\", \"LOW\", \"importlib 动态导入\"),"
+  },
+  {
+   "id": "DC026",
+   "file": "skillgate.py",
+   "line": 74,
+   "severity": "HIGH",
+   "regex": "\\bctypes\\.CDLL\\s*\\(",
+   "message": "ctypes 加载动态库",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC026\", r\"\\bctypes\\.CDLL\\s*\\(\", \"HIGH\", \"ctypes 加载动态库\"),"
+  },
+  {
+   "id": "DC027",
+   "file": "skillgate.py",
+   "line": 75,
+   "severity": "HIGH",
+   "regex": "\\bctypes\\.windll\\s*\\(",
+   "message": "ctypes 加载 Windows DLL",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC027\", r\"\\bctypes\\.windll\\s*\\(\", \"HIGH\", \"ctypes 加载 Windows DLL\"),"
+  },
+  {
+   "id": "DC028",
+   "file": "skillgate.py",
+   "line": 76,
+   "severity": "HIGH",
+   "regex": "\\bctypes\\.oledll\\s*\\(",
+   "message": "ctypes 加载 OLE DLL",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC028\", r\"\\bctypes\\.oledll\\s*\\(\", \"HIGH\", \"ctypes 加载 OLE DLL\"),"
+  },
+  {
+   "id": "DC029",
+   "file": "skillgate.py",
+   "line": 77,
+   "severity": "HIGH",
+   "regex": "\\bdl\\.open\\s*\\(",
+   "message": "dlopen 加载动态库",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC029\", r\"\\bdl\\.open\\s*\\(\", \"HIGH\", \"dlopen 加载动态库\"),"
+  },
+  {
+   "id": "DC030",
+   "file": "skillgate.py",
+   "line": 78,
+   "severity": "MEDIUM",
+   "regex": "\\bctypes\\.pythonapi\\b",
+   "message": "ctypes.pythonapi 直接调用 C API",
+   "section": "=== 新增规则 ===",
+   "line_text": "(\"DC030\", r\"\\bctypes\\.pythonapi\\b\", \"MEDIUM\", \"ctypes.pythonapi 直接调用 C API\"),  # skillgate: ignore"
+  },
+  {
+   "id": "DC031",
+   "file": "skillgate.py",
+   "line": 81,
+   "severity": "HIGH",
+   "regex": "\\bchild_process\\b",
+   "message": "Node 子进程能力（child_process）",
+   "section": "导致同一技能两套扫描器结论不一致（js-skill 34 分但 skillgate 0 HIGH） ===",
+   "line_text": "(\"DC031\", r\"\\bchild_process\\b\", \"HIGH\", \"Node 子进程能力（child_process）\"),"
+  },
+  {
+   "id": "DC032",
+   "file": "skillgate.py",
+   "line": 82,
+   "severity": "HIGH",
+   "regex": "\\bexecSync\\s*\\(",
+   "message": "Node execSync 同步执行 shell",
+   "section": "导致同一技能两套扫描器结论不一致（js-skill 34 分但 skillgate 0 HIGH） ===",
+   "line_text": "(\"DC032\", r\"\\bexecSync\\s*\\(\", \"HIGH\", \"Node execSync 同步执行 shell\"),"
+  },
+  {
+   "id": "DC033",
+   "file": "skillgate.py",
+   "line": 83,
+   "severity": "HIGH",
+   "regex": "\\bshell\\s*:\\s*true",
+   "message": "Node 子进程 shell:true",
+   "section": "导致同一技能两套扫描器结论不一致（js-skill 34 分但 skillgate 0 HIGH） ===",
+   "line_text": "(\"DC033\", r\"\\bshell\\s*:\\s*true\", \"HIGH\", \"Node 子进程 shell:true\"),"
+  },
+  {
+   "id": "DC034",
+   "file": "skillgate.py",
+   "line": 84,
+   "severity": "HIGH",
+   "regex": "\\bnew\\s+Function\\s*\\(",
+   "message": "new Function 动态构造代码",
+   "section": "导致同一技能两套扫描器结论不一致（js-skill 34 分但 skillgate 0 HIGH） ===",
+   "line_text": "(\"DC034\", r\"\\bnew\\s+Function\\s*\\(\", \"HIGH\", \"new Function 动态构造代码\"),"
+  },
+  {
+   "id": "NT001",
+   "file": "skillgate.py",
+   "line": 89,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\bimport\\s+requests\\b",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT001\", r\"\\bimport\\s+requests\\b\", \"INFO\", \"requests 网络库（常见）\"),"
+  },
+  {
+   "id": "NT002",
+   "file": "skillgate.py",
+   "line": 90,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\bfrom\\s+requests\\s+import\\b",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT002\", r\"\\bfrom\\s+requests\\s+import\\b\", \"INFO\", \"requests 网络库（常见）\"),"
+  },
+  {
+   "id": "NT003",
+   "file": "skillgate.py",
+   "line": 91,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\bimport\\s+urllib\\b",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT003\", r\"\\bimport\\s+urllib\\b\", \"INFO\", \"urllib 网络库（常见）\"),"
+  },
+  {
+   "id": "NT004",
+   "file": "skillgate.py",
+   "line": 92,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\bimport\\s+http\\.client\\b",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT004\", r\"\\bimport\\s+http\\.client\\b\", \"INFO\", \"http.client 网络库\"),"
+  },
+  {
+   "id": "NT005",
+   "file": "skillgate.py",
+   "line": 93,
+   "severity": "LOW",
+   "regex": "\\bimport\\s+socket\\b",
+   "message": "socket 原始网络连接",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT005\", r\"\\bimport\\s+socket\\b\", \"LOW\", \"socket 原始网络连接\"),"
+  },
+  {
+   "id": "NT006",
+   "file": "skillgate.py",
+   "line": 94,
+   "severity": "LOW",
+   "regex": "\\bimport\\s+ftplib\\b",
+   "message": "FTP 库",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT006\", r\"\\bimport\\s+ftplib\\b\", \"LOW\", \"FTP 库\"),"
+  },
+  {
+   "id": "NT007",
+   "file": "skillgate.py",
+   "line": 95,
+   "severity": "LOW",
+   "regex": "\\bimport\\s+smtplib\\b",
+   "message": "SMTP 邮件库",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT007\", r\"\\bimport\\s+smtplib\\b\", \"LOW\", \"SMTP 邮件库\"),"
+  },
+  {
+   "id": "NT008",
+   "file": "skillgate.py",
+   "line": 96,
+   "severity": "LOW",
+   "regex": "\\burlopen\\s*\\(",
+   "message": "urlopen 网络请求",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT008\", r\"\\burlopen\\s*\\(\", \"LOW\", \"urlopen 网络请求\"),"
+  },
+  {
+   "id": "NT009",
+   "file": "skillgate.py",
+   "line": 97,
+   "severity": "MEDIUM",
+   "regex": "\\bpost\\s*\\([^)]*https?://",
+   "message": "POST 数据到外部 URL",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT009\", r\"\\bpost\\s*\\([^)]*https?://\", \"MEDIUM\", \"POST 数据到外部 URL\"),"
+  },
+  {
+   "id": "NT010",
+   "file": "skillgate.py",
+   "line": 98,
+   "severity": "LOW",
+   "regex": "\\brequests\\.get\\s*\\([^)]*http://",
+   "message": "GET 请求明文外部 URL",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT010\", r\"\\brequests\\.get\\s*\\([^)]*http://\", \"LOW\", \"GET 请求明文外部 URL\"),"
+  },
+  {
+   "id": "NT011",
+   "file": "skillgate.py",
+   "line": 99,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\bhttpx\\b",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT011\", r\"\\bhttpx\\b\", \"INFO\", \"httpx HTTP 客户端（常见）\"),"
+  },
+  {
+   "id": "NT012",
+   "file": "skillgate.py",
+   "line": 100,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\baiohttp\\b",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT012\", r\"\\baiohttp\\b\", \"INFO\", \"aiohttp 异步 HTTP（常见）\"),"
+  },
+  {
+   "id": "NT013",
+   "file": "skillgate.py",
+   "line": 101,
+   "severity": "LOW",
+   "regex": "\\bcurl\\b",
+   "message": "curl 命令行网络工具",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT013\", r\"\\bcurl\\b\", \"LOW\", \"curl 命令行网络工具\"),"
+  },
+  {
+   "id": "NT014",
+   "file": "skillgate.py",
+   "line": 102,
+   "severity": "LOW",
+   "regex": "\\bwget\\b",
+   "message": "wget 命令行网络工具",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT014\", r\"\\bwget\\b\", \"LOW\", \"wget 命令行网络工具\"),"
+  },
+  {
+   "id": "NT015",
+   "file": "skillgate.py",
+   "line": 103,
+   "severity": "HIGH",
+   "regex": "\\bnc\\s+-[el]\\b",
+   "message": "netcat 反向 shell 风险",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT015\", r\"\\bnc\\s+-[el]\\b\", \"HIGH\", \"netcat 反向 shell 风险\"),"
+  },
+  {
+   "id": "NT016",
+   "file": "skillgate.py",
+   "line": 104,
+   "severity": "LOW",
+   "regex": "\\bncat\\b",
+   "message": "ncat 网络工具",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT016\", r\"\\bncat\\b\", \"LOW\", \"ncat 网络工具\"),"
+  },
+  {
+   "id": "NT017",
+   "file": "skillgate.py",
+   "line": 105,
+   "severity": "HIGH",
+   "regex": "\\btelnetlib\\b",
+   "message": "telnetlib 明文传输",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT017\", r\"\\btelnetlib\\b\", \"HIGH\", \"telnetlib 明文传输\"),  # skillgate: ignore"
+  },
+  {
+   "id": "NT018",
+   "file": "skillgate.py",
+   "line": 106,
+   "severity": "LOW",
+   "regex": "\\bparamiko\\b",
+   "message": "paramiko SSH 库",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT018\", r\"\\bparamiko\\b\", \"LOW\", \"paramiko SSH 库\"),"
+  },
+  {
+   "id": "NT019",
+   "file": "skillgate.py",
+   "line": 107,
+   "severity": "LOW",
+   "regex": "\\bscp\\b",
+   "message": "scp 文件传输",
+   "section": "2. Network calls / data exfiltration",
+   "line_text": "(\"NT019\", r\"\\bscp\\b\", \"LOW\", \"scp 文件传输\"),"
+  },
+  {
+   "id": "NT020",
+   "file": "skillgate.py",
+   "line": 110,
+   "severity": "MEDIUM",
+   "regex": "\\bdict\\s*\\(\\s*os\\.environ\\b",
+   "message": "整份环境变量导出（外泄前兆）",
+   "section": "这里只给 MEDIUM（还差一次外发才算实锤）；evaluate.py 的 R-SEC-21 做组合判定。",
+   "line_text": "(\"NT020\", r\"\\bdict\\s*\\(\\s*os\\.environ\\b\", \"MEDIUM\", \"整份环境变量导出（外泄前兆）\"),"
+  },
+  {
+   "id": "NT021",
+   "file": "skillgate.py",
+   "line": 111,
+   "severity": "MEDIUM",
+   "regex": "\\bos\\.environ\\.copy\\s*\\(",
+   "message": "整份环境变量复制（外泄前兆）",
+   "section": "这里只给 MEDIUM（还差一次外发才算实锤）；evaluate.py 的 R-SEC-21 做组合判定。",
+   "line_text": "(\"NT021\", r\"\\bos\\.environ\\.copy\\s*\\(\", \"MEDIUM\", \"整份环境变量复制（外泄前兆）\"),"
+  },
+  {
+   "id": "NT022",
+   "file": "skillgate.py",
+   "line": 112,
+   "severity": "MEDIUM",
+   "regex": "\\bin\\s+os\\.environ\\.items\\s*\\(",
+   "message": "遍历全部环境变量",
+   "section": "这里只给 MEDIUM（还差一次外发才算实锤）；evaluate.py 的 R-SEC-21 做组合判定。",
+   "line_text": "(\"NT022\", r\"\\bin\\s+os\\.environ\\.items\\s*\\(\", \"MEDIUM\", \"遍历全部环境变量\"),"
+  },
+  {
+   "id": "CR001",
+   "file": "skillgate.py",
+   "line": 117,
+   "severity": "CRITICAL",
+   "regex": "re.compile('(api[_-]?key|apikey|secret|token|password|passwd|credential)\\\\s*[:=]\\\\s*[\\'\\\\\"]([^\\'\\\\\"]{8,})[\\'\\\\\"]', re.IGNORECASE)",
+   "message": "硬编码凭证",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR001\", re.compile(r\"(api[_-]?key|apikey|secret|token|password|passwd|credential)\\s*[:=]\\s*['\\\"]([^'\\\"]{8,})['\\\"]\", re.IGNORECAS"
+  },
+  {
+   "id": "CR002",
+   "file": "skillgate.py",
+   "line": 119,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "re.compile('os\\\\.environ\\\\[[\\'\\\\\"](.*TOKEN|.*KEY|.*SECRET|.*PASSWORD)[\\'\\\\\"]\\\\]', re.IGNORECASE)",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR002\", re.compile(r\"os\\.environ\\[['\\\"](.*TOKEN|.*KEY|.*SECRET|.*PASSWORD)['\\\"]\\]\", re.IGNORECASE),"
+  },
+  {
+   "id": "CR003",
+   "file": "skillgate.py",
+   "line": 121,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "re.compile('os\\\\.getenv\\\\s*\\\\(\\\\s*[\\'\\\\\"](.*TOKEN|.*KEY|.*SECRET|.*PASSWORD)', re.IGNORECASE)",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR003\", re.compile(r\"os\\.getenv\\s*\\(\\s*['\\\"](.*TOKEN|.*KEY|.*SECRET|.*PASSWORD)\", re.IGNORECASE),"
+  },
+  {
+   "id": "CR004",
+   "file": "skillgate.py",
+   "line": 123,
+   "severity": "HIGH",
+   "regex": "re.compile('~\\\\.ssh/', re.IGNORECASE)",
+   "message": "访问 SSH 密钥目录",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR004\", re.compile(r\"~\\.ssh/\", re.IGNORECASE),"
+  },
+  {
+   "id": "CR005",
+   "file": "skillgate.py",
+   "line": 125,
+   "severity": "HIGH",
+   "regex": "re.compile('\\\\.aws/credentials', re.IGNORECASE)",
+   "message": "访问 AWS 凭证文件",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR005\", re.compile(r\"\\.aws/credentials\", re.IGNORECASE),"
+  },
+  {
+   "id": "CR006",
+   "file": "skillgate.py",
+   "line": 127,
+   "severity": "HIGH",
+   "regex": "re.compile('\\\\.git-credentials', re.IGNORECASE)",
+   "message": "访问 Git 凭证文件",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR006\", re.compile(r\"\\.git-credentials\", re.IGNORECASE),"
+  },
+  {
+   "id": "CR007",
+   "file": "skillgate.py",
+   "line": 129,
+   "severity": "MEDIUM",
+   "regex": "re.compile('\\\\.netrc', re.IGNORECASE)",
+   "message": "访问 .netrc 凭证文件",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR007\", re.compile(r\"\\.netrc\", re.IGNORECASE),"
+  },
+  {
+   "id": "CR008",
+   "file": "skillgate.py",
+   "line": 131,
+   "severity": "MEDIUM",
+   "regex": "re.compile('\\\\.npmrc', re.IGNORECASE)",
+   "message": "访问 .npmrc 凭证文件",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR008\", re.compile(r\"\\.npmrc\", re.IGNORECASE),"
+  },
+  {
+   "id": "CR009",
+   "file": "skillgate.py",
+   "line": 133,
+   "severity": "MEDIUM",
+   "regex": "re.compile('\\\\.pypirc', re.IGNORECASE)",
+   "message": "访问 .pypirc 凭证文件",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR009\", re.compile(r\"\\.pypirc\", re.IGNORECASE),"
+  },
+  {
+   "id": "CR010",
+   "file": "skillgate.py",
+   "line": 135,
+   "severity": "HIGH",
+   "regex": "re.compile('id_rsa', re.IGNORECASE)",
+   "message": "访问 SSH 私钥",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR010\", re.compile(r\"id_rsa\", re.IGNORECASE),"
+  },
+  {
+   "id": "CR011",
+   "file": "skillgate.py",
+   "line": 137,
+   "severity": "HIGH",
+   "regex": "re.compile('id_ed25519', re.IGNORECASE)",
+   "message": "访问 SSH 私钥",
+   "section": "3. Credential / secret access",
+   "line_text": "(\"CR011\", re.compile(r\"id_ed25519\", re.IGNORECASE),"
+  },
+  {
+   "id": "FS001",
+   "file": "skillgate.py",
+   "line": 144,
+   "severity": "MEDIUM",
+   "regex": "\\bshutil\\.rmtree\\s*\\(",
+   "message": "shutil.rmtree 递归删除",
+   "section": "4. File system danger",
+   "line_text": "(\"FS001\", r\"\\bshutil\\.rmtree\\s*\\(\", \"MEDIUM\", \"shutil.rmtree 递归删除\"),"
+  },
+  {
+   "id": "FS002",
+   "file": "skillgate.py",
+   "line": 145,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\bos\\.remove\\s*\\(",
+   "section": "4. File system danger",
+   "line_text": "(\"FS002\", r\"\\bos\\.remove\\s*\\(\", \"INFO\", \"os.remove 删除文件（常见）\"),"
+  },
+  {
+   "id": "FS003",
+   "file": "skillgate.py",
+   "line": 146,
+   "severity": "INFO",
+   "regex": "INFO",
+   "message": "\\bos\\.rmdir\\s*\\(",
+   "section": "4. File system danger",
+   "line_text": "(\"FS003\", r\"\\bos\\.rmdir\\s*\\(\", \"INFO\", \"os.rmdir 删除目录（常见）\"),"
+  },
+  {
+   "id": "FS004",
+   "file": "skillgate.py",
+   "line": 147,
+   "severity": "MEDIUM",
+   "regex": "\\bos\\.unlink\\s*\\(",
+   "message": "os.unlink 删除文件",
+   "section": "4. File system danger",
+   "line_text": "(\"FS004\", r\"\\bos\\.unlink\\s*\\(\", \"MEDIUM\", \"os.unlink 删除文件\"),"
+  },
+  {
+   "id": "FS005",
+   "file": "skillgate.py",
+   "line": 148,
+   "severity": "HIGH",
+   "regex": "\\bopen\\s*\\([^)]*['\\\"]/etc/",
+   "message": "写入 /etc/ 系统目录",
+   "section": "4. File system danger",
+   "line_text": "(\"FS005\", r\"\\bopen\\s*\\([^)]*['\\\"]/etc/\", \"HIGH\", \"写入 /etc/ 系统目录\"),"
+  },
+  {
+   "id": "FS006",
+   "file": "skillgate.py",
+   "line": 149,
+   "severity": "HIGH",
+   "regex": "\\bopen\\s*\\([^)]*['\\\"]C:\\\\\\\\Windows\\\\\\\\",
+   "message": "写入 Windows 系统目录",
+   "section": "4. File system danger",
+   "line_text": "(\"FS006\", r\"\\bopen\\s*\\([^)]*['\\\"]C:\\\\\\\\Windows\\\\\\\\\", \"HIGH\", \"写入 Windows 系统目录\"),"
+  },
+  {
+   "id": "FS007",
+   "file": "skillgate.py",
+   "line": 150,
+   "severity": "HIGH",
+   "regex": "\\bopen\\s*\\([^)]*['\\\"]/System/",
+   "message": "写入 macOS 系统目录",
+   "section": "4. File system danger",
+   "line_text": "(\"FS007\", r\"\\bopen\\s*\\([^)]*['\\\"]/System/\", \"HIGH\", \"写入 macOS 系统目录\"),"
+  },
+  {
+   "id": "FS008",
+   "file": "skillgate.py",
+   "line": 151,
+   "severity": "MEDIUM",
+   "regex": "\\bos\\.rename\\s*\\([^)]*/etc/",
+   "message": "重命名 /etc/ 下文件",
+   "section": "4. File system danger",
+   "line_text": "(\"FS008\", r\"\\bos\\.rename\\s*\\([^)]*/etc/\", \"MEDIUM\", \"重命名 /etc/ 下文件\"),"
+  },
+  {
+   "id": "FS009",
+   "file": "skillgate.py",
+   "line": 152,
+   "severity": "MEDIUM",
+   "regex": "\\bshutil\\.move\\s*\\([^)]*/etc/",
+   "message": "移动文件到 /etc/",
+   "section": "4. File system danger",
+   "line_text": "(\"FS009\", r\"\\bshutil\\.move\\s*\\([^)]*/etc/\", \"MEDIUM\", \"移动文件到 /etc/\"),"
+  },
+  {
+   "id": "FS010",
+   "file": "skillgate.py",
+   "line": 153,
+   "severity": "LOW",
+   "regex": "\\btempfile\\.mkdtemp\\b",
+   "message": "创建临时目录",
+   "section": "4. File system danger",
+   "line_text": "(\"FS010\", r\"\\btempfile\\.mkdtemp\\b\", \"LOW\", \"创建临时目录\"),"
+  },
+  {
+   "id": "FS011",
+   "file": "skillgate.py",
+   "line": 154,
+   "severity": "MEDIUM",
+   "regex": "\\btempfile\\.mktemp\\b",
+   "message": "mktemp 临时文件竞争风险",
+   "section": "4. File system danger",
+   "line_text": "(\"FS011\", r\"\\btempfile\\.mktemp\\b\", \"MEDIUM\", \"mktemp 临时文件竞争风险\"),"
+  },
+  {
+   "id": "MD001",
+   "file": "skillgate.py",
+   "line": 159,
+   "severity": "CRITICAL",
+   "regex": "ignore\\s+(all\\s+)?(the\\s+)?previous\\s+instructions",
+   "message": "Prompt injection: ignore previous",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD001\", r\"ignore\\s+(all\\s+)?(the\\s+)?previous\\s+instructions\", \"CRITICAL\", \"Prompt injection: ignore previous\"),"
+  },
+  {
+   "id": "MD002",
+   "file": "skillgate.py",
+   "line": 160,
+   "severity": "CRITICAL",
+   "regex": "disregard\\s+(all\\s+)?(the\\s+)?previous",
+   "message": "Prompt injection: disregard previous",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD002\", r\"disregard\\s+(all\\s+)?(the\\s+)?previous\", \"CRITICAL\", \"Prompt injection: disregard previous\"),"
+  },
+  {
+   "id": "MD003",
+   "file": "skillgate.py",
+   "line": 161,
+   "severity": "LOW",
+   "regex": "you\\s+are\\s+now\\s+a?n?\\s+\\w+",
+   "message": "角色定义，低风险，需人工确认",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD003\", r\"you\\s+are\\s+now\\s+a?n?\\s+\\w+\", \"LOW\", \"角色定义，低风险，需人工确认\"),"
+  },
+  {
+   "id": "MD004",
+   "file": "skillgate.py",
+   "line": 162,
+   "severity": "HIGH",
+   "regex": "system\\s+prompt\\s+leak",
+   "message": "System prompt leak attempt",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD004\", r\"system\\s+prompt\\s+leak\", \"HIGH\", \"System prompt leak attempt\"),"
+  },
+  {
+   "id": "MD005",
+   "file": "skillgate.py",
+   "line": 163,
+   "severity": "CRITICAL",
+   "regex": "jailbreak",
+   "message": "Jailbreak pattern",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD005\", r\"jailbreak\", \"CRITICAL\", \"Jailbreak pattern\"),"
+  },
+  {
+   "id": "MD006",
+   "file": "skillgate.py",
+   "line": 164,
+   "severity": "HIGH",
+   "regex": "reveal\\s+your\\s+instructions",
+   "message": "Reveal system instructions attempt",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD006\", r\"reveal\\s+your\\s+instructions\", \"HIGH\", \"Reveal system instructions attempt\"),"
+  },
+  {
+   "id": "MD007",
+   "file": "skillgate.py",
+   "line": 165,
+   "severity": "HIGH",
+   "regex": "reveal\\s+your\\s+prompt",
+   "message": "Reveal system prompt attempt",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD007\", r\"reveal\\s+your\\s+prompt\", \"HIGH\", \"Reveal system prompt attempt\"),"
+  },
+  {
+   "id": "MD008",
+   "file": "skillgate.py",
+   "line": 166,
+   "severity": "HIGH",
+   "regex": "bypass\\s+safety",
+   "message": "Bypass safety guardrails",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD008\", r\"bypass\\s+safety\", \"HIGH\", \"Bypass safety guardrails\"),"
+  },
+  {
+   "id": "MD009",
+   "file": "skillgate.py",
+   "line": 167,
+   "severity": "MEDIUM",
+   "regex": "do\\s+not\\s+tell\\s+the\\s+user",
+   "message": "Hide actions from user",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD009\", r\"do\\s+not\\s+tell\\s+the\\s+user\", \"MEDIUM\", \"Hide actions from user\"),"
+  },
+  {
+   "id": "MD010",
+   "file": "skillgate.py",
+   "line": 168,
+   "severity": "LOW",
+   "regex": "do\\s+not\\s+mention",
+   "message": "Instructed to omit information",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD010\", r\"do\\s+not\\s+mention\", \"LOW\", \"Instructed to omit information\"),"
+  },
+  {
+   "id": "MD011",
+   "file": "skillgate.py",
+   "line": 169,
+   "severity": "LOW",
+   "regex": "pretend\\s+you\\s+are",
+   "message": "角色定义，低风险，需人工确认",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD011\", r\"pretend\\s+you\\s+are\", \"LOW\", \"角色定义，低风险，需人工确认\"),"
+  },
+  {
+   "id": "MD012",
+   "file": "skillgate.py",
+   "line": 170,
+   "severity": "LOW",
+   "regex": "act\\s+as\\s+if\\s+you\\s+are",
+   "message": "角色定义，低风险，需人工确认",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD012\", r\"act\\s+as\\s+if\\s+you\\s+are\", \"LOW\", \"角色定义，低风险，需人工确认\"),"
+  },
+  {
+   "id": "MD013",
+   "file": "skillgate.py",
+   "line": 171,
+   "severity": "CRITICAL",
+   "regex": "forget\\s+your\\s+rules",
+   "message": "Forget your rules",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD013\", r\"forget\\s+your\\s+rules\", \"CRITICAL\", \"Forget your rules\"),"
+  },
+  {
+   "id": "MD014",
+   "file": "skillgate.py",
+   "line": 172,
+   "severity": "CRITICAL",
+   "regex": "override\\s+your\\s+guidelines",
+   "message": "Override guidelines",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD014\", r\"override\\s+your\\s+guidelines\", \"CRITICAL\", \"Override guidelines\"),"
+  },
+  {
+   "id": "MD015",
+   "file": "skillgate.py",
+   "line": 173,
+   "severity": "CRITICAL",
+   "regex": "ignore\\s+your\\s+training",
+   "message": "Ignore training",
+   "section": "5. Prompt injection / LLM-specific risks",
+   "line_text": "(\"MD015\", r\"ignore\\s+your\\s+training\", \"CRITICAL\", \"Ignore training\"),"
+  },
+  {
+   "id": "HON001",
+   "file": "skillgate.py",
+   "line": 180,
+   "severity": "MEDIUM",
+   "regex": "17\\s+languages",
+   "message": "疑似吹牛：17 languages",
+   "section": "静态无法判定真吹牛），仅保留高特异性的具体吹牛模式。",
+   "line_text": "(\"HON001\", r\"17\\s+languages\", \"MEDIUM\", \"疑似吹牛：17 languages\"),"
+  },
+  {
+   "id": "HON002",
+   "file": "skillgate.py",
+   "line": 181,
+   "severity": "MEDIUM",
+   "regex": "600\\+\\s+rules",
+   "message": "疑似吹牛：600+ rules",
+   "section": "静态无法判定真吹牛），仅保留高特异性的具体吹牛模式。",
+   "line_text": "(\"HON002\", r\"600\\+\\s+rules\", \"MEDIUM\", \"疑似吹牛：600+ rules\"),"
+  },
+  {
+   "id": "EX001",
+   "file": "skillgate.py",
+   "line": 186,
+   "severity": "CRITICAL",
+   "regex": "delete\\s+all\\s+files",
+   "message": "Excessive agency: delete all files",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX001\", r\"delete\\s+all\\s+files\", \"CRITICAL\", \"Excessive agency: delete all files\"),  # skillgate: ignore"
+  },
+  {
+   "id": "EX002",
+   "file": "skillgate.py",
+   "line": 187,
+   "severity": "HIGH",
+   "regex": "send\\s+all\\s+data",
+   "message": "Excessive agency: exfiltrate all data",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX002\", r\"send\\s+all\\s+data\", \"HIGH\", \"Excessive agency: exfiltrate all data\"),"
+  },
+  {
+   "id": "EX003",
+   "file": "skillgate.py",
+   "line": 188,
+   "severity": "HIGH",
+   "regex": "send\\s+all\\s+user\\s+data",
+   "message": "Excessive agency: exfiltrate all user data",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX003\", r\"send\\s+all\\s+user\\s+data\", \"HIGH\", \"Excessive agency: exfiltrate all user data\"),"
+  },
+  {
+   "id": "EX004",
+   "file": "skillgate.py",
+   "line": 189,
+   "severity": "HIGH",
+   "regex": "exfiltrat\\w*\\s+(?:all\\s+)?(?:user\\s+)?data",
+   "message": "Excessive agency: exfiltration of all data",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX004\", r\"exfiltrat\\w*\\s+(?:all\\s+)?(?:user\\s+)?data\", \"HIGH\", \"Excessive agency: exfiltration of all data\"),"
+  },
+  {
+   "id": "EX005",
+   "file": "skillgate.py",
+   "line": 190,
+   "severity": "HIGH",
+   "regex": "run\\s+arbitrary\\s+commands",
+   "message": "Arbitrary command execution",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX005\", r\"run\\s+arbitrary\\s+commands\", \"HIGH\", \"Arbitrary command execution\"),"
+  },
+  {
+   "id": "EX006",
+   "file": "skillgate.py",
+   "line": 191,
+   "severity": "MEDIUM",
+   "regex": "access\\s+all\\s+files",
+   "message": "Overly broad file access",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX006\", r\"access\\s+all\\s+files\", \"MEDIUM\", \"Overly broad file access\"),"
+  },
+  {
+   "id": "EX007",
+   "file": "skillgate.py",
+   "line": 192,
+   "severity": "HIGH",
+   "regex": "read\\s+every\\s+file",
+   "message": "Read every file",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX007\", r\"read\\s+every\\s+file\", \"HIGH\", \"Read every file\"),  # skillgate: ignore"
+  },
+  {
+   "id": "EX008",
+   "file": "skillgate.py",
+   "line": 193,
+   "severity": "HIGH",
+   "regex": "modify\\s+all\\s+configs",
+   "message": "Modify all configs",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX008\", r\"modify\\s+all\\s+configs\", \"HIGH\", \"Modify all configs\"),  # skillgate: ignore"
+  },
+  {
+   "id": "EX009",
+   "file": "skillgate.py",
+   "line": 194,
+   "severity": "MEDIUM",
+   "regex": "install\\s+any\\s+package",
+   "message": "Install any package",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX009\", r\"install\\s+any\\s+package\", \"MEDIUM\", \"Install any package\"),"
+  },
+  {
+   "id": "EX010",
+   "file": "skillgate.py",
+   "line": 195,
+   "severity": "MEDIUM",
+   "regex": "unrestricted\\s+internet\\s+access",
+   "message": "Unrestricted internet access",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX010\", r\"unrestricted\\s+internet\\s+access\", \"MEDIUM\", \"Unrestricted internet access\"),  # skillgate: ignore"
+  },
+  {
+   "id": "EX011",
+   "file": "skillgate.py",
+   "line": 196,
+   "severity": "CRITICAL",
+   "regex": "bypass\\s+all\\s+safety\\s+checks",
+   "message": "Bypass all safety checks",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX011\", r\"bypass\\s+all\\s+safety\\s+checks\", \"CRITICAL\", \"Bypass all safety checks\"),  # skillgate: ignore"
+  },
+  {
+   "id": "EX012",
+   "file": "skillgate.py",
+   "line": 197,
+   "severity": "HIGH",
+   "regex": "disable\\s+all\\s+filters",
+   "message": "Disable all filters",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX012\", r\"disable\\s+all\\s+filters\", \"HIGH\", \"Disable all filters\"),"
+  },
+  {
+   "id": "EX013",
+   "file": "skillgate.py",
+   "line": 198,
+   "severity": "CRITICAL",
+   "regex": "grant\\s+yourself\\s+admin",
+   "message": "Grant yourself admin access",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX013\", r\"grant\\s+yourself\\s+admin\", \"CRITICAL\", \"Grant yourself admin access\"),  # skillgate: ignore"
+  },
+  {
+   "id": "EX014",
+   "file": "skillgate.py",
+   "line": 199,
+   "severity": "HIGH",
+   "regex": "add\\s+new\\s+user\\s+accounts",
+   "message": "Add new user accounts",
+   "section": "6. Excessive agency / MCP risks",
+   "line_text": "(\"EX014\", r\"add\\s+new\\s+user\\s+accounts\", \"HIGH\", \"Add new user accounts\"),"
+  },
+  {
+   "id": "LC001",
+   "file": "skillgate.py",
+   "line": 207,
+   "severity": "MEDIUM",
+   "regex": "\\bGPL\\b",
+   "message": "GPL 许可证（传染性）",
+   "section": "until a call site exists. See audit/20261121/p31_intent/READ",
+   "line_text": "(\"LC001\", r\"\\bGPL\\b\", \"MEDIUM\", \"GPL 许可证（传染性）\"),"
+  },
+  {
+   "id": "LC002",
+   "file": "skillgate.py",
+   "line": 208,
+   "severity": "HIGH",
+   "regex": "\\bAGPL\\b",
+   "message": "AGPL 许可证（网络传染性）",
+   "section": "until a call site exists. See audit/20261121/p31_intent/READ",
+   "line_text": "(\"LC002\", r\"\\bAGPL\\b\", \"HIGH\", \"AGPL 许可证（网络传染性）\"),"
+  },
+  {
+   "id": "LC003",
+   "file": "skillgate.py",
+   "line": 209,
+   "severity": "HIGH",
+   "regex": "\\bSSPL\\b",
+   "message": "SSPL 许可证（服务端传染性）",
+   "section": "until a call site exists. See audit/20261121/p31_intent/READ",
+   "line_text": "(\"LC003\", r\"\\bSSPL\\b\", \"HIGH\", \"SSPL 许可证（服务端传染性）\"),"
+  },
+  {
+   "id": "LC004",
+   "file": "skillgate.py",
+   "line": 210,
+   "severity": "LOW",
+   "regex": "\\bUnlicense\\b",
+   "message": "Unlicense（公有领域）",
+   "section": "until a call site exists. See audit/20261121/p31_intent/READ",
+   "line_text": "(\"LC004\", r\"\\bUnlicense\\b\", \"LOW\", \"Unlicense（公有领域）\"),"
+  },
+  {
+   "id": "QL001",
+   "file": "skillgate.py",
+   "line": 215,
+   "severity": "LOW",
+   "regex": "\\bTODO\\b",
+   "message": "TODO 注释未完成",
+   "section": "8. Code quality",
+   "line_text": "(\"QL001\", r\"\\bTODO\\b\", \"LOW\", \"TODO 注释未完成\"),"
+  },
+  {
+   "id": "QL002",
+   "file": "skillgate.py",
+   "line": 216,
+   "severity": "LOW",
+   "regex": "\\bFIXME\\b",
+   "message": "FIXME 注释未修复",
+   "section": "8. Code quality",
+   "line_text": "(\"QL002\", r\"\\bFIXME\\b\", \"LOW\", \"FIXME 注释未修复\"),"
+  },
+  {
+   "id": "QL003",
+   "file": "skillgate.py",
+   "line": 217,
+   "severity": "LOW",
+   "regex": "\\bHACK\\b",
+   "message": "HACK 临时方案",
+   "section": "8. Code quality",
+   "line_text": "(\"QL003\", r\"\\bHACK\\b\", \"LOW\", \"HACK 临时方案\"),"
+  },
+  {
+   "id": "QL004",
+   "file": "skillgate.py",
+   "line": 218,
+   "severity": "LOW",
+   "regex": "\\bXXX\\b",
+   "message": "XXX 标记的问题",
+   "section": "8. Code quality",
+   "line_text": "(\"QL004\", r\"\\bXXX\\b\", \"LOW\", \"XXX 标记的问题\"),"
+  },
+  {
+   "id": "QL005",
+   "file": "skillgate.py",
+   "line": 219,
+   "severity": "LOW",
+   "regex": "\\bprint\\s*\\(",
+   "message": "print 调试语句",
+   "section": "8. Code quality",
+   "line_text": "(\"QL005\", r\"\\bprint\\s*\\(\", \"LOW\", \"print 调试语句\"),"
+  },
+  {
+   "id": "QL006",
+   "file": "skillgate.py",
+   "line": 220,
+   "severity": "LOW",
+   "regex": "\\bconsole\\.log\\(",
+   "message": "console.log 调试语句",
+   "section": "8. Code quality",
+   "line_text": "(\"QL006\", r\"\\bconsole\\.log\\(\", \"LOW\", \"console.log 调试语句\"),"
+  },
+  {
+   "id": "QL007",
+   "file": "skillgate.py",
+   "line": 221,
+   "severity": "MEDIUM",
+   "regex": "\\bdebugger\\b",
+   "message": "debugger 语句",
+   "section": "8. Code quality",
+   "line_text": "(\"QL007\", r\"\\bdebugger\\b\", \"MEDIUM\", \"debugger 语句\"),"
+  },
+  {
+   "id": "AU001",
+   "file": "skillgate.py",
+   "line": 226,
+   "severity": "MEDIUM",
+   "regex": "\\bauth\\s*=\\s*None\\b",
+   "message": "认证被禁用",
+   "section": "9. Authentication & Authorization",
+   "line_text": "(\"AU001\", r\"\\bauth\\s*=\\s*None\\b\", \"MEDIUM\", \"认证被禁用\"),"
+  },
+  {
+   "id": "AU002",
+   "file": "skillgate.py",
+   "line": 227,
+   "severity": "HIGH",
+   "regex": "\\bverify\\s*=\\s*False\\b",
+   "message": "SSL 验证被禁用",
+   "section": "9. Authentication & Authorization",
+   "line_text": "(\"AU002\", r\"\\bverify\\s*=\\s*False\\b\", \"HIGH\", \"SSL 验证被禁用\"),"
+  },
+  {
+   "id": "AU003",
+   "file": "skillgate.py",
+   "line": 228,
+   "severity": "HIGH",
+   "regex": "\\bALLOW_ALL\\b",
+   "message": "允许所有访问",
+   "section": "9. Authentication & Authorization",
+   "line_text": "(\"AU003\", r\"\\bALLOW_ALL\\b\", \"HIGH\", \"允许所有访问\"),"
+  },
+  {
+   "id": "AU004",
+   "file": "skillgate.py",
+   "line": 229,
+   "severity": "MEDIUM",
+   "regex": "\\bCORS.*\\*\\b",
+   "message": "CORS 允许所有来源",
+   "section": "9. Authentication & Authorization",
+   "line_text": "(\"AU004\", r\"\\bCORS.*\\*\\b\", \"MEDIUM\", \"CORS 允许所有来源\"),"
+  },
+  {
+   "id": "AU005",
+   "file": "skillgate.py",
+   "line": 230,
+   "severity": "CRITICAL",
+   "regex": "\\bpassword\\s*=\\s*['\\\"][^'\\\"]+['\\\"]",
+   "message": "硬编码密码",
+   "section": "9. Authentication & Authorization",
+   "line_text": "(\"AU005\", r\"\\bpassword\\s*=\\s*['\\\"][^'\\\"]+['\\\"]\", \"CRITICAL\", \"硬编码密码\"),"
+  },
+  {
+   "id": "AU006",
+   "file": "skillgate.py",
+   "line": 231,
+   "severity": "CRITICAL",
+   "regex": "\\btoken\\s*=\\s*['\\\"][a-zA-Z0-9]{20,}['\\\"]",
+   "message": "硬编码 token",
+   "section": "9. Authentication & Authorization",
+   "line_text": "(\"AU006\", r\"\\btoken\\s*=\\s*['\\\"][a-zA-Z0-9]{20,}['\\\"]\", \"CRITICAL\", \"硬编码 token\"),"
+  },
+  {
+   "id": "VL001",
+   "file": "skillgate.py",
+   "line": 236,
+   "severity": "LOW",
+   "regex": "\\brequest\\.args\\.get\\(",
+   "message": "直接读取请求参数",
+   "section": "10. Input Validation",
+   "line_text": "(\"VL001\", r\"\\brequest\\.args\\.get\\(\", \"LOW\", \"直接读取请求参数\"),"
+  },
+  {
+   "id": "VL002",
+   "file": "skillgate.py",
+   "line": 237,
+   "severity": "MEDIUM",
+   "regex": "\\binput\\s*\\(",
+   "message": "读取用户输入",
+   "section": "10. Input Validation",
+   "line_text": "(\"VL002\", r\"\\binput\\s*\\(\", \"MEDIUM\", \"读取用户输入\"),"
+  },
+  {
+   "id": "VL003",
+   "file": "skillgate.py",
+   "line": 238,
+   "severity": "LOW",
+   "regex": "\\bsys\\.argv\\b",
+   "message": "读取命令行参数",
+   "section": "10. Input Validation",
+   "line_text": "(\"VL003\", r\"\\bsys\\.argv\\b\", \"LOW\", \"读取命令行参数\"),"
+  },
+  {
+   "id": "VL004",
+   "file": "skillgate.py",
+   "line": 239,
+   "severity": "MEDIUM",
+   "regex": "\\bos\\.environ\\[",
+   "message": "读取环境变量",
+   "section": "10. Input Validation",
+   "line_text": "(\"VL004\", r\"\\bos\\.environ\\[\", \"MEDIUM\", \"读取环境变量\"),"
+  },
+  {
+   "id": "EF001",
+   "file": "skillgate.py",
+   "line": 247,
+   "severity": "MEDIUM",
+   "regex": "\\brequests\\.post\\([^)]*https?://",
+   "message": "向外发 POST 请求",
+   "section": "新增外泄规则请加到 NETWORK_PATTERNS，不要再往这里加。",
+   "line_text": "(\"EF001\", r\"\\brequests\\.post\\([^)]*https?://\", \"MEDIUM\", \"向外发 POST 请求\"),"
+  },
+  {
+   "id": "EF002",
+   "file": "skillgate.py",
+   "line": 248,
+   "severity": "MEDIUM",
+   "regex": "\\burllib\\.request\\.urlopen\\(",
+   "message": "向外发请求",
+   "section": "新增外泄规则请加到 NETWORK_PATTERNS，不要再往这里加。",
+   "line_text": "(\"EF002\", r\"\\burllib\\.request\\.urlopen\\(\", \"MEDIUM\", \"向外发请求\"),"
+  },
+  {
+   "id": "EF003",
+   "file": "skillgate.py",
+   "line": 249,
+   "severity": "MEDIUM",
+   "regex": "\\bsmtplib\\.SMTP\\(",
+   "message": "发送邮件",
+   "section": "新增外泄规则请加到 NETWORK_PATTERNS，不要再往这里加。",
+   "line_text": "(\"EF003\", r\"\\bsmtplib\\.SMTP\\(\", \"MEDIUM\", \"发送邮件\"),"
+  },
+  {
+   "id": "EF004",
+   "file": "skillgate.py",
+   "line": 250,
+   "severity": "MEDIUM",
+   "regex": "\\bsocket\\.socket\\(",
+   "message": "原始 socket 网络连接",
+   "section": "新增外泄规则请加到 NETWORK_PATTERNS，不要再往这里加。",
+   "line_text": "(\"EF004\", r\"\\bsocket\\.socket\\(\", \"MEDIUM\", \"原始 socket 网络连接\"),"
+  },
+  {
+   "id": "SH001",
+   "file": "skillgate.py",
+   "line": 995,
+   "severity": "CRITICAL",
+   "regex": "\\brm\\s+-rf?\\s+/\\s*(;|&&|\\||$)",
+   "message": "rm -rf / 危险删除（仅根目录）",
+   "section": "—— 原有 5 条（补 rule_id）——",
+   "line_text": "(\"SH001\", r\"\\brm\\s+-rf?\\s+/\\s*(;|&&|\\||$)\", \"CRITICAL\","
+  },
+  {
+   "id": "SH002",
+   "file": "skillgate.py",
+   "line": 997,
+   "severity": "HIGH",
+   "regex": "\\b(curl|wget)\\s+.*\\|\\s*(bash|sh|zsh)\\b",
+   "message": "下载后直接管道执行远程脚本",
+   "section": "—— 原有 5 条（补 rule_id）——",
+   "line_text": "(\"SH002\", r\"\\b(curl|wget)\\s+.*\\|\\s*(bash|sh|zsh)\\b\", \"HIGH\","
+  },
+  {
+   "id": "SH003",
+   "file": "skillgate.py",
+   "line": 999,
+   "severity": "MEDIUM",
+   "regex": "\\bchmod\\s+777",
+   "message": "chmod 777 权限过松",
+   "section": "—— 原有 5 条（补 rule_id）——",
+   "line_text": "(\"SH003\", r\"\\bchmod\\s+777\", \"MEDIUM\", \"chmod 777 权限过松\", \"任何用户可改写该文件\"),"
+  },
+  {
+   "id": "SH004",
+   "file": "skillgate.py",
+   "line": 1000,
+   "severity": "MEDIUM",
+   "regex": "\\bsudo\\s+",
+   "message": "sudo 权限提升",
+   "section": "—— 原有 5 条（补 rule_id）——",
+   "line_text": "(\"SH004\", r\"\\bsudo\\s+\", \"MEDIUM\", \"sudo 权限提升\", \"脚本需要提权，扩大影响面\"),"
+  },
+  {
+   "id": "SH005",
+   "file": "skillgate.py",
+   "line": 1005,
+   "severity": "CRITICAL",
+   "regex": "_INTERP_PIPE_DECODE",
+   "message": "解码后管道执行（解码器 | 任意解释器）",
+   "section": "只枚举 bash|sh 时，`| base64 -d | python3` 直接漏（holdout H01 就是这样漏的",
+   "line_text": "(\"SH005\", _INTERP_PIPE_DECODE, \"CRITICAL\","
+  },
+  {
+   "id": "SH006",
+   "file": "skillgate.py",
+   "line": 1008,
+   "severity": "CRITICAL",
+   "regex": "_INTERP_PIPE_ANY",
+   "message": "管道最终落到解释器执行（下载/回显 → 解释器）",
+   "section": "SH006 修正版：任意下载器 → 管道 → 任意解释器；中间可隔多段",
+   "line_text": "(\"SH006\", _INTERP_PIPE_ANY, \"CRITICAL\","
+  },
+  {
+   "id": "SH007",
+   "file": "skillgate.py",
+   "line": 1012,
+   "severity": "CRITICAL",
+   "regex": "\\brm\\s+-rf?\\s+(\\$HOME|~|\\$\\{?HOME\\}?)\\s*(;|&&|\\|$|$)",
+   "message": "删除用户主目录",
+   "section": "—— 新增：危险删除与家目录 ——",
+   "line_text": "(\"SH007\", r\"\\brm\\s+-rf?\\s+(\\$HOME|~|\\$\\{?HOME\\}?)\\s*(;|&&|\\|$|$)\", \"CRITICAL\","
+  },
+  {
+   "id": "SH008",
+   "file": "skillgate.py",
+   "line": 1014,
+   "severity": "CRITICAL",
+   "regex": "\\brm\\s+-rf?\\s+/(etc|usr|var|bin|boot)\\b",
+   "message": "删除系统关键目录",
+   "section": "—— 新增：危险删除与家目录 ——",
+   "line_text": "(\"SH008\", r\"\\brm\\s+-rf?\\s+/(etc|usr|var|bin|boot)\\b\", \"CRITICAL\","
+  },
+  {
+   "id": "SH009",
+   "file": "skillgate.py",
+   "line": 1018,
+   "severity": "CRITICAL",
+   "regex": "/dev/tcp/[^\\s]+",
+   "message": "反弹 shell（/dev/tcp）",
+   "section": "—— 新增：反弹 shell ——",
+   "line_text": "(\"SH009\", r\"/dev/tcp/[^\\s]+\", \"CRITICAL\","
+  },
+  {
+   "id": "SH010",
+   "file": "skillgate.py",
+   "line": 1020,
+   "severity": "CRITICAL",
+   "regex": "\\b(nc|ncat)\\b[^\\n]*\\s-[a-z]*e\\b",
+   "message": "netcat 反弹 shell（-e）",
+   "section": "—— 新增：反弹 shell ——",
+   "line_text": "(\"SH010\", r\"\\b(nc|ncat)\\b[^\\n]*\\s-[a-z]*e\\b\", \"CRITICAL\","
+  },
+  {
+   "id": "SH011",
+   "file": "skillgate.py",
+   "line": 1024,
+   "severity": "CRITICAL",
+   "regex": "\\b(curl|wget)\\s+[^\\n]*(--data[= ]?@|-d\\s*@|--upload-file)[^\\n]*(\\.ssh|\\.aws|\\.env|\\.netrc|\\.npmrc|id_rsa)",
+   "message": "上传凭据/密钥文件到远端",
+   "section": "—— 新增：凭据外泄（curl/wget 上传 + 复制型外传）——",
+   "line_text": "(\"SH011\", r\"\\b(curl|wget)\\s+[^\\n]*(--data[= ]?@|-d\\s*@|--upload-file)[^\\n]*(\\.ssh|\\.aws|\\.env|\\.netrc|\\.npmrc|id_rsa)\", \"CRITICAL\""
+  },
+  {
+   "id": "SH012",
+   "file": "skillgate.py",
+   "line": 1026,
+   "severity": "HIGH",
+   "regex": "\\b(curl|wget)\\s+[^\\n]*(\\.ssh/id_|\\.aws/credentials|\\.env\\b)",
+   "message": "命令中出现敏感文件路径",
+   "section": "—— 新增：凭据外泄（curl/wget 上传 + 复制型外传）——",
+   "line_text": "(\"SH012\", r\"\\b(curl|wget)\\s+[^\\n]*(\\.ssh/id_|\\.aws/credentials|\\.env\\b)\", \"HIGH\","
+  },
+  {
+   "id": "SH013",
+   "file": "skillgate.py",
+   "line": 1029,
+   "severity": "CRITICAL",
+   "regex": "\\b(scp|rsync|sftp|ftp|rclone)\\b[^\\n]*(\\.ssh|\\.aws|\\.env\\b|id_rsa|\\.netrc|\\.npmrc|\\.credentials)",
+   "message": "用复制工具外传凭据",
+   "section": "SH013：scp/rsync/ftp/rclone 这类\"复制型外传\"，此前完全没覆盖（holdout H02）",
+   "line_text": "(\"SH013\", r\"\\b(scp|rsync|sftp|ftp|rclone)\\b[^\\n]*(\\.ssh|\\.aws|\\.env\\b|id_rsa|\\.netrc|\\.npmrc|\\.credentials)\", \"CRITICAL\","
+  },
+  {
+   "id": "SH017",
+   "file": "skillgate.py",
+   "line": 1033,
+   "severity": "HIGH",
+   "regex": "\\b(iwr|Invoke-WebRequest|DownloadString|DownloadFile|Net\\.WebClient)\\b",
+   "message": "PowerShell 下载远程内容",
+   "section": "—— 新增：PowerShell 载体（.ps1 此前完全不在扫描范围内）——",
+   "line_text": "(\"SH017\", r\"\\b(iwr|Invoke-WebRequest|DownloadString|DownloadFile|Net\\.WebClient)\\b\", \"HIGH\","
+  },
+  {
+   "id": "SH018",
+   "file": "skillgate.py",
+   "line": 1035,
+   "severity": "CRITICAL",
+   "regex": "\\b(iex|Invoke-Expression)\\b",
+   "message": "PowerShell 动态执行（IEX）",
+   "section": "—— 新增：PowerShell 载体（.ps1 此前完全不在扫描范围内）——",
+   "line_text": "(\"SH018\", r\"\\b(iex|Invoke-Expression)\\b\", \"CRITICAL\","
+  },
+  {
+   "id": "SH019",
+   "file": "skillgate.py",
+   "line": 1037,
+   "severity": "CRITICAL",
+   "regex": "\\b(powershell|pwsh)\\b[^\\n]*\\s-e(nc|ncodedcommand)?\\b[^\\n]*[A-Za-z0-9+/=]{40,}",
+   "message": "PowerShell 编码命令执行",
+   "section": "—— 新增：PowerShell 载体（.ps1 此前完全不在扫描范围内）——",
+   "line_text": "(\"SH019\", r\"\\b(powershell|pwsh)\\b[^\\n]*\\s-e(nc|ncodedcommand)?\\b[^\\n]*[A-Za-z0-9+/=]{40,}\", \"CRITICAL\","
+  },
+  {
+   "id": "SH020",
+   "file": "skillgate.py",
+   "line": 1039,
+   "severity": "CRITICAL",
+   "regex": "\\b(Set-MpPreference|Add-MpPreference)\\b[^\\n]*(Disable|Exclusion)",
+   "message": "关闭或排除杀毒扫描",
+   "section": "—— 新增：PowerShell 载体（.ps1 此前完全不在扫描范围内）——",
+   "line_text": "(\"SH020\", r\"\\b(Set-MpPreference|Add-MpPreference)\\b[^\\n]*(Disable|Exclusion)\", \"CRITICAL\","
+  },
+  {
+   "id": "SH021",
+   "file": "skillgate.py",
+   "line": 1043,
+   "severity": "HIGH",
+   "regex": "\\b(cp|mv|install)\\b[^\\n]*(\\\\.ssh|\\\\.aws|\\\\.env\\\\b|id_rsa|credentials)[^\\n]*(/tmp|/var/tmp|/dev/shm)",
+   "message": "凭据被复制到共享临时目录",
+   "section": "—— 新增：凭据暂存、容器逃逸、免取证 ——",
+   "line_text": "(\"SH021\", r\"\\b(cp|mv|install)\\b[^\\n]*(\\\\.ssh|\\\\.aws|\\\\.env\\\\b|id_rsa|credentials)[^\\n]*(/tmp|/var/tmp|/dev/shm)\", \"HIGH\","
+  },
+  {
+   "id": "SH022",
+   "file": "skillgate.py",
+   "line": 1045,
+   "severity": "CRITICAL",
+   "regex": "\\bsocat\\b[^\\n]*(EXEC:|TCP:)",
+   "message": "socat 建立 shell 通道",
+   "section": "—— 新增：凭据暂存、容器逃逸、免取证 ——",
+   "line_text": "(\"SH022\", r\"\\bsocat\\b[^\\n]*(EXEC:|TCP:)\", \"CRITICAL\","
+  },
+  {
+   "id": "SH023",
+   "file": "skillgate.py",
+   "line": 1047,
+   "severity": "CRITICAL",
+   "regex": "\\bdocker\\s+(run|exec)\\b[^\\n]*--privileged[^\\n]*\\s-v\\s*/:",
+   "message": "特权容器挂载宿主根目录",
+   "section": "—— 新增：凭据暂存、容器逃逸、免取证 ——",
+   "line_text": "(\"SH023\", r\"\\bdocker\\s+(run|exec)\\b[^\\n]*--privileged[^\\n]*\\s-v\\s*/:\", \"CRITICAL\","
+  },
+  {
+   "id": "SH024",
+   "file": "skillgate.py",
+   "line": 1049,
+   "severity": "MEDIUM",
+   "regex": "(\\bhistory\\s+-c\\b|rm\\s+[^\\n]*(\\\\.bash_history|\\\\.zsh_history))",
+   "message": "清除命令历史（免取证）",
+   "section": "—— 新增：凭据暂存、容器逃逸、免取证 ——",
+   "line_text": "(\"SH024\", r\"(\\bhistory\\s+-c\\b|rm\\s+[^\\n]*(\\\\.bash_history|\\\\.zsh_history))\", \"MEDIUM\","
+  },
+  {
+   "id": "JSDC001",
+   "file": "js_analyzer.py",
+   "line": 19,
+   "severity": "HIGH",
+   "regex": "re.compile('require\\\\s*\\\\(\\\\s*[\\'\\\\\"]child_process[\\'\\\\\"]\\\\s*\\\\)')",
+   "message": "引入 child_process（任意子进程执行）",
+   "section": "确定的危险执行面：无论参数多克制，这几样都是任意代码执行",
+   "line_text": "(\"JSDC001\", re.compile(r\"require\\s*\\(\\s*['\\\"]child_process['\\\"]\\s*\\)\"), \"HIGH\","
+  },
+  {
+   "id": "JSDC002",
+   "file": "js_analyzer.py",
+   "line": 21,
+   "severity": "HIGH",
+   "regex": "re.compile('from\\\\s+[\\'\\\\\"]child_process[\\'\\\\\"]')",
+   "message": "引入 child_process（任意子进程执行）",
+   "section": "确定的危险执行面：无论参数多克制，这几样都是任意代码执行",
+   "line_text": "(\"JSDC002\", re.compile(r\"from\\s+['\\\"]child_process['\\\"]\"), \"HIGH\","
+  },
+  {
+   "id": "JSDC003",
+   "file": "js_analyzer.py",
+   "line": 23,
+   "severity": "HIGH",
+   "regex": "re.compile('\\\\bexecSync\\\\s*\\\\(')",
+   "message": "execSync 同步执行 shell",
+   "section": "确定的危险执行面：无论参数多克制，这几样都是任意代码执行",
+   "line_text": "(\"JSDC003\", re.compile(r\"\\bexecSync\\s*\\(\"), \"HIGH\", \"execSync 同步执行 shell\"),"
+  },
+  {
+   "id": "JSDC004",
+   "file": "js_analyzer.py",
+   "line": 24,
+   "severity": "HIGH",
+   "regex": "re.compile('\\\\bexecFileSync\\\\s*\\\\(')",
+   "message": "execFileSync 同步执行外部程序",
+   "section": "确定的危险执行面：无论参数多克制，这几样都是任意代码执行",
+   "line_text": "(\"JSDC004\", re.compile(r\"\\bexecFileSync\\s*\\(\"), \"HIGH\", \"execFileSync 同步执行外部程序\"),"
+  },
+  {
+   "id": "JSDC005",
+   "file": "js_analyzer.py",
+   "line": 25,
+   "severity": "HIGH",
+   "regex": "re.compile('\\\\bspawn\\\\s*\\\\([^)]*shell\\\\s*:\\\\s*true')",
+   "message": "spawn 开启 shell",
+   "section": "确定的危险执行面：无论参数多克制，这几样都是任意代码执行",
+   "line_text": "(\"JSDC005\", re.compile(r\"\\bspawn\\s*\\([^)]*shell\\s*:\\s*true\"), \"HIGH\", \"spawn 开启 shell\"),"
+  },
+  {
+   "id": "JSDC006",
+   "file": "js_analyzer.py",
+   "line": 26,
+   "severity": "HIGH",
+   "regex": "re.compile('\\\\bexec\\\\s*\\\\(\\\\s*[`\\'\\\\\"]')",
+   "message": "exec 执行命令字符串",
+   "section": "确定的危险执行面：无论参数多克制，这几样都是任意代码执行",
+   "line_text": "(\"JSDC006\", re.compile(r\"\\bexec\\s*\\(\\s*[`'\\\"]\"), \"HIGH\", \"exec 执行命令字符串\"),"
+  },
+  {
+   "id": "JSDC007",
+   "file": "js_analyzer.py",
+   "line": 27,
+   "severity": "HIGH",
+   "regex": "re.compile('\\\\bnew\\\\s+Function\\\\s*\\\\(')",
+   "message": "new Function 动态构造代码",
+   "section": "确定的危险执行面：无论参数多克制，这几样都是任意代码执行",
+   "line_text": "(\"JSDC007\", re.compile(r\"\\bnew\\s+Function\\s*\\(\"), \"HIGH\", \"new Function 动态构造代码\"),"
+  },
+  {
+   "id": "JSDC008",
+   "file": "js_analyzer.py",
+   "line": 28,
+   "severity": "MEDIUM",
+   "regex": "re.compile('\\\\beval\\\\s*\\\\(')",
+   "message": "eval 动态求值（工具常用，需人工判断）",
+   "section": "确定的危险执行面：无论参数多克制，这几样都是任意代码执行",
+   "line_text": "(\"JSDC008\", re.compile(r\"\\beval\\s*\\(\"), \"MEDIUM\", \"eval 动态求值（工具常用，需人工判断）\"),"
+  },
+  {
+   "id": "JSDC009",
+   "file": "js_analyzer.py",
+   "line": 29,
+   "severity": "MEDIUM",
+   "regex": "re.compile('\\\\bvm\\\\.runInNewContext\\\\s*\\\\(')",
+   "message": "vm 隔离执行（可逃逸）",
+   "section": "确定的危险执行面：无论参数多克制，这几样都是任意代码执行",
+   "line_text": "(\"JSDC009\", re.compile(r\"\\bvm\\.runInNewContext\\s*\\(\"), \"MEDIUM\", \"vm 隔离执行（可逃逸）\"),"
+  },
+  {
+   "id": "JSCR001",
+   "file": "js_analyzer.py",
+   "line": 34,
+   "severity": "CRITICAL",
+   "regex": "re.compile('AKIA[0-9A-Z]{16}')",
+   "message": "硬编码 AWS Access Key",
+   "section": "凭证：与 Python 侧同一套格式，避免两个扫描器口径不一",
+   "line_text": "(\"JSCR001\", re.compile(r\"AKIA[0-9A-Z]{16}\"), \"CRITICAL\", \"硬编码 AWS Access Key\"),"
+  },
+  {
+   "id": "JSCR002",
+   "file": "js_analyzer.py",
+   "line": 35,
+   "severity": "CRITICAL",
+   "regex": "re.compile('ghp_[A-Za-z0-9]{36}')",
+   "message": "硬编码 GitHub Token",
+   "section": "凭证：与 Python 侧同一套格式，避免两个扫描器口径不一",
+   "line_text": "(\"JSCR002\", re.compile(r\"ghp_[A-Za-z0-9]{36}\"), \"CRITICAL\", \"硬编码 GitHub Token\"),"
+  },
+  {
+   "id": "JSCR003",
+   "file": "js_analyzer.py",
+   "line": 36,
+   "severity": "CRITICAL",
+   "regex": "re.compile('sk-(?:proj-|ant-)?[A-Za-z0-9_-]{20,}')",
+   "message": "硬编码模型 API Key",
+   "section": "凭证：与 Python 侧同一套格式，避免两个扫描器口径不一",
+   "line_text": "(\"JSCR003\", re.compile(r\"sk-(?:proj-|ant-)?[A-Za-z0-9_-]{20,}\"), \"CRITICAL\", \"硬编码模型 API Key\"),"
+  },
+  {
+   "id": "JSCR004",
+   "file": "js_analyzer.py",
+   "line": 37,
+   "severity": "CRITICAL",
+   "regex": "re.compile('xox[baprs]-[A-Za-z0-9-]{10,}')",
+   "message": "硬编码 Slack Token",
+   "section": "凭证：与 Python 侧同一套格式，避免两个扫描器口径不一",
+   "line_text": "(\"JSCR004\", re.compile(r\"xox[baprs]-[A-Za-z0-9-]{10,}\"), \"CRITICAL\", \"硬编码 Slack Token\"),"
+  },
+  {
+   "id": "JSXF001",
+   "file": "js_analyzer.py",
+   "line": 42,
+   "severity": "MEDIUM",
+   "regex": "re.compile('JSON\\\\.stringify\\\\s*\\\\(\\\\s*process\\\\.env\\\\s*\\\\)')",
+   "message": "整份 process.env 导出（外泄前兆）",
+   "section": "外泄前兆：整份环境变量 / 大量文件内容上报",
+   "line_text": "(\"JSXF001\", re.compile(r\"JSON\\.stringify\\s*\\(\\s*process\\.env\\s*\\)\"), \"MEDIUM\","
+  },
+  {
+   "id": "JSXF002",
+   "file": "js_analyzer.py",
+   "line": 44,
+   "severity": "MEDIUM",
+   "regex": "re.compile('Object\\\\.entries\\\\s*\\\\(\\\\s*process\\\\.env\\\\s*\\\\)')",
+   "message": "遍历全部环境变量",
+   "section": "外泄前兆：整份环境变量 / 大量文件内容上报",
+   "line_text": "(\"JSXF002\", re.compile(r\"Object\\.entries\\s*\\(\\s*process\\.env\\s*\\)\"), \"MEDIUM\","
+  },
+  {
+   "id": "JSXF003",
+   "file": "js_analyzer.py",
+   "line": 46,
+   "severity": "LOW",
+   "regex": "re.compile('https?://[^\\\\s\\'\\\\\"`]+\\\\.(com|net|org)[^\\\\s\\'\\\\\"`]*')",
+   "message": "硬编码外部 URL",
+   "section": "外泄前兆：整份环境变量 / 大量文件内容上报",
+   "line_text": "(\"JSXF003\", re.compile(r\"https?://[^\\s'\\\"`]+\\.(com|net|org)[^\\s'\\\"`]*\"), \"LOW\","
+  },
+  {
+   "id": "JSFS001",
+   "file": "js_analyzer.py",
+   "line": 51,
+   "severity": "MEDIUM",
+   "regex": "re.compile('\\\\brmSync\\\\s*\\\\(')",
+   "message": "rmSync 删除",
+   "section": "外泄前兆：整份环境变量 / 大量文件内容上报",
+   "line_text": "(\"JSFS001\", re.compile(r\"\\brmSync\\s*\\(\"), \"MEDIUM\", \"rmSync 删除\"),"
+  },
+  {
+   "id": "JSFS002",
+   "file": "js_analyzer.py",
+   "line": 52,
+   "severity": "MEDIUM",
+   "regex": "re.compile('\\\\brimraf\\\\b')",
+   "message": "rimraf 递归删除",
+   "section": "外泄前兆：整份环境变量 / 大量文件内容上报",
+   "line_text": "(\"JSFS002\", re.compile(r\"\\brimraf\\b\"), \"MEDIUM\", \"rimraf 递归删除\"),"
+  },
+  {
+   "id": "JSFS003",
+   "file": "js_analyzer.py",
+   "line": 53,
+   "severity": "LOW",
+   "regex": "re.compile('\\\\bunlinkSync\\\\s*\\\\(')",
+   "message": "unlinkSync 删除文件",
+   "section": "外泄前兆：整份环境变量 / 大量文件内容上报",
+   "line_text": "(\"JSFS003\", re.compile(r\"\\bunlinkSync\\s*\\(\"), \"LOW\", \"unlinkSync 删除文件\"),"
+  }
+ ]
+}

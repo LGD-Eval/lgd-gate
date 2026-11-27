@@ -1,0 +1,169 @@
+{
+  "metrics": {
+    "samples": 10,
+    "tp": 5,
+    "fp": 0,
+    "tn": 5,
+    "fn": 0,
+    "recall": 1.0,
+    "precision": 1.0,
+    "false_positive_rate": 0.0,
+    "accuracy": 1.0,
+    "rule_version": "v3.1.3",
+    "definition": "任意 findings 即判命中（原口径）",
+    "definition_severity": "仅 CRITICAL/HIGH/MEDIUM/LOW 计入，INFO 视为信息（不判违规）",
+    "metrics_by_severity": {
+      "tp": 5,
+      "fp": 0,
+      "tn": 5,
+      "fn": 0,
+      "recall": 1.0,
+      "precision": 1.0,
+      "false_positive_rate": 0.0,
+      "accuracy": 1.0
+    }
+  },
+  "samples": [
+    {
+      "id": "H01",
+      "desc": "wget 管道给 python 解释器",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [
+        "SH006"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "H02",
+      "desc": "scp 外传私钥",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [
+        "SH013"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "H03",
+      "desc": "expanduser 递归删除",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "HIGH",
+        "MEDIUM"
+      ],
+      "flagged_sev": true,
+      "score": 70,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "H04",
+      "desc": "整份环境变量打印到日志",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "MEDIUM"
+      ],
+      "flagged_sev": true,
+      "score": 76,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "H05",
+      "desc": "base64 --decode 管道给 sh",
+      "malicious": true,
+      "flagged": true,
+      "severities": [
+        "CRITICAL",
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 52,
+      "grade": "D",
+      "rules": [
+        "SH005",
+        "SH006"
+      ],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "H06",
+      "desc": "下载到本地（无执行）",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "H07",
+      "desc": "参数化 git 命令",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "H08",
+      "desc": "打包构建产物",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "H09",
+      "desc": "读本地配置文件",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "H10",
+      "desc": "axios 只读 GET",
+      "malicious": false,
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    }
+  ],
+  "corpus": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\rt_corpus_wqmalfwx",
+  "scanner": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\xlgd_audit\\_sw_patch3\\skillgate.py"
+}

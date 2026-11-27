@@ -1,0 +1,18 @@
+<!doctype html><meta charset="utf-8"><title>红队独立复算 2026-11-21</title>
+<style>body{background:#0f1115;color:#e6e8ee;font-family:-apple-system,"Segoe UI","Microsoft YaHei";margin:32px}
+h1{font-size:22px;margin:0 0 6px}p.mut{color:#8b93a7;font-size:13px}
+table{border-collapse:collapse;width:100%;margin-top:14px;font-size:13px}
+th,td{border-bottom:1px solid #232733;padding:8px 10px;text-align:left}
+th{color:#96a0b8;font-size:12px}.mono{font-family:ui-monospace,Consolas,monospace}.mut{color:#8b93a7}
+.ok{color:#5bd6a2}.bad{color:#ff6b6b}
+.kpi{display:flex;gap:12px;margin-top:14px}.k{background:#171a21;border:1px solid #232733;border-radius:10px;padding:12px 16px}
+.k b{font-size:20px}.k span{display:block;color:#8b93a7;font-size:12px;margin-top:3px}</style>
+<h1>红队 114 样本 · 独立复算（不跑扫描器，只重算判定）</h1>
+<p class="mut">我们唯一"领先"的维度是负向语料，所以这一步必须外人能自己算：拿 9 份 bench json，按 flagged 字段数 TP/FP/TN/FN，与存储汇总逐项比对漂移，并核 sha256。</p>
+<div class="kpi"><div class="k"><b>0</b><span>样本总数</span></div>
+<div class="k"><b>0 / 0 / 0 / 0</b><span>TP / FP / TN / FN</span></div>
+<div class="k"><b>None / None / None</b><span>recall / precision / FPR</span></div>
+<div class="k"><b>0</b><span>有漂移的分片数</span></div></div>
+<table><thead><tr><th>分片</th><th>样本</th><th>TP/FP/TN/FN（任意 findings）</th><th>recall/precision/FPR</th><th>TP/FP/TN/FN（仅 CRITICAL..LOW）</th><th>与存档汇总</th><th>sha256 前 12</th></tr></thead><tbody></tbody></table>
+<p class="mut" style="margin-top:14px">复算命令：<span class="mono">python redteam_recount_20261121.py --bench &lt;bench 目录&gt; --summary redteam_all_splits_20261121.json</span>；期望漂移 0。
+边界：本页证明"汇总数字与逐样本一致"，不证明语料比对手更有价值；D09 的领先限定在"公开可复跑范围内的静默失败覆盖"。</p>

@@ -1,0 +1,207 @@
+{
+  "metrics": {
+    "samples": 12,
+    "tp": 3,
+    "fp": 1,
+    "tn": 5,
+    "fn": 3,
+    "recall": 0.5,
+    "precision": 0.75,
+    "false_positive_rate": 0.167,
+    "accuracy": 0.667,
+    "rule_version": "v3.1.3",
+    "definition": "任意 findings 即判命中（原口径）",
+    "definition_severity": "仅 CRITICAL/HIGH/MEDIUM/LOW 计入，INFO 视为信息（不判违规）",
+    "metrics_by_severity": {
+      "tp": 3,
+      "fp": 1,
+      "tn": 5,
+      "fn": 3,
+      "recall": 0.5,
+      "precision": 0.75,
+      "false_positive_rate": 0.167,
+      "accuracy": 0.667
+    }
+  },
+  "samples": [
+    {
+      "id": "Z01",
+      "desc": "curl 直传 /etc/shadow",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z02",
+      "desc": "os.system 双层 shell 拼串",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": true,
+      "severities": [
+        "CRITICAL"
+      ],
+      "flagged_sev": true,
+      "score": 67,
+      "grade": "C",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z03",
+      "desc": "find 批量抓 pem 后外传",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z04",
+      "desc": "child_process 管道执行",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": true,
+      "severities": [
+        "HIGH"
+      ],
+      "flagged_sev": true,
+      "score": 74,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z05",
+      "desc": "requests 上传 shadow 文件",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": true,
+      "severities": [
+        "INFO",
+        "MEDIUM"
+      ],
+      "flagged_sev": true,
+      "score": 76,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z06",
+      "desc": "改时间后删日志",
+      "malicious": true,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z07",
+      "desc": "下载依赖包",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z08",
+      "desc": "读配置并构造请求头",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z09",
+      "desc": "正常带载荷的 POST",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z10",
+      "desc": "统计代码行数",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z11",
+      "desc": "查询 git 状态",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": true,
+      "severities": [
+        "HIGH"
+      ],
+      "flagged_sev": true,
+      "score": 74,
+      "grade": "B",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    },
+    {
+      "id": "Z12",
+      "desc": "查看服务状态",
+      "malicious": false,
+      "intent_verdict": "ALLOW",
+      "intent_policies": [],
+      "flagged": false,
+      "severities": [],
+      "flagged_sev": false,
+      "score": 82,
+      "grade": "A",
+      "rules": [],
+      "rule_version": "v3.1.3"
+    }
+  ],
+  "corpus": "C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\rt_corpus_5ebcdhzx",
+  "scanner": "C:\\Users\\Administrator\\AppData\\Local\\Temp\\xlgd_audit\\lgd-gate\\skillgate.py"
+}

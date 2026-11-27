@@ -1,0 +1,111 @@
+diff --git a/js_analyzer.py b/js_analyzer.py
+index c9c2f0a..a7fe4f9 100644
+--- a/js_analyzer.py
++++ b/js_analyzer.py
+@@ -83,8 +83,10 @@ def scan_js_file(filepath):
+                 break
+         for pattern, sev, msg in EXFIL:
+             if pattern.search(line):
+-                # 硬编码 URL 太常见，只在同一行出现数据外发动词时才记
+-                if msg == "硬编码外部 URL" and not re.search(r"\b(fetch|axios|post|send)\b", line):
++                # 硬编码 URL 太常见；只有同一行出现**外发数据**的动词才算外泄前兆。
++                # 普通 fetch/axios.get 是只读取数据，不构成外泄（此前把 fetch 也算进来，误报）。
++                if msg == "硬编码外部 URL" and not re.search(
++                        r"\b(axios\.post|\.post|send|upload|writeFileSync)\b", line):
+                     continue
+                 out.append((sev, "network", msg, i))
+                 break
+diff --git a/skillgate.py b/skillgate.py
+index 7247f0a..f01b183 100644
+--- a/skillgate.py
++++ b/skillgate.py
+@@ -95,7 +95,7 @@ NETWORK_PATTERNS = [
+     (r"\bimport\s+smtplib\b", "LOW", "SMTP 邮件库"),
+     (r"\burlopen\s*\(", "LOW", "urlopen 网络请求"),
+     (r"\bpost\s*\([^)]*https?://", "MEDIUM", "POST 数据到外部 URL"),
+-    (r"\brequests\.get\s*\([^)]*https?://", "LOW", "GET 请求外部 URL"),
++    (r"\brequests\.get\s*\([^)]*http://", "LOW", "GET 请求明文外部 URL"),
+     (r"\bhttpx\b", "INFO", "httpx HTTP 客户端（常见）"),
+     (r"\baiohttp\b", "INFO", "aiohttp 异步 HTTP（常见）"),
+     (r"\bcurl\b", "LOW", "curl 命令行网络工具"),
+@@ -551,6 +551,23 @@ def scan_python_file(filepath: Path, result: ScanResult):
+ 
+     lines = content.splitlines()
+ 
++    # === 步骤 0：路径穿越（正则层，AST 覆盖不到字面量 open） ===
++    # 判据：open/read 的字面量路径中出现 2 段以上 ../，或直接指向系统敏感文件。
++    # 只对字面量生效，不做跨文件数据流（那是后续 AST/污点分析的范围）。
++    _traversal = re.compile(r"""open\s*\(\s*['"]([^'"]*\.\./[^'"]*\.\./[^'"]*)['"]""")
++    _sensitive = re.compile(r"""['"](/(etc|proc|root|var/log)/[^'"]*)['"]""")
++    for i, line in enumerate(lines, 1):
++        if "skillgate: ignore" in line:
++            continue
++        if _traversal.search(line) or _sensitive.search(line):
++            result.findings.append(Finding(
++                severity="HIGH", category="path-traversal",
++                message="路径穿越/敏感系统文件读取",
++                file=str(filepath), line=i,
++                rule_id="PY001",
++                explanation="相对路径越出技能目录，或直接读取系统敏感文件",
++            ))
++
+     # === 第一步：AST 分析（更准，误报低） ===
+     ast_lines = set()  # 记录 AST 已经报过的行，正则就不要重复报了
+     try:
+@@ -917,20 +934,49 @@ def scan_shell_file(filepath: Path, result: ScanResult):
+         return
+ 
+     lines = content.splitlines()
++    # 每条规则带 rule_id：findings 必须可归因到具体规则（否则无法抑制/回归/审计）
++    # 结构：(rule_id, pattern, severity, message, explanation)
+     dangerous_sh_patterns = [
+-        (r"\brm\s+-rf?\s+/\s*(;|&&|\||$)", "CRITICAL", "rm -rf / 危险删除（仅根目录）"),
+-        (r"\bcurl\s+.*\|\s*sh", "MEDIUM", "curl | sh 管道执行远程脚本（常见安装方式，需确认来源可信）"),
+-        (r"\bwget\s+.*\|\s*bash", "MEDIUM", "wget | bash 管道执行远程脚本（常见安装方式，需确认来源可信）"),
+-        (r"\bchmod\s+777", "MEDIUM", "chmod 777 权限过松"),
+-        (r"\bsudo\s+", "MEDIUM", "sudo 权限提升"),
++        # —— 原有 5 条（补 rule_id）——
++        ("SH001", r"\brm\s+-rf?\s+/\s*(;|&&|\||$)", "CRITICAL",
++         "rm -rf / 危险删除（仅根目录）", "删除根目录不可恢复"),
++        ("SH002", r"\b(curl|wget)\s+.*\|\s*(bash|sh|zsh)\b", "HIGH",
++         "下载后直接管道执行远程脚本", "远程内容未经审阅即执行，等同于远端代码执行"),
++        ("SH003", r"\bchmod\s+777", "MEDIUM", "chmod 777 权限过松", "任何用户可改写该文件"),
++        ("SH004", r"\bsudo\s+", "MEDIUM", "sudo 权限提升", "脚本需要提权，扩大影响面"),
++
++        # —— 新增：编码绕过与多层管道（M01 这类）——
++        ("SH005", r"\|[^|]*\b(base64|xxd|openssl)\s*(--decode|-d|-D)?\s*\|[^|]*\b(bash|sh)\b", "CRITICAL",
++         "解码后管道执行（base64/xxd/openssl | bash）", "编码是为了绕过静态检查，解码即执行"),
++        ("SH006", r"\b(curl|wget)\s+[^\n|]*\|[^\n|]*\|\s*(bash|sh)\b", "CRITICAL",
++         "多段管道最终落到 shell 执行", "链条中间步骤转义了静态匹配"),
++
++        # —— 新增：危险删除与家目录 ——
++        ("SH007", r"\brm\s+-rf?\s+(\$HOME|~|\$\{?HOME\}?)\s*(;|&&|\|$|$)", "CRITICAL",
++         "删除用户主目录", "不可恢复，等同毁坏环境"),
++        ("SH008", r"\brm\s+-rf?\s+/(etc|usr|var|bin|boot)\b", "CRITICAL",
++         "删除系统关键目录", "破坏宿主系统"),
++
++        # —— 新增：反弹 shell ——
++        ("SH009", r"/dev/tcp/[^\s]+", "CRITICAL",
++         "反弹 shell（/dev/tcp）", "以本机为跳板建立外连"),
++        ("SH010", r"\bnc\s+-[a-z]*e\b|\bncat\s+-[a-z]*e\b", "CRITICAL",
++         "netcat 反弹 shell（-e）", "把 shell 交给远端"),
++
++        # —— 新增：凭据外泄 ——
++        ("SH011", r"\b(curl|wget)\s+[^\n]*(--data[= ]?@|-d\s*@|--upload-file)[^\n]*(\.ssh|\.aws|\.env|\.netrc|\.npmrc|id_rsa)", "CRITICAL",
++         "上传凭据/密钥文件到远端", "明确的外泄链：读敏感文件 → 发到外部"),
++        ("SH012", r"\b(curl|wget)\s+[^\n]*(\.ssh/id_|\.aws/credentials|\.env\b)", "HIGH",
++         "命令中出现敏感文件路径", "敏感文件被网络工具访问"),
+     ]
+ 
+-    for pattern, severity, msg in dangerous_sh_patterns:
++    for rule_id, pattern, severity, msg, explanation in dangerous_sh_patterns:
+         for i, line in enumerate(lines, 1):
+             if re.search(pattern, clean_line(line)):
+                 result.findings.append(Finding(
+                     severity=severity, category="dangerous-shell",
+-                    message=msg, file=str(filepath), line=i
++                    message=msg, file=str(filepath), line=i,
++                    rule_id=rule_id, explanation=explanation,
+                 ))
+ 
+ 
