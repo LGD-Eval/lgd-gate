@@ -226,7 +226,9 @@ AUTH_PATTERNS = [
     ("AU001", r"\bauth\s*=\s*None\b", "MEDIUM", "认证被禁用"),
     ("AU002", r"\bverify\s*=\s*False\b", "HIGH", "SSL 验证被禁用"),
     ("AU003", r"\bALLOW_ALL\b", "HIGH", "允许所有访问"),
-    ("AU004", r"\bCORS.*\*\b", "MEDIUM", "CORS 允许所有来源"),
+    # 2026-11-28 修正：原写法 r"\bCORS.*\*\b" 的尾部 \b 永远不成立
+    # （'*' 是非单词字符，其后不可能再有单词边界），该规则因此从未命中过。
+    ("AU004", r"\bCORS[^\n]*\*", "MEDIUM", "CORS 允许所有来源"),
     ("AU005", r"\bpassword\s*=\s*['\"][^'\"]+['\"]", "CRITICAL", "硬编码密码"),
     ("AU006", r"\btoken\s*=\s*['\"][a-zA-Z0-9]{20,}['\"]", "CRITICAL", "硬编码 token"),
 ]
@@ -240,8 +242,9 @@ VALIDATION_PATTERNS = [
 ]
 
 # 11. Data Exfiltration Risk
-# ⚠️ 本表历史上定义过、但从未接入扫描循环（死表）：它的规则一条都不会生效。
-# 已在本次修复中把独有规则并入 NETWORK_PATTERNS，此表仅为兼容旧引用而保留。
+# ⚠️ 本表历史上定义过、但从未接入扫描循环（死表）；且 EF001-EF004 与 NT005/NT007/
+# NT008/NT009 是同一能力的重复登记（urlopen / smtplib.SMTP / socket.socket / 外部 POST）。
+# 2026-11-28 判定：4 条全部退役，不计入规则总数；此表仅为兼容旧引用保留。
 # 新增外泄规则请加到 NETWORK_PATTERNS，不要再往这里加。
 EXFIL_PATTERNS = [
     ("EF001", r"\brequests\.post\([^)]*https?://", "MEDIUM", "向外发 POST 请求"),
@@ -1461,11 +1464,81 @@ def scan_skill(skill_dir: str) -> ScanResult:
                 file=fp, line=1
             ))
 
+    # 5 张历史上未被任何循环消费的规则表（LC/QL/AU/VL/EF，共 25 条）：
+    # 仅在 strict profile 下执行，避免改变默认口径下的既有结果。
+    if STRICT_PROFILE:
+        _aux_sweep(skill_path, result)
+
     # Compute score
     result.trust_score = compute_trust_score(result)
     result.grade = grade_from_score(result.trust_score)
 
     return result
+
+
+# ── strict profile：接入 LC / QL / AU / VL / EF 五张表 ────────────────────────
+# 默认 profile 保持历史行为不变（这五张表一条都不跑），因此对外默认口径仍是
+# 161 条默认可执行规则；strict profile 下 186 条全部可执行。
+STRICT_PROFILE = os.environ.get("LGD_PROFILE", "").strip().lower() == "strict"
+
+
+def _aux_sweep(skill_path: Path, result: ScanResult):
+    """strict profile 专用：把 LC/QL/AU/VL/EF 五张表接进扫描循环。
+
+    去重约定：同一 (文件, 行) 已有其他规则命中时跳过，避免与已接线的
+    NT/CR/DC 规则对同一行为双计（例如 `urlopen(` 先被 NT008 报过，
+    EF002 不再重复计一条）。
+    """
+    taken = {(f.file, f.line) for f in result.findings if f.line}
+    tables = {
+        "LICENSE": LICENSE_PATTERNS,
+        "QUALITY": QUALITY_PATTERNS,
+        "AUTH": AUTH_PATTERNS,
+        "VALIDATION": VALIDATION_PATTERNS,
+        # EXFIL_PATTERNS 不在此处：EF001-EF004 与 NT005/NT007/NT008/NT009 是同一能力
+        # 的重复登记，2026-11-28 判定退役，不再计入规则总数（见表内注释）。
+    }
+    targets = []
+    for py in skill_path.rglob("*.py"):
+        targets.append((py, "py"))
+    for js in list(skill_path.rglob("*.js")) + list(skill_path.rglob("*.ts")):
+        targets.append((js, "js"))
+    for sh in list(skill_path.rglob("*.sh")) + list(skill_path.rglob("*.bash")):
+        targets.append((sh, "sh"))
+    for lic in list(skill_path.rglob("LICENSE*")) + list(skill_path.rglob("COPYING*")):
+        if lic.is_file():
+            targets.append((lic, "license"))
+
+    for fp, ftype in targets:
+        try:
+            lines = fp.read_text(encoding="utf-8", errors="replace").splitlines()
+        except Exception:
+            continue
+        for tname, ttype in (("LICENSE", "license"), ("QUALITY", ("py", "js", "sh")),
+                             ("AUTH", ("py", "js")), ("VALIDATION", ("py",))):
+            if ttype != "license" and ftype not in ttype:
+                continue
+            for rid, pattern, severity, msg in tables[tname]:
+                for i, line in enumerate(lines, 1):
+                    s = line.strip()
+                    # QUALITY 表本就是在注释里找 TODO/FIXME/HACK/XXX，不能按注释跳过；
+                    # AUTH/VALIDATION 判的是代码行为，注释里的同名词不算。
+                    if tname in ("AUTH", "VALIDATION") and (
+                            s.startswith("#") or s.startswith("//") or s.startswith("*")):
+                        continue
+                    if "skillgate: ignore" in line:
+                        continue
+                    if not re.search(pattern, line):
+                        continue
+                    key = (str(fp), i)
+                    if key in taken:
+                        continue
+                    taken.add(key)
+                    result.findings.append(Finding(
+                        severity=severity, category=f"aux-{tname.lower()}",
+                        message=msg, file=str(fp), line=i, rule_id=rid,
+                        explanation=f"strict profile 接入的 {tname} 规则",
+                    ))
 
 
 def _ci_exit(result: ScanResult, fail_under: int = None) -> int:
@@ -1707,6 +1780,9 @@ def main():
                              help="批量扫描：扫描目录下所有子目录")
     scan_parser.add_argument("--lenient", action="store_true",
                              help="宽松模式：所有规则降一级别（减少误报）")
+    scan_parser.add_argument("--profile", choices=["default", "strict"], default="default",
+                             help="规则配置：default=161 条默认可执行规则（历史口径）；"
+                                  "strict=额外启用 LC/QL/AU/VL/EF 五张表（共 186 条）")
 
     # Quickstart subcommand
     quickstart_parser = sub.add_parser("quickstart", help="快速演示 SkillGate 怎么用")
@@ -1738,6 +1814,10 @@ def main():
         sys.exit(0)
 
     if args.command == "scan":
+        global STRICT_PROFILE
+        STRICT_PROFILE = (getattr(args, "profile", "default") == "strict")
+        if STRICT_PROFILE:
+            print("  (strict profile：启用 LC/QL/AU/VL/EF 五张表，共 186 条规则)")
         # Batch mode: scan all subdirectories
         if args.batch:
             base_path = Path(args.skill_dir).resolve()
