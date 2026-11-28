@@ -4,9 +4,13 @@
 """
 import json, os, shutil, subprocess, sys, tempfile, datetime, argparse, io
 
-D = os.environ.get('REVIEW_DIR', r'D:\Workbuddy\发布前审查_20261121\xlgd-scan-review-20261121')
-DEFAULT_ENGINE = os.environ.get('INTENT_ENGINE',
-    r'C:\Users\Administrator\Doubao\chats\2026-11-19\new-chat-6\XLGD整改审计_20261119\proposals\p31_intent\intent_engine.py')
+HERE = os.path.dirname(os.path.abspath(__file__))
+# 输出默认落在脚本同目录（任何机器任何系统都可写）；需要别处用 REVIEW_DIR 覆盖。
+D = os.environ.get('REVIEW_DIR') or HERE
+# 默认引擎 = 随仓的产品引擎（audit/20261121/p31_intent/intent_engine.py）；
+# 也可以用 --engine 指你自己的实现。
+DEFAULT_ENGINE = os.environ.get('INTENT_ENGINE') or os.path.normpath(
+    os.path.join(HERE, os.pardir, 'p31_intent', 'intent_engine.py'))
 
 # (id, 说明, 期望, 文件映射)
 CASES = [

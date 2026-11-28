@@ -29,7 +29,9 @@ CAPS = {
                      r"\bIEX\b|Invoke-Expression|powershell\s+-|pickle\.loads\s*\(|"
                      r"yaml\.load\s*\(|__import__\s*\(|"
                      r"\|\s*(bash|sh|zsh|dash|ksh|python[0-9.]*|node|perl|ruby|php)\b|"
-                     r"\b(bash|sh|zsh)\s+-i\b)"),
+                     r"\b(bash|sh|zsh)\s+-i\b|"
+                    r"(^|[;&|]\s*)(bash|sh|zsh|dash|ksh|python[0-9.]*|node|perl|ruby|php|pwsh)\s+"
+                    r"[^\s;&|]+(\.sh|\.bash|\.py|\.js|\.mjs|\.ps1|\.run)\b)"),
     "binary_exec": r"(^|[;&|]\s*)(\./|/|~/)[^\s;&|]+",
     "persistence": (r"(authorized_keys|\bcrontab\b|/etc/cron|systemd|LaunchAgents|LaunchDaemons|"
                     r"schtasks|~/.bashrc|~/.profile)"),
@@ -103,15 +105,29 @@ def scan_files(files, root: Path):
                     caps.setdefault(cap, []).append(f"{f.relative_to(root)}:{i}")
                     evidence.append({"cap": cap, "file": str(f.relative_to(root)),
                                      "line": i, "text": stripped[:120]})
+    # 跨行组合：下载落盘 + 解释器执行该文件（C04）。逐行扫描拆不开，必须整文匹配。
+    whole = "\n".join(f.read_text(encoding="utf-8", errors="replace") for f in files if f.exists())
+    if re.search(r"(curl|wget)[^\n]*(-o|--output|-O)[^\n]*\n[^\n]{0,120}?"
+                 r"(bash|sh|zsh|python[0-9.]*|node|pwsh)\s+", whole, re.IGNORECASE):
+        caps.setdefault("dynamic_exec", []).append("cross-line: download->execute")
+        evidence.append({"cap": "dynamic_exec", "file": "cross-line",
+                         "line": 0, "text": "download then interpreter executed file"})
     return caps, evidence
 
 
 def decide(code_caps, doc_caps, has_code):
     if not has_code:
-        # 纯提示词技能：没有可执行代码，风险面只剩"提示注入"（由规则层 md 扫描负责）
-        # 与"解析失败/不可读"必须区分，否则 27 个正常提示词技能会被误判为不可放行
+        # 纯提示词技能：先评估文档描述出的能力（文档最高 REVIEW），再降级为 PROMPT_ONLY。
+        # 早退会漏掉"文档里写着完整外泄链"的情形（C08），属安全语义漏洞。
+        doc_hits = []
+        for pid, need, verdict, reason in DOC_POLICY:
+            if all(c in doc_caps for c in need):
+                doc_hits.append({"id": pid, "verdict": verdict, "reason": reason,
+                                 "scope": "doc"})
+        if doc_hits:
+            return "REVIEW", doc_hits
         return "PROMPT_ONLY", [{"id": "D00", "verdict": "PROMPT_ONLY",
-                                "reason": "无代码文件，风险面仅提示注入",
+                                "reason": "无代码文件，文档未描述危险能力，风险面仅提示注入",
                                 "scope": "none"}]
     hits = []
     for pid, need, verdict, reason in POLICY:

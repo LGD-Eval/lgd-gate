@@ -5,10 +5,12 @@
 """
 import argparse, io, json, os, sys, datetime, importlib.util
 
-D = os.environ.get('REVIEW_DIR', r'D:\Workbuddy\发布前审查_20261121\xlgd-scan-review-20261121')
+HERE = os.path.dirname(os.path.abspath(__file__))
+D = os.environ.get('REVIEW_DIR') or HERE
 TESTPY = os.path.join(D, 'test_intent_conformance_20261121.py')
-PRODUCT = os.environ.get('INTENT_ENGINE',
-    r'C:\Users\Administrator\Doubao\chats\2026-11-19\new-chat-6\XLGD整改审计_20261119\proposals\p31_intent\intent_engine.py')
+# 产品引擎随仓，外人无需本地路径即可复跑差分。
+PRODUCT = os.environ.get('INTENT_ENGINE') or os.path.normpath(
+    os.path.join(HERE, os.pardir, 'p31_intent', 'intent_engine.py'))
 REFERENCE = os.path.join(D, 'intent_contract_reference_20261121.py')
 
 spec = importlib.util.spec_from_file_location('tc', TESTPY)
