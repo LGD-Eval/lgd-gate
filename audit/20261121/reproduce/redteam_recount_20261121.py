@@ -8,7 +8,8 @@
 """
 import argparse, glob, hashlib, io, json, os, sys, datetime
 
-D = os.environ.get('REVIEW_DIR', r'D:\Workbuddy\发布前审查_20261121\xlgd-scan-review-20261121')
+HERE = os.path.dirname(os.path.abspath(__file__))
+D = os.environ.get('REVIEW_DIR') or HERE
 BENCH = os.environ.get('BENCH_DIR', r'D:\Workbuddy\发布前审查_20261121\_bench')
 SUMMARY = os.environ.get('REDTEAM_SUMMARY', os.path.join(D, 'redteam_all_splits_20261121.json'))
 
